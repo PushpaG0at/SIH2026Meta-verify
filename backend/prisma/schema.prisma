@@ -1,0 +1,162 @@
+// METRA-VERIFY Prisma Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         String        // BUSINESS, INSPECTOR, OFFICER, ADMIN
+  phone        String?
+  orgName      String?       // Trade name or Dept jurisdiction
+  licenseNo    String?       // GSTIN/Trade License or Officer Badge ID
+  createdAt    DateTime      @default(now())
+
+  instruments  Instrument[]
+  applications Application[] @relation("BusinessApps")
+  inspections  Inspection[]  @relation("InspectorInspections")
+  reviews      OfficerReview[]
+}
+
+model Instrument {
+  id                  String        @id @default(uuid())
+  uin                 String        @unique // Digital Instrument ID (e.g., METRA-2026-W1024)
+  businessId          String
+  category            String        // ELECTRONIC_WEIGHING_SCALE, WEIGHBRIDGE, FUEL_DISPENSER, PRECISION_BALANCE, FLOW_METER
+  brand               String
+  modelNo             String
+  serialNo            String        @unique
+  maxCapacity         Float         // in kg, litres, grams
+  minCapacity         Float
+  leastCount          Float         // Verification scale interval (e)
+  installationAddress String
+  latitude            Float?
+  longitude           Float?
+  currentStatus       String        @default("UNVERIFIED") // UNVERIFIED, VERIFIED, EXPIRED, FLAGGED
+  createdAt           DateTime      @default(now())
+
+  business            User          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  applications        Application[]
+  certificates        Certificate[]
+}
+
+model Application {
+  id             String         @id @default(uuid())
+  applicationNo  String         @unique // e.g., APP-2026-89412
+  businessId     String
+  instrumentId   String
+  status         String         @default("SUBMITTED") // DRAFT, SUBMITTED, AI_REVIEWED, INSPECTION_ASSIGNED, INSPECTION_COMPLETED, OFFICER_APPROVED, OFFICER_REJECTED
+  submissionDate DateTime       @default(now())
+  feeAmount      Float          @default(500.0)
+  feeStatus      String         @default("PAID")
+
+  // AI Decision-Support Pre-Check Layer
+  aiScore        Float?         // 0 to 100 confidence
+  aiRemarks      String?        // JSON stringified flags/discrepancies
+  aiStatus       String?        // PASSED_ADVISORY, FLAGGED_ADVISORY, REVIEW_SUGGESTED
+  aiVerifiedAt   DateTime?
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  business       User           @relation("BusinessApps", fields: [businessId], references: [id], onDelete: Cascade)
+  instrument     Instrument     @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+  documents      Document[]
+  inspection     Inspection?
+  officerReview  OfficerReview?
+  certificate    Certificate?
+}
+
+model Document {
+  id               String      @id @default(uuid())
+  applicationId    String
+  docType          String      // INVOICE, MODEL_APPROVAL, PREVIOUS_VERIFICATION, CALIBRATION_REPORT
+  fileName         String
+  fileUrl          String
+  ocrExtractedText String?
+  aiExtractedData  String?     // JSON format
+  verifiedByAi     Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model Inspection {
+  id                String       @id @default(uuid())
+  applicationId     String       @unique
+  inspectorId       String
+  assignedAt        DateTime     @default(now())
+  completedAt       DateTime?
+
+  // Checklist verification booleans
+  visualInspection  Boolean      @default(false)
+  sealingIntact     Boolean      @default(false)
+  zeroErrorCheck    Boolean      @default(false)
+  repeatabilityPass Boolean      @default(false)
+
+  // Test load readings: JSON array of [{testWeightKg, indicatedWeightKg, errorKg, mpeKg, pass}]
+  testReadingsJson  String?
+
+  // Digital Trust Chain Evidence
+  photoUrl          String?
+  latitude          Float?
+  longitude         Float?
+  networkTimestamp  DateTime?
+  evidenceHash      String?      // Cryptographic SHA-256 Digest
+  inspectorNotes    String?
+  resultStatus      String?      // PASSED, FAILED, NEEDS_RECALIBRATION
+
+  application       Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  inspector         User         @relation("InspectorInspections", fields: [inspectorId], references: [id])
+}
+
+model OfficerReview {
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  officerId     String
+  decision      String      // APPROVED, REJECTED, RETURNED_FOR_REINSPECTION
+  remarks       String
+  stampingCode  String?     // Official Govt Stamping Die mark e.g., DL/W&M/2026/08
+  validUntil    DateTime?
+  reviewedAt    DateTime    @default(now())
+
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  officer       User        @relation(fields: [officerId], references: [id])
+}
+
+model Certificate {
+  id             String      @id @default(uuid())
+  certificateNo  String      @unique // e.g., METRA-CERT-2026-90412
+  applicationId  String      @unique
+  instrumentId   String
+  issuedAt       DateTime    @default(now())
+  validUntil     DateTime
+  qrPayload      String      // Cryptographic verification URL/data
+  qrCodeDataUrl  String?     // Base64 PNG QR code
+  evidenceHash   String      // SHA-256 evidence hash from inspection
+  status         String      @default("VALID") // VALID, REVOKED, EXPIRED
+
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  instrument     Instrument  @relation(fields: [instrumentId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id           String      @id @default(uuid())
+  entityType   String      // APPLICATION, INSPECTION, CERTIFICATE, INSTRUMENT
+  entityId     String
+  action       String      // CREATED, SUBMITTED, AI_CHECKED, INSPECTED, APPROVED, REJECTED, VERIFIED
+  actorId      String
+  actorRole    String
+  details      String?     // JSON snapshot of change
+  previousHash String?     // Blockchain-like block chaining
+  blockHash    String      // SHA-256(previousHash + action + entityId + actorId + timestamp)
+  timestamp    DateTime    @default(now())
+}

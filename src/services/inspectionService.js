@@ -1,6 +1,11 @@
 import apiClient from './api';
 import { MOCK_INSPECTION_ASSIGNMENTS } from '../utils/mockData';
-import { normalizeApplication } from './applicationService';
+import {
+  normalizeApplication,
+  getMasterApplications,
+  saveMasterApplications,
+  syncWithInspectorAssignments
+} from './applicationService';
 
 const INSPECTOR_STORAGE_KEY = 'mv_inspector_assignments';
 
@@ -26,6 +31,12 @@ function saveStoredAssignments(list) {
     if (typeof window !== 'undefined') {
       localStorage.setItem(INSPECTOR_STORAGE_KEY, JSON.stringify(list));
       window.dispatchEvent(new CustomEvent('mv_inspection_updated', { detail: list }));
+      try {
+        const syncedApps = syncWithInspectorAssignments(getMasterApplications());
+        saveMasterApplications(syncedApps);
+      } catch (err) {
+        console.warn('[inspectionService] Auto-sync with master applications error:', err);
+      }
     }
   } catch (e) {
     console.warn('[inspectionService] Failed to save localStorage assignments:', e);

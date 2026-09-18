@@ -36,21 +36,41 @@ export const OfficerDashboard = () => {
   const [selectedJurisdiction, setSelectedJurisdiction] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const loadOfficerData = async () => {
+    try {
+      const data = await applicationService.getApplications();
+      setApplications(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const data = await applicationService.getApplications();
-        setApplications(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+    loadOfficerData();
+
+    const handleSync = () => {
+      loadOfficerData();
     };
-    fetch();
+
+    window.addEventListener('mv_inspection_updated', handleSync);
+    window.addEventListener('mv_application_updated', handleSync);
+    window.addEventListener('focus', handleSync);
+
+    return () => {
+      window.removeEventListener('mv_inspection_updated', handleSync);
+      window.removeEventListener('mv_application_updated', handleSync);
+      window.removeEventListener('focus', handleSync);
+    };
   }, []);
 
   const stats = MOCK_STATS.officer;
+
+  const isPending = (s) => s === 'OFFICER_REVIEW' || s === 'INSPECTION_COMPLETED' || s === 'PENDING_REVIEW';
+  const isInInspection = (s) => s === 'INSPECTION' || s === 'INSPECTION_ASSIGNED' || s === 'INSPECTION_SCHEDULED' || s === 'ASSIGNED';
+  const isApproved = (s) => s === 'APPROVED' || s === 'OFFICER_APPROVED' || s === 'VERIFIED';
+  const isRejected = (s) => s === 'REJECTED' || s === 'OFFICER_REJECTED';
 
   // Filtered applications for the table
   const filteredApps = applications.filter((app) => {
@@ -58,13 +78,13 @@ export const OfficerDashboard = () => {
       filterTab === 'ALL'
         ? true
         : filterTab === 'PENDING'
-        ? app.status === 'OFFICER_REVIEW'
+        ? isPending(app.status)
         : filterTab === 'HIGH_RISK'
         ? app.riskScore >= 60
         : filterTab === 'INSPECTION'
-        ? app.status === 'INSPECTION'
+        ? isInInspection(app.status)
         : filterTab === 'APPROVED'
-        ? app.status === 'APPROVED'
+        ? isApproved(app.status)
         : true;
 
     const matchesJurisdiction =
@@ -89,14 +109,14 @@ export const OfficerDashboard = () => {
 
   // Highlight the highest-risk application in queue
   const highRiskApp =
-    applications.find((a) => a.riskScore >= 60 && a.status === 'OFFICER_REVIEW') ||
+    applications.find((a) => a.riskScore >= 60 && isPending(a.status)) ||
     applications.find((a) => a.riskScore >= 60);
 
-  const pendingAdjudicationCount = applications.filter((a) => a.status === 'OFFICER_REVIEW').length;
+  const pendingAdjudicationCount = applications.filter((a) => isPending(a.status)).length;
   const highRiskCount = applications.filter((a) => a.riskScore >= 60).length;
-  const underInspectionCount = applications.filter((a) => ['INSPECTION', 'INSPECTION_ASSIGNED', 'INSPECTION_SCHEDULED', 'INSPECTION_COMPLETED'].includes(a.status)).length;
-  const approvedCount = applications.filter((a) => ['APPROVED', 'OFFICER_APPROVED', 'VERIFIED'].includes(a.status)).length;
-  const rejectedCount = applications.filter((a) => a.status === 'REJECTED').length;
+  const underInspectionCount = applications.filter((a) => isInInspection(a.status)).length;
+  const approvedCount = applications.filter((a) => isApproved(a.status)).length;
+  const rejectedCount = applications.filter((a) => isRejected(a.status)).length;
 
   // Audit activity ticker items
   const auditTicker = [
@@ -237,11 +257,11 @@ export const OfficerDashboard = () => {
       render: (row) => (
         <Link to={`/officer/applications/${row.id}`}>
           <Button
-            variant={row.status === 'OFFICER_REVIEW' ? 'primary' : 'outline'}
+            variant={isPending(row.status) ? 'primary' : 'outline'}
             size="sm"
-            className={row.status === 'OFFICER_REVIEW' ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
+            className={isPending(row.status) ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
           >
-            {row.status === 'OFFICER_REVIEW' ? 'Adjudicate' : 'Review Dossier'}
+            {isPending(row.status) ? 'Adjudicate' : 'Review Dossier'}
           </Button>
         </Link>
       )
@@ -642,7 +662,7 @@ export const OfficerDashboard = () => {
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                Approved ({applications.filter((a) => a.status === 'APPROVED').length})
+                Approved ({approvedCount})
               </button>
             </div>
           </div>

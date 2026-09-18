@@ -33,18 +33,38 @@ export const OfficerApplicationsListPage = () => {
   const [slaFilter, setSlaFilter] = useState('ALL'); // 'ALL' | 'URGENT' | 'NORMAL'
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'risk_desc' | 'sla_asc' | 'trader'
 
+  const isPending = (s) => s === 'OFFICER_REVIEW' || s === 'INSPECTION_COMPLETED' || s === 'PENDING_REVIEW';
+  const isInInspection = (s) => s === 'INSPECTION' || s === 'INSPECTION_ASSIGNED' || s === 'INSPECTION_SCHEDULED' || s === 'ASSIGNED';
+  const isApproved = (s) => s === 'APPROVED' || s === 'OFFICER_APPROVED' || s === 'VERIFIED';
+  const isRejected = (s) => s === 'REJECTED' || s === 'OFFICER_REJECTED';
+
+  const fetchApplications = async () => {
+    try {
+      const data = await applicationService.getApplications();
+      setApplications(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const data = await applicationService.getApplications();
-        setApplications(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+    fetchApplications();
+
+    const handleSync = () => {
+      fetchApplications();
     };
-    fetch();
+
+    window.addEventListener('mv_inspection_updated', handleSync);
+    window.addEventListener('mv_application_updated', handleSync);
+    window.addEventListener('focus', handleSync);
+
+    return () => {
+      window.removeEventListener('mv_inspection_updated', handleSync);
+      window.removeEventListener('mv_application_updated', handleSync);
+      window.removeEventListener('focus', handleSync);
+    };
   }, []);
 
   // Filter logic
@@ -60,7 +80,18 @@ export const OfficerApplicationsListPage = () => {
       (app.traderDetails?.gstin && app.traderDetails.gstin.toLowerCase().includes(query)) ||
       (app.assignedInspector && app.assignedInspector.toLowerCase().includes(query));
 
-    const matchesStatus = statusTab === 'ALL' ? true : app.status === statusTab;
+    const matchesStatus =
+      statusTab === 'ALL'
+        ? true
+        : statusTab === 'OFFICER_REVIEW'
+        ? isPending(app.status)
+        : statusTab === 'INSPECTION'
+        ? isInInspection(app.status)
+        : statusTab === 'APPROVED'
+        ? isApproved(app.status)
+        : statusTab === 'REJECTED'
+        ? isRejected(app.status)
+        : app.status === statusTab;
 
     const matchesRisk =
       riskFilter === 'ALL'
@@ -260,21 +291,21 @@ export const OfficerApplicationsListPage = () => {
       render: (row) => (
         <Link to={`/officer/applications/${row.id}`}>
           <Button
-            variant={row.status === 'OFFICER_REVIEW' ? 'primary' : 'outline'}
+            variant={isPending(row.status) ? 'primary' : 'outline'}
             size="sm"
-            className={row.status === 'OFFICER_REVIEW' ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
+            className={isPending(row.status) ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
           >
-            {row.status === 'OFFICER_REVIEW' ? 'Adjudicate' : 'Review Dossier'}
+            {isPending(row.status) ? 'Adjudicate' : 'Review Dossier'}
           </Button>
         </Link>
       )
     }
   ];
 
-  const pendingCount = applications.filter((a) => a.status === 'OFFICER_REVIEW').length;
-  const inspectionCount = applications.filter((a) => a.status === 'INSPECTION').length;
-  const approvedCount = applications.filter((a) => a.status === 'APPROVED').length;
-  const rejectedCount = applications.filter((a) => a.status === 'REJECTED').length;
+  const pendingCount = applications.filter((a) => isPending(a.status)).length;
+  const inspectionCount = applications.filter((a) => isInInspection(a.status)).length;
+  const approvedCount = applications.filter((a) => isApproved(a.status)).length;
+  const rejectedCount = applications.filter((a) => isRejected(a.status)).length;
   const highRiskCount = applications.filter((a) => a.riskScore >= 60).length;
 
   return (
@@ -587,14 +618,14 @@ export const OfficerApplicationsListPage = () => {
               {/* Card Action Footer */}
               <div className="pt-2">
                 <Button
-                  variant={app.status === 'OFFICER_REVIEW' ? 'primary' : 'outline'}
+                  variant={isPending(app.status) ? 'primary' : 'outline'}
                   size="sm"
                   className={`w-full text-xs font-semibold ${
-                    app.status === 'OFFICER_REVIEW' ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''
+                    isPending(app.status) ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''
                   }`}
                   rightIcon={ChevronRight}
                 >
-                  {app.status === 'OFFICER_REVIEW' ? 'Adjudicate File' : 'Open Statutory Dossier'}
+                  {isPending(app.status) ? 'Adjudicate File' : 'Open Statutory Dossier'}
                 </Button>
               </div>
             </div>

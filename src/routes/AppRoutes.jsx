@@ -11,6 +11,7 @@ import AppLayout from '../layouts/AppLayout';
 
 // Portal Entry Gateway
 import PortalEntryPage from '../pages/portal/PortalEntryPage';
+import MetraFrontPage from '../pages/public/MetraFrontPage';
 
 // Public Pages
 import LandingPage from '../pages/public/LandingPage';
@@ -57,16 +58,18 @@ export const AppRoutes = () => {
         <Route path="/design-system" element={<Navigate to="/ui-kit" replace />} />
       </Route>
 
-      {/* METRA-VERIFY Initial Portal Entry Gateway */}
-      <Route path="/" element={<PortalEntryPage />} />
+      {/* METRA-VERIFY Official Front Page (Matching statutory government portal design) */}
+      <Route path="/" element={<MetraFrontPage />} />
+      <Route path="/portal-gateway" element={<PortalEntryPage />} />
 
       {/* Public Verification (Dedicated, Standalone, No Account Required) */}
       <Route path="/verify" element={<PublicVerification />} />
       <Route path="/verify/:certificateId" element={<PublicVerification />} />
 
       {/* Marketing & Explanatory Pages */}
+      <Route path="/landing" element={<MetraFrontPage />} />
       <Route element={<PublicLayout />}>
-        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/system-overview" element={<LandingPage />} />
         <Route path="/about" element={<HowItWorks />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
       </Route>

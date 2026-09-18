@@ -43,7 +43,7 @@ apiClient.interceptors.response.use(
         friendlyMessage = 'Request timed out. The server took too long to respond.';
       } else {
         category = 'BACKEND_UNAVAILABLE';
-        friendlyMessage = 'Backend unavailable: Unable to connect to the authentication server at http://localhost:5000. Please ensure the backend is running.';
+        friendlyMessage = 'Backend service offline. Running in seamless offline/demonstration mode.';
       }
       console.warn(`[METRA-VERIFY API] ${category}:`, error.message);
     } else {

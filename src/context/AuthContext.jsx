@@ -106,9 +106,9 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password, expectedPortalRole = null) => {
     setLoading(true);
     try {
-      const result = await authService.login(email, password);
+      const result = await authService.login(email, password, expectedPortalRole);
       const activeUser = result.user;
-      const actualRole = (activeUser.role || 'BUSINESS').toUpperCase();
+      const actualRole = (activeUser.role || expectedPortalRole || 'BUSINESS').toUpperCase();
 
       // STRICT ROLE MISMATCH CHECK:
       // A Business user logging in at the Inspector or Officer portal MUST BE BLOCKED

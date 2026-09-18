@@ -161,6 +161,47 @@ export const InspectionDetailPage = () => {
         if (data.inspectionReport.remarks) setRemarks(data.inspectionReport.remarks);
         if (data.inspectionReport.sealNumber) setSealNumber(data.inspectionReport.sealNumber);
         if (data.inspectionReport.recommendation) setRecommendation(data.inspectionReport.recommendation);
+        if (data.inspectionReport.measurements && data.inspectionReport.measurements.length > 0) {
+          setMeasurements(data.inspectionReport.measurements.map((m, idx) => ({
+            id: m.id || `m_${idx}`,
+            testWeight: m.testWeight || `${m.loadKg || m.testWeightKg || 10} kg Calibration Load`,
+            loadKg: Number(m.loadKg !== undefined ? m.loadKg : (m.testWeightKg || 10)),
+            readingKg: Number(m.readingKg !== undefined ? m.readingKg : (m.indicatedWeightKg || m.loadKg || 10)),
+            errorG: Number(m.errorG !== undefined ? m.errorG : 0),
+            toleranceG: Number(m.toleranceG !== undefined ? m.toleranceG : 10),
+            result: m.result || 'PASS'
+          })));
+        }
+      } else if (data.initialMeasurements && data.initialMeasurements.length > 0) {
+        setMeasurements(data.initialMeasurements.map((m, idx) => ({
+          id: m.id || `m_${idx}`,
+          testWeight: m.testWeight || `${m.loadKg} kg Load`,
+          loadKg: Number(m.loadKg || 10),
+          readingKg: Number(m.readingKg !== undefined ? m.readingKg : (m.loadKg || 10)),
+          errorG: Number(m.errorG || 0),
+          toleranceG: Number(m.toleranceG || 10),
+          result: m.result || 'PASS'
+        })));
+      } else if (data.maxCapacity) {
+        const capStr = String(data.maxCapacity).toLowerCase();
+        let capKg = parseFloat(capStr);
+        if (capStr.includes('g') && !capStr.includes('kg')) {
+          capKg = capKg / 1000;
+        }
+        if (!isNaN(capKg) && capKg > 0) {
+          const p1 = Math.max(0.01, +(capKg * 0.1).toFixed(3));
+          const p2 = Math.max(0.05, +(capKg * 0.25).toFixed(3));
+          const p3 = Math.max(0.1, +(capKg * 0.5).toFixed(3));
+          const p4 = +capKg.toFixed(3);
+          const tol = Math.max(1, Math.round(capKg <= 1 ? 1 : (capKg <= 100 ? 5 : 20)));
+
+          setMeasurements([
+            { id: 'm1', testWeight: `${p1} kg (Minimum Load Test)`, loadKg: p1, readingKg: p1, errorG: 0, toleranceG: tol, result: 'PASS' },
+            { id: 'm2', testWeight: `${p2} kg (Quarter Load Test)`, loadKg: p2, readingKg: p2, errorG: 0, toleranceG: tol, result: 'PASS' },
+            { id: 'm3', testWeight: `${p3} kg (Half Capacity Test)`, loadKg: p3, readingKg: p3, errorG: 0, toleranceG: tol * 2, result: 'PASS' },
+            { id: 'm4', testWeight: `${p4} kg (Full Capacity Test)`, loadKg: p4, readingKg: p4, errorG: 0, toleranceG: tol * 3, result: 'PASS' }
+          ]);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -306,7 +347,7 @@ export const InspectionDetailPage = () => {
     }
     setSubmitting(true);
     try {
-      await inspectionService.submitInspection(assignment.id, {
+      const reportPayload = {
         checklist,
         gpsData,
         measurements,
@@ -316,7 +357,14 @@ export const InspectionDetailPage = () => {
         remarks,
         completedAt: new Date().toISOString(),
         status: 'COMPLETED'
-      });
+      };
+      await inspectionService.submitInspection(assignment.id, reportPayload);
+      setAssignment((prev) => ({
+        ...prev,
+        status: 'COMPLETED',
+        completedAt: reportPayload.completedAt,
+        inspectionReport: reportPayload
+      }));
       showToast('Field inspection successfully signed and submitted to Officer queue.', 'success');
       setShowSuccessModal(true);
     } catch (err) {

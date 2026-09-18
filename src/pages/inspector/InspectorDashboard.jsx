@@ -32,27 +32,44 @@ export const InspectorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [scheduleFilter, setScheduleFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'COMPLETED'
 
+  const loadAssignments = async () => {
+    try {
+      const data = await inspectionService.getAssignments();
+      setAssignments(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const data = await inspectionService.getAssignments();
-        setAssignments(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+    loadAssignments();
+
+    const handleUpdate = () => {
+      loadAssignments();
     };
-    fetch();
+
+    window.addEventListener('mv_inspection_updated', handleUpdate);
+    window.addEventListener('focus', handleUpdate);
+
+    return () => {
+      window.removeEventListener('mv_inspection_updated', handleUpdate);
+      window.removeEventListener('focus', handleUpdate);
+    };
   }, []);
 
-  const pendingAssignments = assignments.filter((a) => a.status === 'PENDING');
-  const completedAssignments = assignments.filter((a) => a.status === 'COMPLETED');
+  const isPending = (a) => a.status === 'PENDING' || a.status === 'ASSIGNED' || a.status === 'INSPECTION_ASSIGNED';
+  const isDone = (a) => a.status === 'COMPLETED' || a.status === 'INSPECTION_COMPLETED';
+
+  const pendingAssignments = assignments.filter(isPending);
+  const completedAssignments = assignments.filter(isDone);
+  const highPriorityPending = assignments.filter((a) => a.priority === 'HIGH' && isPending(a));
   const activeAssignment = pendingAssignments[0] || assignments[0];
 
   const filteredAssignments = assignments.filter((a) => {
-    if (scheduleFilter === 'PENDING') return a.status === 'PENDING';
-    if (scheduleFilter === 'COMPLETED') return a.status === 'COMPLETED';
+    if (scheduleFilter === 'PENDING') return isPending(a);
+    if (scheduleFilter === 'COMPLETED') return isDone(a);
     return true;
   });
 
@@ -100,7 +117,7 @@ export const InspectorDashboard = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Assigned Audits"
-          value={assignments.length || 4}
+          value={assignments.length}
           subtitle="Active roster cycle"
           icon={ClipboardCheck}
           iconColor="text-blue-600 bg-blue-50"
@@ -121,7 +138,7 @@ export const InspectorDashboard = () => {
         />
         <StatCard
           title="High-Priority Sites"
-          value={assignments.filter((a) => a.priority === 'HIGH').length}
+          value={highPriorityPending.length > 0 ? highPriorityPending.length : assignments.filter((a) => a.priority === 'HIGH').length}
           subtitle="Priority queue verification"
           icon={ShieldAlert}
           iconColor="text-rose-600 bg-rose-50"
@@ -139,10 +156,11 @@ export const InspectorDashboard = () => {
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-full font-mono">
-                    Next Active Target
+                    {isPending(activeAssignment) ? 'Next Active Target' : 'Inspection Dossier'}
                   </span>
                   <span className="font-mono text-xs font-bold text-slate-800">{activeAssignment.id}</span>
                   <StatusBadge status={activeAssignment.priority} size="sm" />
+                  <StatusBadge status={activeAssignment.status} size="sm" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900">
                   {activeAssignment.instrumentType} — {activeAssignment.businessName}

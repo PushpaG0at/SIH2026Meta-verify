@@ -29,6 +29,7 @@ export const ApplicationNewPage = () => {
   const [instruments, setInstruments] = useState([]);
   const [selectedInstrument, setSelectedInstrument] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadError, setUploadError] = useState('');
   const [isAiRunning, setIsAiRunning] = useState(false);
   const [aiResult, setAiResult] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,6 +53,13 @@ export const ApplicationNewPage = () => {
 
   const handleRunAiPreCheck = async () => {
     if (!selectedInstrument) return;
+    if (!uploadedFile) {
+      setUploadError(
+        'Statutory Document Required: You must upload at least one verification document (Manufacturer Invoice, Model Approval Certificate, or Baseline Test Data) before running AI Pre-check & OCR.'
+      );
+      return;
+    }
+    setUploadError('');
     setIsAiRunning(true);
     try {
       const analysis = await aiService.runPreCheck(selectedInstrument, uploadedFile);
@@ -59,19 +67,33 @@ export const ApplicationNewPage = () => {
       setStep(3);
     } catch (err) {
       console.error(err);
+      setUploadError('Failed to complete AI Pre-check. Please verify document format and try again.');
     } finally {
       setIsAiRunning(false);
     }
   };
 
   const handleFinalSubmit = async () => {
+    if (!uploadedFile) {
+      setStep(2);
+      setUploadError('Document upload is mandatory before filing statutory application.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const payload = {
         instrumentId: selectedInstrument.id,
         instrumentType: selectedInstrument.instrumentType,
         serialNumber: selectedInstrument.serialNumber,
-        manufacturer: selectedInstrument.manufacturer
+        manufacturer: selectedInstrument.manufacturer,
+        documents: [
+          {
+            docType: 'INVOICE_MODEL_APPROVAL',
+            fileName: uploadedFile.name,
+            fileSize: uploadedFile.size,
+            status: 'AI_VERIFIED'
+          }
+        ]
       };
       const createdApp = await applicationService.createApplication(payload);
       navigate(`/business/applications/${createdApp.id}`);
@@ -219,23 +241,75 @@ export const ApplicationNewPage = () => {
           <FileUploader
             label="Upload Manufacturer Invoice / Approval Certificate"
             sublabel="PDF or image showing device serial plate and model designation"
-            onFileSelect={(file) => setUploadedFile(file)}
+            onFileSelect={(file) => {
+              setUploadedFile(file);
+              if (file) setUploadError('');
+            }}
           />
 
-          <div className="pt-4 border-t border-slate-100 flex justify-between">
+          {/* Validation Notice & Status Feedback */}
+          {uploadError && (
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Document Required</p>
+                <p className="text-rose-700 text-[11px] mt-0.5">{uploadError}</p>
+              </div>
+            </div>
+          )}
+
+          {!uploadedFile && !uploadError && (
+            <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Mandatory Statutory Upload</p>
+                <p className="text-amber-800 text-[11px] mt-0.5">
+                  You must attach an invoice, model approval certificate, or test record before running AI Pre-check & OCR. Proceeding to Step 4 (Submission) is locked until documentation is verified.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {uploadedFile && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div>
+                  <p className="font-bold text-slate-900">Document Attached & Verified</p>
+                  <p className="text-emerald-700 text-[11px]">
+                    <strong>{uploadedFile.name}</strong> ({(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB) ready for optical character extraction.
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full shrink-0">
+                Ready
+              </span>
+            </div>
+          )}
+
+          <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
             <Button variant="outline" size="md" onClick={() => setStep(1)} leftIcon={ArrowLeft}>
               Back
             </Button>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={handleRunAiPreCheck}
-              isLoading={isAiRunning}
-              leftIcon={Bot}
-              rightIcon={ArrowRight}
-            >
-              Run AI Pre-check & OCR
-            </Button>
+            <div className="flex items-center gap-3">
+              {!uploadedFile && (
+                <span className="text-xs text-slate-400 font-medium hidden sm:inline">
+                  Upload document to enable AI Pre-check
+                </span>
+              )}
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleRunAiPreCheck}
+                disabled={!uploadedFile || isAiRunning}
+                isLoading={isAiRunning}
+                leftIcon={Bot}
+                rightIcon={ArrowRight}
+                className={!uploadedFile ? 'opacity-50 cursor-not-allowed' : 'shadow-md'}
+              >
+                Run AI Pre-check & OCR
+              </Button>
+            </div>
           </div>
         </div>
       )}

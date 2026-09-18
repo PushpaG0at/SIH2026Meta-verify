@@ -94,7 +94,9 @@ export const OfficerDashboard = () => {
 
   const pendingAdjudicationCount = applications.filter((a) => a.status === 'OFFICER_REVIEW').length;
   const highRiskCount = applications.filter((a) => a.riskScore >= 60).length;
-  const underInspectionCount = applications.filter((a) => a.status === 'INSPECTION').length;
+  const underInspectionCount = applications.filter((a) => ['INSPECTION', 'INSPECTION_ASSIGNED', 'INSPECTION_SCHEDULED', 'INSPECTION_COMPLETED'].includes(a.status)).length;
+  const approvedCount = applications.filter((a) => ['APPROVED', 'OFFICER_APPROVED', 'VERIFIED'].includes(a.status)).length;
+  const rejectedCount = applications.filter((a) => a.status === 'REJECTED').length;
 
   // Audit activity ticker items
   const auditTicker = [
@@ -331,35 +333,35 @@ export const OfficerDashboard = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
           title="Pending Adjudication"
-          value={pendingAdjudicationCount || stats.pendingApplications}
+          value={loading ? '-' : pendingAdjudicationCount}
           subtitle="Awaiting officer sign-off"
           icon={Clock}
           iconColor="text-amber-600 bg-amber-50"
         />
         <StatCard
           title="High-Risk Anomalies"
-          value={highRiskCount || stats.highRiskCases}
+          value={loading ? '-' : highRiskCount}
           subtitle="AI mismatch flagged"
           icon={ShieldAlert}
           iconColor="text-rose-600 bg-rose-50"
         />
         <StatCard
           title="Under Field Inspection"
-          value={underInspectionCount || stats.underInspection}
+          value={loading ? '-' : underInspectionCount}
           subtitle="Live GNSS telematics"
           icon={FileText}
           iconColor="text-indigo-600 bg-indigo-50"
         />
         <StatCard
           title="Certificates Issued"
-          value={stats.approvedTotal}
+          value={loading ? '-' : (approvedCount > 0 ? approvedCount : stats.approvedTotal)}
           subtitle="Cryptographically sealed"
           icon={CheckCircle2}
           iconColor="text-emerald-600 bg-emerald-50"
         />
         <StatCard
           title="Rejections / Void"
-          value={stats.rejectedTotal}
+          value={loading ? '-' : (rejectedCount > 0 ? rejectedCount : stats.rejectedTotal)}
           subtitle="Statutory non-compliance"
           icon={XCircle}
           iconColor="text-rose-600 bg-rose-50"

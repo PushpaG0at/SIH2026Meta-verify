@@ -1,6 +1,7 @@
 import apiClient from './api';
 import { MOCK_APPLICATIONS } from '../utils/mockData';
 import { normalizeInstrument } from './instrumentService';
+import { getCurrentUser, isDemoSeedUser, getUserStorageKey } from '../utils/userScope';
 
 let localApplications = [...MOCK_APPLICATIONS];
 
@@ -139,23 +140,38 @@ export const applicationService = {
    * List applications via GET /applications or GET /officer/applications
    */
   async getApplications(filters = {}) {
+    const user = getCurrentUser();
     try {
       const userRole = localStorage.getItem('mv_user_role')?.toUpperCase();
       const endpoint = userRole === 'OFFICER' ? '/officer/applications' : '/applications';
       const res = await apiClient.get(endpoint, { params: filters });
-      const rawList = res.data?.applications || (Array.isArray(res.data) ? res.data : []);
+      const rawList = res.data?.applications !== undefined
+        ? res.data.applications
+        : (Array.isArray(res.data) ? res.data : null);
 
-      if (rawList && rawList.length > 0) {
+      if (Array.isArray(rawList)) {
         return rawList.map(normalizeApplication);
       }
-      return localApplications.map(normalizeApplication);
+      return [];
     } catch (error) {
-      console.warn('[applicationService] Remote fetch failed, using local mock cache:', error.message);
-      let data = localApplications.map(normalizeApplication);
-      if (filters.status) {
-        data = data.filter((app) => app.status === filters.status);
+      console.warn('[applicationService] Remote fetch failed, using local user cache:', error.message);
+
+      if (isDemoSeedUser(user)) {
+        let data = localApplications.map(normalizeApplication);
+        if (filters.status) {
+          data = data.filter((app) => app.status === filters.status);
+        }
+        return data;
       }
-      return data;
+
+      // For new / custom business owners, return their own user-scoped applications (empty initially)
+      const key = getUserStorageKey('mv_applications', user);
+      const stored = localStorage.getItem(key);
+      let userList = stored ? JSON.parse(stored) : [];
+      if (filters.status) {
+        userList = userList.filter((app) => app.status === filters.status);
+      }
+      return userList.map(normalizeApplication);
     }
   },
 
@@ -163,6 +179,7 @@ export const applicationService = {
    * Retrieve application details via GET /applications/:id
    */
   async getApplicationById(id) {
+    const user = getCurrentUser();
     try {
       const res = await apiClient.get(`/applications/${id}`);
       const raw = res.data?.application || res.data;
@@ -177,13 +194,27 @@ export const applicationService = {
       console.warn(`[applicationService] GET /applications/${id} failed:`, error.message);
     }
 
-    // Local fallback
-    const found = localApplications.find(
+    // Check user-scoped local records first
+    const key = getUserStorageKey('mv_applications', user);
+    const stored = localStorage.getItem(key);
+    const userList = stored ? JSON.parse(stored) : [];
+    const foundUserApp = userList.find(
       (app) => app.id === id || app.applicationNo === id
     );
-    if (found) {
-      return normalizeApplication(found);
+    if (foundUserApp) {
+      return normalizeApplication(foundUserApp);
     }
+
+    // Local demo fallback only if demo account
+    if (isDemoSeedUser(user)) {
+      const found = localApplications.find(
+        (app) => app.id === id || app.applicationNo === id
+      );
+      if (found) {
+        return normalizeApplication(found);
+      }
+    }
+
     throw new Error(`Application '${id}' not found in registry.`);
   },
 
@@ -191,6 +222,10 @@ export const applicationService = {
    * Submit new verification application via POST /applications
    */
   async createApplication(payload) {
+    const user = getCurrentUser();
+    const currentUserId = user?.id || `usr_biz_${Date.now()}`;
+    const currentUserName = user?.orgName || user?.name || 'Commercial Enterprise';
+
     try {
       const backendPayload = {
         instrumentId: payload.instrumentId,
@@ -201,10 +236,19 @@ export const applicationService = {
       const created = res.data?.application || res.data;
       const normalized = normalizeApplication(created);
 
-      localApplications = [normalized, ...localApplications];
+      // Save to user storage as well
+      const key = getUserStorageKey('mv_applications', user);
+      const stored = localStorage.getItem(key);
+      const userList = stored ? JSON.parse(stored) : [];
+      localStorage.setItem(key, JSON.stringify([normalized, ...userList]));
+
+      if (isDemoSeedUser(user)) {
+        localApplications = [normalized, ...localApplications];
+      }
+
       return normalized;
     } catch (error) {
-      console.warn('[applicationService] Remote application creation failed, saving to local cache:', error.message);
+      console.warn('[applicationService] Remote application creation failed, saving to user cache:', error.message);
 
       const newId = `MV-APP-${String(Math.floor(100000 + Math.random() * 900000))}`;
       const newApp = normalizeApplication({
@@ -212,13 +256,13 @@ export const applicationService = {
         applicationNo: newId,
         instrumentId: payload.instrumentId,
         instrumentType: payload.instrumentType || 'Digital Weighing Scale',
-        businessId: 'usr_biz_01',
-        businessName: 'Sharma Traders & Co.',
+        businessId: currentUserId,
+        businessName: currentUserName,
         submissionDate: new Date().toISOString().split('T')[0],
         status: 'SUBMITTED',
         currentStep: 4,
-        assignedInspector: 'Insp. Vikram Sharma',
-        assignedOfficer: 'Shri R. Sen',
+        assignedInspector: 'Insp. Field Squad Assigned',
+        assignedOfficer: 'Officer Adjudication Desk',
         certificateId: null,
         riskScore: 18,
         riskLevel: 'LOW',
@@ -229,7 +273,15 @@ export const applicationService = {
         ]
       });
 
-      localApplications = [newApp, ...localApplications];
+      const key = getUserStorageKey('mv_applications', user);
+      const stored = localStorage.getItem(key);
+      const userList = stored ? JSON.parse(stored) : [];
+      localStorage.setItem(key, JSON.stringify([newApp, ...userList]));
+
+      if (isDemoSeedUser(user)) {
+        localApplications = [newApp, ...localApplications];
+      }
+
       return newApp;
     }
   },

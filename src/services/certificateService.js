@@ -1,5 +1,6 @@
 import apiClient from './api';
 import { MOCK_CERTIFICATES } from '../utils/mockData';
+import { getCurrentUser, isDemoSeedUser, getUserStorageKey } from '../utils/userScope';
 
 let localCertificates = [...MOCK_CERTIFICATES];
 
@@ -78,19 +79,32 @@ export function normalizeCertificate(raw) {
 
 export const certificateService = {
   /**
-   * List certificates via GET /certificates
+   * List certificates for authenticated user via GET /certificates
    */
   async getCertificates() {
+    const user = getCurrentUser();
     try {
       const res = await apiClient.get('/certificates');
-      const list = res.data?.certificates || (Array.isArray(res.data) ? res.data : []);
-      if (list && list.length > 0) {
+      const list = res.data?.certificates !== undefined
+        ? res.data.certificates
+        : (Array.isArray(res.data) ? res.data : null);
+
+      if (Array.isArray(list)) {
         return list.map(normalizeCertificate);
       }
-      return localCertificates.map(normalizeCertificate);
+      return [];
     } catch (error) {
       console.warn('[certificateService] Remote certificates fetch failed, using local cache:', error.message);
-      return localCertificates.map(normalizeCertificate);
+
+      if (isDemoSeedUser(user)) {
+        return localCertificates.map(normalizeCertificate);
+      }
+
+      // For new / custom business owners, return their own user-scoped certificates (empty initially)
+      const key = getUserStorageKey('mv_certificates', user);
+      const stored = localStorage.getItem(key);
+      const userList = stored ? JSON.parse(stored) : [];
+      return userList.map(normalizeCertificate);
     }
   },
 
@@ -100,6 +114,7 @@ export const certificateService = {
   async getCertificateById(id) {
     if (!id) return null;
     const cleanId = id.trim();
+    const user = getCurrentUser();
 
     try {
       const res = await apiClient.get(`/certificates/${encodeURIComponent(cleanId)}`);
@@ -121,11 +136,26 @@ export const certificateService = {
       // ignore
     }
 
-    // Local fallback
-    const found = localCertificates.find(
+    // Check user-scoped local records first
+    const key = getUserStorageKey('mv_certificates', user);
+    const stored = localStorage.getItem(key);
+    const userList = stored ? JSON.parse(stored) : [];
+    const foundUserCert = userList.find(
       (c) => c.id.toUpperCase() === cleanId.toUpperCase() || c.certificateNo?.toUpperCase() === cleanId.toUpperCase()
     );
-    return found ? normalizeCertificate(found) : null;
+    if (foundUserCert) {
+      return normalizeCertificate(foundUserCert);
+    }
+
+    // Demo seed fallback only if demo account
+    if (isDemoSeedUser(user)) {
+      const found = localCertificates.find(
+        (c) => c.id.toUpperCase() === cleanId.toUpperCase() || c.certificateNo?.toUpperCase() === cleanId.toUpperCase()
+      );
+      if (found) return normalizeCertificate(found);
+    }
+
+    return null;
   },
 
   /**

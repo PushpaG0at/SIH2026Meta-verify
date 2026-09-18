@@ -16,13 +16,11 @@ import {
   User,
   Search,
   Lightbulb,
-  HelpCircle,
-  ShieldCheck,
-  Building
+  ShieldCheck
 } from 'lucide-react';
 import { applicationService } from '../../services/applicationService';
 import { instrumentService } from '../../services/instrumentService';
-import { MOCK_STATS } from '../../utils/mockData';
+import { certificateService } from '../../services/certificateService';
 import StatCard from '../../components/ui/StatCard';
 import StatusBadge from '../../components/ui/StatusBadge';
 import RiskBadge from '../../components/ui/RiskBadge';
@@ -37,7 +35,8 @@ export const BusinessDashboard = () => {
   const [quickVerifyId, setQuickVerifyId] = useState('');
   const [applications, setApplications] = useState([]);
   const [instruments, setInstruments] = useState([]);
-  const [selectedAppId, setSelectedAppId] = useState('MV-APP-000123');
+  const [certificates, setCertificates] = useState([]);
+  const [selectedAppId, setSelectedAppId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const handleQuickVerify = (e) => {
@@ -54,38 +53,53 @@ export const BusinessDashboard = () => {
 
   useEffect(() => {
     const loadDashboardData = async () => {
+      setLoading(true);
       try {
-        const [apps, insts] = await Promise.all([
+        const [apps, insts, certs] = await Promise.all([
           applicationService.getApplications(),
-          instrumentService.getInstruments()
+          instrumentService.getInstruments(),
+          certificateService.getCertificates()
         ]);
 
-        let userApps = apps;
-        let userInsts = insts;
+        let appList = apps || [];
+        let instList = insts || [];
+        let certList = certs || [];
+
         if (user) {
           const uEmail = (user.email || '').toLowerCase();
           const uName = (user.name || '').toLowerCase();
-          const filteredApps = apps.filter(a => 
+          const filteredApps = appList.filter(a => 
             a.businessId === user.id ||
             (a.traderDetails?.email && a.traderDetails.email.toLowerCase() === uEmail) ||
             (a.traderDetails?.proprietor && a.traderDetails.proprietor.toLowerCase().includes(uName)) ||
             (a.businessName && a.businessName.toLowerCase().includes(uName))
           );
-          if (filteredApps.length > 0) userApps = filteredApps;
+          if (filteredApps.length > 0) appList = filteredApps;
 
-          const filteredInsts = insts.filter(i => 
+          const filteredInsts = instList.filter(i => 
             i.businessId === user.id ||
             (i.ownerEmail && i.ownerEmail.toLowerCase() === uEmail) ||
             (i.ownerName && i.ownerName.toLowerCase().includes(uName)) ||
             (i.businessName && i.businessName.toLowerCase().includes(uName))
           );
-          if (filteredInsts.length > 0) userInsts = filteredInsts;
+          if (filteredInsts.length > 0) instList = filteredInsts;
+
+          const filteredCerts = certList.filter(c =>
+            c.ownerEmail?.toLowerCase() === uEmail ||
+            c.ownerName?.toLowerCase().includes(uName) ||
+            c.businessName?.toLowerCase().includes(uName)
+          );
+          if (filteredCerts.length > 0) certList = filteredCerts;
         }
 
-        setApplications(userApps);
-        setInstruments(userInsts);
-        if (userApps.length > 0) {
-          setSelectedAppId((prev) => prev || userApps[0].id);
+        setApplications(appList);
+        setInstruments(instList);
+        setCertificates(certList);
+
+        if (appList.length > 0) {
+          setSelectedAppId((prev) => (appList.some((a) => a.id === prev) ? prev : appList[0].id));
+        } else {
+          setSelectedAppId(null);
         }
       } catch (err) {
         console.error('Error loading dashboard data:', err);
@@ -96,80 +110,94 @@ export const BusinessDashboard = () => {
     loadDashboardData();
   }, [user]);
 
-  const stats = MOCK_STATS.business;
+  // Compute live operational metrics dynamically from user's records (all 0 for new business owners)
+  const stats = {
+    totalInstruments: instruments.length,
+    pendingApplications: applications.filter((app) =>
+      ['SUBMITTED', 'AI_REVIEWED', 'PENDING', 'DRAFT', 'PAYMENT_PENDING', 'PAYMENT_DONE'].includes(app.status?.toUpperCase())
+    ).length,
+    underInspection: applications.filter((app) =>
+      ['INSPECTION', 'INSPECTION_ASSIGNED', 'INSPECTION_SCHEDULED', 'INSPECTION_COMPLETED', 'OFFICER_REVIEW', 'PENDING_REVIEW', 'ASSIGNED'].includes(app.status?.toUpperCase())
+    ).length,
+    approved: applications.filter((app) =>
+      ['APPROVED', 'OFFICER_APPROVED', 'VERIFIED'].includes(app.status?.toUpperCase())
+    ).length,
+    activeCertificates: certificates.length
+  };
 
   // Selected application for live interactive timeline
-  const activeApp = applications.find((a) => a.id === selectedAppId) || applications[0];
+  const activeApp = applications.find((a) => a.id === selectedAppId) || applications[0] || null;
+  const activeCert = certificates.length > 0 ? certificates[0] : null;
 
   // 8-stage statutory legal metrology lifecycle timeline steps
-  const timelineStages = [
+  const timelineStages = activeApp ? [
     {
       num: 1,
       title: 'Digital Instrument Registration',
-      actor: `${user?.name || 'Trader'} (Owner)`,
-      date: activeApp?.submissionDate || '01 Sep 2026',
-      desc: `Asset minted with Digital ID ${activeApp?.instrumentId || activeApp?.id || 'IND-LM-2026-PS01'} & serial plate ${activeApp?.instrumentDetails?.serialNumber || 'PS-SN-9573401'}.`,
+      actor: activeApp.businessName || user?.name || 'Trader (Owner)',
+      date: activeApp.submissionDate || '01 Sep 2026',
+      desc: `Asset minted with Digital ID ${activeApp.instrumentId || activeApp.id || 'IND-LM-2026-PS01'} & serial plate ${activeApp.instrumentDetails?.serialNumber || activeApp.serialNumber || 'PS-SN-9573401'}.`,
       status: 'completed'
     },
     {
       num: 2,
       title: 'Document & Invoice Upload',
       actor: 'Business Licensee',
-      date: activeApp?.submissionDate || '01 Sep 2026',
-      desc: 'Tax invoice & manufacturer model approval test certificate uploaded.',
+      date: activeApp.submissionDate || '01 Sep 2026',
+      desc: `${activeApp.documents?.length || 4} statutory document(s) uploaded and verified.`,
       status: 'completed'
     },
     {
       num: 3,
       title: 'AI Pre-check & OCR Scrutiny',
       actor: 'METRA-AI Vision Engine',
-      date: activeApp?.submissionDate || '01 Sep 2026',
-      desc: 'Automated 100% parameter match. Advisory risk evaluated as Low (12/100).',
-      status: 'completed'
+      date: activeApp.submissionDate || '01 Sep 2026',
+      desc: `Automated scrutiny complete. Advisory risk evaluated as ${activeApp.riskLevel || 'Low'} (${activeApp.riskScore || 12}/100).`,
+      status: ['AI_REVIEWED', 'AI_PRECHECK', 'DOCUMENTS', 'SUBMITTED', 'INSPECTION', 'INSPECTION_ASSIGNED', 'INSPECTION_SCHEDULED', 'INSPECTION_COMPLETED', 'OFFICER_REVIEW', 'OFFICER_APPROVED', 'APPROVED'].includes(activeApp.status?.toUpperCase()) ? 'completed' : 'pending'
     },
     {
       num: 4,
       title: 'Statutory Fee Clearance',
       actor: 'e-Treasury Gateway',
-      date: '02 Sep 2026',
-      desc: `Government scheduled fee of ${activeApp?.statutoryFee?.amount || '₹2,500.00'} received with receipt ${activeApp?.statutoryFee?.receiptNo || 'MTR-FEE-PS-001'}.`,
-      status: 'completed'
+      date: activeApp.submissionDate || '02 Sep 2026',
+      desc: `Government scheduled fee of ${activeApp.statutoryFee?.amount || '₹2,500.00'} received with receipt ${activeApp.statutoryFee?.receiptNo || 'MTR-FEE-PS-001'}.`,
+      status: activeApp.status !== 'DRAFT' ? 'completed' : 'pending'
     },
     {
       num: 5,
       title: 'Inspector Assignment',
       actor: 'Legal Metrology Dispatch',
-      date: '03 Sep 2026',
-      desc: `Field Inspector ${activeApp?.assignedInspector || 'Insp. Vikram Singh (Badge INSP-NZ-4082)'} dispatched.`,
-      status: 'completed'
+      date: activeApp.submissionDate || '03 Sep 2026',
+      desc: `Field Inspector ${activeApp.assignedInspector || 'Insp. Vikram Singh (Badge INSP-NZ-4082)'} dispatched.`,
+      status: ['INSPECTION', 'INSPECTION_ASSIGNED', 'INSPECTION_SCHEDULED', 'INSPECTION_COMPLETED', 'OFFICER_REVIEW', 'OFFICER_APPROVED', 'APPROVED'].includes(activeApp.status?.toUpperCase()) ? 'completed' : 'pending'
     },
     {
       num: 6,
       title: 'On-Site Geofenced Audit',
-      actor: activeApp?.assignedInspector || 'Inspector Vikram Singh',
+      actor: activeApp.assignedInspector || 'Inspector Vikram Singh',
       date: '05 Sep 2026',
-      desc: 'Physical verification with standard weights at registered GPS geofence. Zero error verified.',
-      status: activeApp?.currentStep >= 6 ? 'completed' : 'pending'
+      desc: activeApp.inspection ? 'Physical verification with standard weights at registered GPS geofence. Zero error verified.' : 'On-site physical test with standard weights.',
+      status: ['INSPECTION_COMPLETED', 'OFFICER_REVIEW', 'OFFICER_APPROVED', 'APPROVED'].includes(activeApp.status?.toUpperCase()) || activeApp.currentStep >= 6 ? 'completed' : 'pending'
     },
     {
       num: 7,
       title: 'Officer Adjudication',
-      actor: `${activeApp?.assignedOfficer || 'Dr. Anita Deshmukh'} (Officer)`,
+      actor: `${activeApp.assignedOfficer || 'Dr. Anita Deshmukh'} (Officer)`,
       date: '08 Sep 2026',
-      desc: 'Review completed with positive recommendation. Statutory clearance granted.',
-      status: activeApp?.currentStep >= 7 ? 'completed' : 'pending'
+      desc: ['APPROVED', 'OFFICER_APPROVED'].includes(activeApp.status?.toUpperCase()) ? 'Review completed with positive recommendation. Statutory clearance granted.' : 'Officer review & adjudication in progress.',
+      status: ['APPROVED', 'OFFICER_APPROVED'].includes(activeApp.status?.toUpperCase()) || activeApp.currentStep >= 7 ? 'completed' : 'pending'
     },
     {
       num: 8,
       title: 'Digital QR Certificate Issued',
       actor: 'State Directorate',
-      date: activeApp?.status === 'APPROVED' ? (activeApp.submissionDate || '08 Sep 2026') : 'Pending Final Review',
-      desc: activeApp?.certificateId
+      date: activeApp.status === 'APPROVED' ? (activeApp.submissionDate || '08 Sep 2026') : 'Pending Final Review',
+      desc: activeApp.certificateId
         ? `Certificate #${activeApp.certificateId} sealed with SHA-256 cryptographic signature.`
-        : (activeApp?.status === 'APPROVED' ? 'Verification certificate sealed & generated.' : 'Pending final officer sign-off and certificate seal.'),
-      status: activeApp?.status === 'APPROVED' ? 'completed' : 'pending'
+        : (activeApp.status === 'APPROVED' ? 'Verification certificate sealed & generated.' : 'Digital certificate issued upon officer sign-off.'),
+      status: (activeApp.status === 'APPROVED' || activeApp.status === 'OFFICER_APPROVED' || activeApp.certificateId) ? 'completed' : 'pending'
     }
-  ];
+  ] : [];
 
   const appColumns = [
     {
@@ -337,7 +365,11 @@ export const BusinessDashboard = () => {
           </p>
         </div>
         <div className="text-xs text-slate-500 font-medium sm:text-right shrink-0">
-          Last login: 12 Sep 2025, 10:24 AM
+          {user?.orgName || user?.licenseNo ? (
+            <span>Enterprise: <strong className="text-slate-700">{user.orgName || user.licenseNo}</strong></span>
+          ) : (
+            <span>Commercial Metrology Registry</span>
+          )}
         </div>
       </div>
 
@@ -633,7 +665,7 @@ export const BusinessDashboard = () => {
           </Link>
 
           <Link
-            to="/verify/MV-2026-000123"
+            to={activeCert ? `/verify/${activeCert.id}` : "/verify"}
             className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-purple-50/50 hover:border-purple-300 transition-all flex items-start gap-3 group"
           >
             <div className="p-2.5 bg-purple-600 text-white rounded-xl group-hover:scale-105 transition-transform">
@@ -662,84 +694,116 @@ export const BusinessDashboard = () => {
               <h3 className="text-base font-bold text-slate-900">
                 Application Lifecycle Timeline
               </h3>
-              <Badge variant="primary" size="sm" className="font-mono">
-                {activeApp?.id || 'MV-APP-000123'}
-              </Badge>
+              {activeApp && (
+                <Badge variant="primary" size="sm" className="font-mono">
+                  {activeApp.id}
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-slate-500 mt-1">
               End-to-end statutory progression from digital asset onboarding to QR certificate issuance
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500">Switch Application:</span>
-            <select
-              value={selectedAppId}
-              onChange={(e) => setSelectedAppId(e.target.value)}
-              className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-mono text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {applications.map((app) => (
-                <option key={app.id} value={app.id}>
-                  {app.id} ({app.status})
-                </option>
-              ))}
-            </select>
-            <Link to={`/business/applications/${activeApp?.id || 'MV-APP-000123'}`}>
-              <Button variant="outline" size="sm" rightIcon={ExternalLink}>
-                View Dossier
-              </Button>
-            </Link>
-          </div>
+          {applications.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">Switch Application:</span>
+              <select
+                value={selectedAppId || ''}
+                onChange={(e) => setSelectedAppId(e.target.value)}
+                className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-mono text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {applications.map((app) => (
+                  <option key={app.id} value={app.id}>
+                    {app.id} ({app.status})
+                  </option>
+                ))}
+              </select>
+              {activeApp && (
+                <Link to={`/business/applications/${activeApp.id}`}>
+                  <Button variant="outline" size="sm" rightIcon={ExternalLink}>
+                    View Dossier
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Horizontal Visual Stepper / Cards */}
-        <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {timelineStages.map((stage) => {
-              const isDone = stage.status === 'completed';
-              return (
-                <div
-                  key={stage.num}
-                  className={`p-4 rounded-xl border transition-all ${
-                    isDone
-                      ? 'bg-slate-50/80 border-slate-200/90'
-                      : 'bg-white border-dashed border-slate-300 opacity-75'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          isDone
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-200 text-slate-600'
-                        }`}
-                      >
-                        {isDone ? <Check className="w-3.5 h-3.5" /> : stage.num}
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-400 font-mono">
-                        STAGE 0{stage.num}
+        {applications.length === 0 ? (
+          <div className="p-8 text-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200 space-y-3">
+            <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">No Verification Applications Yet</h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                Once you register an instrument and file a calibration audit, its live 8-stage statutory lifecycle tracking will appear here.
+              </p>
+            </div>
+            <div className="pt-2 flex justify-center gap-3">
+              <Link to="/business/instruments/new">
+                <Button variant="outline" size="sm" leftIcon={PlusCircle}>
+                  1. Register Instrument
+                </Button>
+              </Link>
+              <Link to="/business/applications/new">
+                <Button variant="primary" size="sm" rightIcon={ArrowRight}>
+                  2. File Application
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          /* Horizontal Visual Stepper / Cards */
+          <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {timelineStages.map((stage) => {
+                const isDone = stage.status === 'completed';
+                return (
+                  <div
+                    key={stage.num}
+                    className={`p-4 rounded-xl border transition-all ${
+                      isDone
+                        ? 'bg-slate-50/80 border-slate-200/90'
+                        : 'bg-white border-dashed border-slate-300 opacity-75'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            isDone
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}
+                        >
+                          {isDone ? <Check className="w-3.5 h-3.5" /> : stage.num}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400 font-mono">
+                          STAGE 0{stage.num}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-semibold text-slate-500">
+                        {stage.date}
                       </span>
                     </div>
-                    <span className="text-[10px] font-semibold text-slate-500">
-                      {stage.date}
+
+                    <h4 className="text-xs font-bold text-slate-900 leading-tight mb-1">
+                      {stage.title}
+                    </h4>
+                    <p className="text-[11px] text-slate-600 leading-snug mb-2">
+                      {stage.desc}
+                    </p>
+                    <span className="text-[10px] font-medium text-slate-400 block pt-1 border-t border-slate-100">
+                      By: {stage.actor}
                     </span>
                   </div>
-
-                  <h4 className="text-xs font-bold text-slate-900 leading-tight mb-1">
-                    {stage.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-600 leading-snug mb-2">
-                    {stage.desc}
-                  </p>
-                  <span className="text-[10px] font-medium text-slate-400 block pt-1 border-t border-slate-100">
-                    By: {stage.actor}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* =========================================================================
@@ -768,6 +832,8 @@ export const BusinessDashboard = () => {
             columns={appColumns}
             data={applications}
             isLoading={loading}
+            emptyTitle="No verification applications filed"
+            emptyDescription="You have not submitted any calibration verification applications yet. Register an instrument and file an application to begin."
             onRowClick={(row) => setSelectedAppId(row.id)}
           />
         </div>
@@ -790,62 +856,91 @@ export const BusinessDashboard = () => {
               </Link>
             </div>
 
-            {/* Category Breakdown Chips */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
-              <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 block">
-                  Retail Weighing
-                </span>
-                <p className="text-lg font-bold text-blue-950 font-mono mt-0.5">1 Unit</p>
-                <span className="text-[10px] text-blue-600">Class III NAWI (WS-500)</span>
+            {instruments.length === 0 ? (
+              <div className="p-8 text-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200 my-4 space-y-3">
+                <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+                  <Scale className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">No Instruments Registered</h4>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    You have not registered any weighing or measuring devices. Onboard your scale to begin tracking statutory compliance.
+                  </p>
+                </div>
+                <div className="pt-1">
+                  <Link to="/business/instruments/new">
+                    <Button variant="primary" size="sm" leftIcon={PlusCircle}>
+                      Onboard Instrument
+                    </Button>
+                  </Link>
+                </div>
               </div>
-              <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
-                  Heavy Platform
-                </span>
-                <p className="text-lg font-bold text-indigo-950 font-mono mt-0.5">1 Unit</p>
-                <span className="text-[10px] text-indigo-600">1500 kg Industrial</span>
-              </div>
-              <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-100">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block">
-                  Precision Analytical
-                </span>
-                <p className="text-lg font-bold text-purple-950 font-mono mt-0.5">1 Unit</p>
-                <span className="text-[10px] text-purple-600">Class I Micro-Balance</span>
-              </div>
-            </div>
-
-            {/* Instruments quick table */}
-            <div className="divide-y divide-slate-100">
-              {instruments.map((item) => (
-                <div key={item.id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 px-2 rounded-lg transition-colors">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/business/instruments/${item.id}`}
-                        className="font-bold text-slate-900 hover:text-blue-600 hover:underline"
-                      >
-                        {item.instrumentType}
-                      </Link>
-                      <span className="font-mono text-[10px] text-slate-400">({item.id})</span>
-                    </div>
-                    <p className="text-slate-500 text-[11px] mt-0.5 font-mono">
-                      Serial: {item.serialNumber} • Capacity: {item.capacity} • {item.accuracyClass}
+            ) : (
+              <>
+                {/* Category Breakdown Chips */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
+                  <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 block">
+                      Retail Weighing
+                    </span>
+                    <p className="text-lg font-bold text-blue-950 font-mono mt-0.5">
+                      {instruments.filter((i) => /digital|bench|nawi|retail|scale/i.test(i.instrumentType || i.category || '')).length} Units
                     </p>
+                    <span className="text-[10px] text-blue-600">Class III NAWI</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <StatusBadge status={item.status} size="sm" />
-                    <Link
-                      to={`/business/instruments/${item.id}`}
-                      className="text-xs font-semibold text-blue-600 hover:underline inline-flex items-center gap-0.5"
-                    >
-                      <span>Details</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
+                  <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
+                      Heavy Platform
+                    </span>
+                    <p className="text-lg font-bold text-indigo-950 font-mono mt-0.5">
+                      {instruments.filter((i) => /platform|weighbridge|heavy|industrial/i.test(i.instrumentType || i.category || '')).length} Units
+                    </p>
+                    <span className="text-[10px] text-indigo-600">Industrial Scales</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-100">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block">
+                      Precision Analytical
+                    </span>
+                    <p className="text-lg font-bold text-purple-950 font-mono mt-0.5">
+                      {instruments.filter((i) => /precision|analytical|balance|micro/i.test(i.instrumentType || i.category || '')).length} Units
+                    </p>
+                    <span className="text-[10px] text-purple-600">Class I/II Balances</span>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Instruments quick table */}
+                <div className="divide-y divide-slate-100">
+                  {instruments.slice(0, 5).map((item) => (
+                    <div key={item.id} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50 px-2 rounded-lg transition-colors">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            to={`/business/instruments/${item.id}`}
+                            className="font-bold text-slate-900 hover:text-blue-600 hover:underline"
+                          >
+                            {item.instrumentType}
+                          </Link>
+                          <span className="font-mono text-[10px] text-slate-400">({item.id})</span>
+                        </div>
+                        <p className="text-slate-500 text-[11px] mt-0.5 font-mono">
+                          Serial: {item.serialNumber} • Capacity: {item.capacity} • {item.accuracyClass || 'Standard'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <StatusBadge status={item.status} size="sm" />
+                        <Link
+                          to={`/business/instruments/${item.id}`}
+                          className="text-xs font-semibold text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                        >
+                          <span>Details</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
@@ -868,59 +963,91 @@ export const BusinessDashboard = () => {
                 <Award className="w-4 h-4 text-emerald-600" />
                 <h3 className="text-base font-bold text-slate-900">Active Legal Certificate</h3>
               </div>
-              <StatusBadge status="VALID" size="sm" />
+              {activeCert ? (
+                <StatusBadge status="VALID" size="sm" />
+              ) : (
+                <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                  None Active
+                </span>
+              )}
             </div>
 
-            <div className="mt-4 p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-blue-300 uppercase">
-                  Digital Certificate ID
-                </span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/30">
-                  SEAL VALID
-                </span>
-              </div>
-              <p className="font-mono text-lg font-extrabold tracking-tight text-white">
-                MV-2026-000123
-              </p>
-              <div className="text-[11px] text-slate-300 space-y-1 pt-1 border-t border-slate-700/80">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Device:</span>
-                  <span className="font-medium text-white">Digital Weighing Scale</span>
+            {activeCert ? (
+              <>
+                <div className="mt-4 p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-blue-300 uppercase">
+                      Digital Certificate ID
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/30">
+                      SEAL VALID
+                    </span>
+                  </div>
+                  <p className="font-mono text-lg font-extrabold tracking-tight text-white">
+                    {activeCert.id || activeCert.certificateNo}
+                  </p>
+                  <div className="text-[11px] text-slate-300 space-y-1 pt-1 border-t border-slate-700/80">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Device:</span>
+                      <span className="font-medium text-white">{activeCert.instrumentType || 'Weighing Scale'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Serial:</span>
+                      <span className="font-mono text-white">{activeCert.serialNumber || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Valid Until:</span>
+                      <span className="text-emerald-400 font-semibold">{activeCert.validUntil || 'Active'}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Serial:</span>
-                  <span className="font-mono text-white">WS123456</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Valid Until:</span>
-                  <span className="text-emerald-400 font-semibold">08 Sep 2027</span>
-                </div>
-              </div>
-            </div>
 
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-[11px] text-slate-600 mt-3 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-slate-800">
-                <QrCode className="w-3.5 h-3.5 text-blue-600" />
-                <span>QR Physical Verification</span>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-[11px] text-slate-600 mt-3 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <QrCode className="w-3.5 h-3.5 text-blue-600" />
+                    <span>QR Physical Verification</span>
+                  </div>
+                  <p className="text-slate-500">
+                    Tamper-proof digital seal with SHA-256 audit proof for consumer verification.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="p-6 text-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200 my-4 space-y-3">
+                <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">No Active Certificates Yet</h4>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Digital certificates with cryptographic QR seals will be issued here once your applications are verified and approved by the Legal Metrology officer.
+                  </p>
+                </div>
               </div>
-              <p className="text-slate-500">
-                Affixed to scale plate. Scanned 42 times by consumers & field squads.
-              </p>
-            </div>
+            )}
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
-            <Link to="/business/certificates/MV-2026-000123" className="w-full">
-              <Button variant="primary" size="sm" className="w-full" rightIcon={ArrowRight}>
-                Open Full Certificate
-              </Button>
-            </Link>
-            <Link to="/verify/MV-2026-000123" className="w-full">
-              <Button variant="outline" size="sm" className="w-full" leftIcon={ExternalLink}>
-                Public QR Registry View
-              </Button>
-            </Link>
+            {activeCert ? (
+              <>
+                <Link to={`/business/certificates/${activeCert.id}`} className="w-full">
+                  <Button variant="primary" size="sm" className="w-full" rightIcon={ArrowRight}>
+                    Open Full Certificate
+                  </Button>
+                </Link>
+                <Link to={`/verify/${activeCert.id}`} className="w-full">
+                  <Button variant="outline" size="sm" className="w-full" leftIcon={ExternalLink}>
+                    Public QR Registry View
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Link to="/business/applications/new" className="w-full">
+                <Button variant="primary" size="sm" className="w-full" leftIcon={PlusCircle}>
+                  Apply for Verification
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

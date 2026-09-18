@@ -59,10 +59,33 @@ export const BusinessDashboard = () => {
           applicationService.getApplications(),
           instrumentService.getInstruments()
         ]);
-        setApplications(apps);
-        setInstruments(insts);
-        if (apps.length > 0) {
-          setSelectedAppId((prev) => prev || apps[0].id);
+
+        let userApps = apps;
+        let userInsts = insts;
+        if (user) {
+          const uEmail = (user.email || '').toLowerCase();
+          const uName = (user.name || '').toLowerCase();
+          const filteredApps = apps.filter(a => 
+            a.businessId === user.id ||
+            (a.traderDetails?.email && a.traderDetails.email.toLowerCase() === uEmail) ||
+            (a.traderDetails?.proprietor && a.traderDetails.proprietor.toLowerCase().includes(uName)) ||
+            (a.businessName && a.businessName.toLowerCase().includes(uName))
+          );
+          if (filteredApps.length > 0) userApps = filteredApps;
+
+          const filteredInsts = insts.filter(i => 
+            i.businessId === user.id ||
+            (i.ownerEmail && i.ownerEmail.toLowerCase() === uEmail) ||
+            (i.ownerName && i.ownerName.toLowerCase().includes(uName)) ||
+            (i.businessName && i.businessName.toLowerCase().includes(uName))
+          );
+          if (filteredInsts.length > 0) userInsts = filteredInsts;
+        }
+
+        setApplications(userApps);
+        setInstruments(userInsts);
+        if (userApps.length > 0) {
+          setSelectedAppId((prev) => prev || userApps[0].id);
         }
       } catch (err) {
         console.error('Error loading dashboard data:', err);
@@ -71,7 +94,7 @@ export const BusinessDashboard = () => {
       }
     };
     loadDashboardData();
-  }, []);
+  }, [user]);
 
   const stats = MOCK_STATS.business;
 
@@ -83,16 +106,16 @@ export const BusinessDashboard = () => {
     {
       num: 1,
       title: 'Digital Instrument Registration',
-      actor: 'Rajesh Sharma (Owner)',
-      date: '01 Sep 2026',
-      desc: 'Asset minted with Digital ID MV-INS-000123 & serial plate WS123456.',
+      actor: `${user?.name || 'Trader'} (Owner)`,
+      date: activeApp?.submissionDate || '01 Sep 2026',
+      desc: `Asset minted with Digital ID ${activeApp?.instrumentId || activeApp?.id || 'IND-LM-2026-PS01'} & serial plate ${activeApp?.instrumentDetails?.serialNumber || 'PS-SN-9573401'}.`,
       status: 'completed'
     },
     {
       num: 2,
       title: 'Document & Invoice Upload',
       actor: 'Business Licensee',
-      date: '01 Sep 2026',
+      date: activeApp?.submissionDate || '01 Sep 2026',
       desc: 'Tax invoice & manufacturer model approval test certificate uploaded.',
       status: 'completed'
     },
@@ -100,8 +123,8 @@ export const BusinessDashboard = () => {
       num: 3,
       title: 'AI Pre-check & OCR Scrutiny',
       actor: 'METRA-AI Vision Engine',
-      date: '01 Sep 2026',
-      desc: 'Automated 100% parameter match. Advisory risk evaluated as Low (25/100).',
+      date: activeApp?.submissionDate || '01 Sep 2026',
+      desc: 'Automated 100% parameter match. Advisory risk evaluated as Low (12/100).',
       status: 'completed'
     },
     {
@@ -109,7 +132,7 @@ export const BusinessDashboard = () => {
       title: 'Statutory Fee Clearance',
       actor: 'e-Treasury Gateway',
       date: '02 Sep 2026',
-      desc: 'Government scheduled fee of ₹1,250 received with transaction ID TR-881920.',
+      desc: `Government scheduled fee of ${activeApp?.statutoryFee?.amount || '₹2,500.00'} received with receipt ${activeApp?.statutoryFee?.receiptNo || 'MTR-FEE-PS-001'}.`,
       status: 'completed'
     },
     {
@@ -117,31 +140,33 @@ export const BusinessDashboard = () => {
       title: 'Inspector Assignment',
       actor: 'Legal Metrology Dispatch',
       date: '03 Sep 2026',
-      desc: 'Field Inspector Vikram Singh (Badge INSP-NZ-4082) dispatched.',
+      desc: `Field Inspector ${activeApp?.assignedInspector || 'Insp. Vikram Singh (Badge INSP-NZ-4082)'} dispatched.`,
       status: 'completed'
     },
     {
       num: 6,
       title: 'On-Site Geofenced Audit',
-      actor: 'Inspector Vikram Singh',
+      actor: activeApp?.assignedInspector || 'Inspector Vikram Singh',
       date: '05 Sep 2026',
-      desc: 'Physical verification with F1 standard weights at 28.6139°N, 77.2090°E. 0 error.',
-      status: 'completed'
+      desc: 'Physical verification with standard weights at registered GPS geofence. Zero error verified.',
+      status: activeApp?.currentStep >= 6 ? 'completed' : 'pending'
     },
     {
       num: 7,
       title: 'Officer Adjudication',
-      actor: 'Dr. Anita Deshmukh (Officer)',
+      actor: `${activeApp?.assignedOfficer || 'Dr. Anita Deshmukh'} (Officer)`,
       date: '08 Sep 2026',
       desc: 'Review completed with positive recommendation. Statutory clearance granted.',
-      status: 'completed'
+      status: activeApp?.currentStep >= 7 ? 'completed' : 'pending'
     },
     {
       num: 8,
       title: 'Digital QR Certificate Issued',
       actor: 'State Directorate',
-      date: '08 Sep 2026',
-      desc: 'Certificate #MV-2026-000123 sealed with SHA-256 cryptographic signature.',
+      date: activeApp?.status === 'APPROVED' ? (activeApp.submissionDate || '08 Sep 2026') : 'Pending Final Review',
+      desc: activeApp?.certificateId
+        ? `Certificate #${activeApp.certificateId} sealed with SHA-256 cryptographic signature.`
+        : (activeApp?.status === 'APPROVED' ? 'Verification certificate sealed & generated.' : 'Pending final officer sign-off and certificate seal.'),
       status: activeApp?.status === 'APPROVED' ? 'completed' : 'pending'
     }
   ];

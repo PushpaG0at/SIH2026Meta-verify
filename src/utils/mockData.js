@@ -8,6 +8,19 @@
  */
 
 export const MOCK_USERS = {
+  pushpendra: {
+    id: 'usr_pushpa_01',
+    name: 'Pushpendra Singh',
+    email: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    username: 'singhpushpendra95734_db_user',
+    role: 'business',
+    organization: 'Singh Legal Metrology & Enterprise Tech',
+    phone: '+91 95734 00000',
+    address: 'Plot 24, Cyber Park & Logistics Complex, Sector 18, New Delhi - 110001',
+    registrationNumber: 'GSTIN07AAAPS95734Z1',
+    licenseNo: '07AAAPS95734Z1',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+  },
   business: {
     id: 'usr_biz_01',
     name: 'Rajesh Sharma',
@@ -42,6 +55,126 @@ export const MOCK_USERS = {
 };
 
 export const MOCK_INSTRUMENTS = [
+  {
+    id: 'MV-INS-PS-001',
+    uin: 'IND-LM-2026-PS01-95734',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    ownerName: 'Pushpendra Singh',
+    ownerEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    instrumentType: 'Digital Weighing Scale',
+    category: 'Non-Automatic Weighing Instrument (NAWI)',
+    manufacturer: 'Pushpa Metrology Tech',
+    brand: 'Pushpa Metrology Tech',
+    model: 'PM-DS-95734 Ultra-Precision',
+    modelNo: 'PM-DS-95734 Ultra-Precision',
+    serialNumber: 'PS-SN-9573401',
+    serialNo: 'PS-SN-9573401',
+    capacity: '60 kg',
+    maxCapacity: 60,
+    minCapacity: 0.1,
+    leastCount: 0.002,
+    accuracyClass: 'Class III (Medium Accuracy)',
+    verificationDivision: 'e = 2 g, d = 0.5 g',
+    purchaseDate: '2025-05-10',
+    location: 'Main Logistics & Distribution Bay A, Cyber Park, Sector 18, New Delhi',
+    installationAddress: 'Main Logistics & Distribution Bay A, Cyber Park, Sector 18, New Delhi',
+    lastVerifiedDate: '2026-09-05',
+    nextDueCheck: '2027-09-05',
+    status: 'VERIFIED',
+    activeCertificateId: 'MV-CERT-PS95734-01',
+    applicationsCount: 2
+  },
+  {
+    id: 'MV-INS-PS-002',
+    uin: 'IND-LM-2026-PS02-95734',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    ownerName: 'Pushpendra Singh',
+    ownerEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    instrumentType: 'Heavy Duty Platform Scale',
+    category: 'Industrial Platform Scale',
+    manufacturer: 'Pushpa-Apex Metrology Systems',
+    brand: 'Pushpa-Apex Metrology Systems',
+    model: 'PM-PL-3000 Heavy Master',
+    modelNo: 'PM-PL-3000 Heavy Master',
+    serialNumber: 'PS-SN-9573402',
+    serialNo: 'PS-SN-9573402',
+    capacity: '3000 kg',
+    maxCapacity: 3000,
+    minCapacity: 5,
+    leastCount: 0.05,
+    accuracyClass: 'Class III (Industrial)',
+    verificationDivision: 'e = 50 g, d = 20 g',
+    purchaseDate: '2025-08-20',
+    location: 'Heavy Freight Terminal & Loading Bay 4, Sector 18, New Delhi',
+    installationAddress: 'Heavy Freight Terminal & Loading Bay 4, Sector 18, New Delhi',
+    lastVerifiedDate: '2025-09-20',
+    nextDueCheck: '2026-09-20',
+    status: 'INSPECTION_SCHEDULED',
+    activeCertificateId: null,
+    applicationsCount: 1
+  },
+  {
+    id: 'MV-INS-PS-003',
+    uin: 'IND-LM-2026-PS03-95734',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    ownerName: 'Pushpendra Singh',
+    ownerEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    instrumentType: 'Precision Laboratory Micro-Balance',
+    category: 'Fine Chemical Analytical Balance',
+    manufacturer: 'Pushpa-Sartorius Ultra-Lab',
+    brand: 'Pushpa-Sartorius Ultra-Lab',
+    model: 'SRT-PREC-95734 Precision Pro',
+    modelNo: 'SRT-PREC-95734 Precision Pro',
+    serialNumber: 'PS-SN-9573403',
+    serialNo: 'PS-SN-9573403',
+    capacity: '500 g',
+    maxCapacity: 0.5,
+    minCapacity: 0.000001,
+    leastCount: 0.0000001,
+    accuracyClass: 'Class I (Special High Precision)',
+    verificationDivision: 'e = 1 mg, d = 0.1 mg',
+    purchaseDate: '2026-01-15',
+    location: 'Advanced Calibration & Metrology Cleanroom Lab, New Delhi',
+    installationAddress: 'Advanced Calibration & Metrology Cleanroom Lab, New Delhi',
+    lastVerifiedDate: null,
+    nextDueCheck: '2026-09-25',
+    status: 'PENDING_REVIEW',
+    activeCertificateId: null,
+    applicationsCount: 1
+  },
+  {
+    id: 'MV-INS-PS-004',
+    uin: 'IND-LM-2026-PS04-95734',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    ownerName: 'Pushpendra Singh',
+    ownerEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    instrumentType: 'Automatic Checkweigher Belt',
+    category: 'Automatic Gravimetric Filling & Checkweighing',
+    manufacturer: 'Pushpa-Ishida Dynamic Systems',
+    brand: 'Pushpa-Ishida Dynamic Systems',
+    model: 'PM-CKW-95734 Dynamic',
+    modelNo: 'PM-CKW-95734 Dynamic',
+    serialNumber: 'PS-SN-9573404',
+    serialNo: 'PS-SN-9573404',
+    capacity: '25 kg',
+    maxCapacity: 25,
+    minCapacity: 0.02,
+    leastCount: 0.001,
+    accuracyClass: 'Class XIII(1) Automatic',
+    verificationDivision: 'e = 1 g, d = 0.2 g',
+    purchaseDate: '2025-11-10',
+    location: 'Automated High-Speed Packaging Conveyor Line 2, New Delhi',
+    installationAddress: 'Automated High-Speed Packaging Conveyor Line 2, New Delhi',
+    lastVerifiedDate: '2026-08-15',
+    nextDueCheck: '2027-08-15',
+    status: 'VERIFIED',
+    activeCertificateId: 'MV-CERT-PS95734-04',
+    applicationsCount: 1
+  },
   {
     id: 'MV-INS-000123',
     businessId: 'usr_biz_01',
@@ -108,6 +241,267 @@ export const MOCK_INSTRUMENTS = [
 ];
 
 export const MOCK_APPLICATIONS = [
+  {
+    id: 'MV-APP-PS95734-01',
+    applicationNo: 'MV-APP-PS95734-01',
+    instrumentId: 'MV-INS-PS-001',
+    instrumentType: 'Digital Weighing Scale',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    submissionDate: '2026-09-01',
+    status: 'APPROVED',
+    currentStep: 8,
+    assignedInspector: 'Insp. Vikram Singh (Badge: INSP-NZ-4082)',
+    assignedOfficer: 'Dr. Anita Deshmukh',
+    certificateId: 'MV-CERT-PS95734-01',
+    riskScore: 12,
+    riskLevel: 'LOW',
+    slaRemainingDays: 0,
+    statutoryFee: {
+      amount: '₹2,500.00',
+      receiptNo: 'MTR-FEE-PS-001',
+      paidAt: '01/09/2026 10:14 IST',
+      paymentMode: 'Bharat BillPay Gateway'
+    },
+    traderDetails: {
+      proprietor: 'Pushpendra Singh',
+      email: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+      phone: '+91 95734 00000',
+      gstin: '07AAAPS95734Z1',
+      address: 'Plot 24, Cyber Park & Logistics Complex, Sector 18, New Delhi - 110001'
+    },
+    instrumentDetails: {
+      category: 'Non-Automatic Weighing Instrument (NAWI)',
+      manufacturer: 'Pushpa Metrology Tech',
+      model: 'PM-DS-95734 Ultra-Precision',
+      serialNumber: 'PS-SN-9573401',
+      accuracyClass: 'Class III (Medium Accuracy)',
+      maxCapacity: '60 kg',
+      minCapacity: '100 g',
+      verificationDivision: '2 g (e)',
+      scaleInterval: '0.5 g (d)',
+      modelApprovalNumber: 'IND-DLM-2026-PS-0957'
+    },
+    chainOfCustodyHash: '9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e',
+    riskFactors: [
+      'Document OCR match verified at 100% confidence',
+      'Valid manufacturer type approval registration on file',
+      'Class III tolerance compliance within Schedule VII parameters'
+    ],
+    ocrComparison: [
+      { field: 'Serial Number', dbValue: 'PS-SN-9573401', docValue: 'PS-SN-9573401', status: 'MATCH' },
+      { field: 'Manufacturer', dbValue: 'Pushpa Metrology Tech', docValue: 'Pushpa Metrology Tech', status: 'MATCH' },
+      { field: 'Model', dbValue: 'PM-DS-95734 Ultra-Precision', docValue: 'PM-DS-95734 Ultra-Precision', status: 'MATCH' },
+      { field: 'Max Capacity', dbValue: '60 kg', docValue: '60 kg', status: 'MATCH' }
+    ],
+    documents: [
+      { name: 'Purchase_Invoice_PSSN9573401.pdf', size: '2.1 MB', uploadedAt: '2026-09-01 10:15', status: 'Verified' },
+      { name: 'Pushpa_Model_Approval_Certificate.pdf', size: '2.8 MB', uploadedAt: '2026-09-01 10:17', status: 'Verified' },
+      { name: 'Baseline_Calibration_Chart.pdf', size: '1.4 MB', uploadedAt: '2026-09-01 10:20', status: 'Verified' },
+      { name: 'Statutory_Fee_Challan.pdf', size: '0.9 MB', uploadedAt: '2026-09-01 10:22', status: 'Verified' }
+    ],
+    inspection: {
+      id: 'INSP-2026-PS-001',
+      inspectorName: 'Insp. Vikram Singh (Badge: INSP-NZ-4082)',
+      scheduledDate: '2026-09-05',
+      completedDate: '2026-09-05 11:30 IST',
+      gpsCoordinates: '28.6139° N, 77.2090° E (Geofence verified within 3.4m)',
+      checklist: [
+        { item: 'Instrument available at registered site', passed: true },
+        { item: 'Serial number and model plate clearly visible & unaltered', passed: true },
+        { item: 'Manufacturer details and statutory markings visible', passed: true },
+        { item: 'Digital LED display functioning with zero-tracking integrity', passed: true },
+        { item: 'Required regulatory seals / tamper tags intact', passed: true },
+        { item: 'Standard test weight eccentric load check verified within MPE', passed: true }
+      ],
+      measurements: [
+        { testWeight: '10 kg Class M1 Standard', readingKg: 10.000, errorG: 0, toleranceG: 5, result: 'PASS' },
+        { testWeight: '30 kg Class M1 Standard', readingKg: 30.001, errorG: 1, toleranceG: 10, result: 'PASS' },
+        { testWeight: '60 kg Full Scale Test', readingKg: 60.002, errorG: 2, toleranceG: 15, result: 'PASS' }
+      ],
+      photosCount: 5,
+      sealNumber: 'MV-SEAL-2026-PS95734',
+      remarks: 'Device verified in pristine condition. Zero drift observed. Tamper seal wirelock attached.',
+      status: 'RECOMMENDED_FOR_APPROVAL'
+    }
+  },
+  {
+    id: 'MV-APP-PS95734-02',
+    applicationNo: 'MV-APP-PS95734-02',
+    instrumentId: 'MV-INS-PS-002',
+    instrumentType: 'Heavy Duty Platform Scale',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    submissionDate: '2026-09-04',
+    status: 'INSPECTION',
+    currentStep: 4,
+    assignedInspector: 'Insp. Vikram Singh (Badge: INSP-NZ-4082)',
+    assignedOfficer: 'Dr. Anita Deshmukh',
+    certificateId: null,
+    riskScore: 24,
+    riskLevel: 'LOW',
+    slaRemainingDays: 2.1,
+    statutoryFee: {
+      amount: '₹5,000.00',
+      receiptNo: 'MTR-FEE-PS-002',
+      paidAt: '04/09/2026 11:25 IST',
+      paymentMode: 'Net Banking'
+    },
+    traderDetails: {
+      proprietor: 'Pushpendra Singh',
+      email: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+      phone: '+91 95734 00000',
+      gstin: '07AAAPS95734Z1',
+      address: 'Heavy Freight Terminal & Loading Bay 4, Sector 18, New Delhi'
+    },
+    instrumentDetails: {
+      category: 'Industrial Platform Scale',
+      manufacturer: 'Pushpa-Apex Metrology Systems',
+      model: 'PM-PL-3000 Heavy Master',
+      serialNumber: 'PS-SN-9573402',
+      accuracyClass: 'Class III (Industrial)',
+      maxCapacity: '3000 kg',
+      minCapacity: '5 kg',
+      verificationDivision: '50 g (e)',
+      scaleInterval: '20 g (d)',
+      modelApprovalNumber: 'IND-DLM-2026-PL-0958'
+    },
+    chainOfCustodyHash: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b',
+    riskFactors: ['High capacity industrial platform scale (3000 kg) requires heavy crane calibration test slabs'],
+    ocrComparison: [
+      { field: 'Serial Number', dbValue: 'PS-SN-9573402', docValue: 'PS-SN-9573402', status: 'MATCH' },
+      { field: 'Manufacturer', dbValue: 'Pushpa-Apex Metrology Systems', docValue: 'Pushpa-Apex Metrology Systems', status: 'MATCH' },
+      { field: 'Max Capacity', dbValue: '3000 kg', docValue: '3000 kg', status: 'MATCH' }
+    ],
+    documents: [
+      { name: 'Apex_Invoice_PS9573402.pdf', size: '2.3 MB', uploadedAt: '2026-09-04 11:30', status: 'Verified' }
+    ],
+    inspection: {
+      id: 'INSP-2026-PS-002',
+      inspectorName: 'Insp. Vikram Singh (Badge: INSP-NZ-4082)',
+      scheduledDate: '2026-09-20',
+      completedDate: null,
+      gpsCoordinates: 'Pending Field Visit',
+      status: 'ASSIGNED'
+    }
+  },
+  {
+    id: 'MV-APP-PS95734-03',
+    applicationNo: 'MV-APP-PS95734-03',
+    instrumentId: 'MV-INS-PS-003',
+    instrumentType: 'Precision Laboratory Micro-Balance',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    submissionDate: '2026-09-07',
+    status: 'OFFICER_REVIEW',
+    currentStep: 6,
+    assignedInspector: 'Insp. Kavita Iyer (Badge: INSP-SZ-2011)',
+    assignedOfficer: 'Dr. Anita Deshmukh',
+    certificateId: null,
+    riskScore: 18,
+    riskLevel: 'LOW',
+    slaRemainingDays: 2.8,
+    statutoryFee: {
+      amount: '₹3,500.00',
+      receiptNo: 'MTR-FEE-PS-003',
+      paidAt: '07/09/2026 09:10 IST',
+      paymentMode: 'Corporate Card'
+    },
+    traderDetails: {
+      proprietor: 'Pushpendra Singh',
+      email: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+      phone: '+91 95734 00000',
+      gstin: '07AAAPS95734Z1',
+      address: 'Advanced Calibration & Metrology Cleanroom Lab, New Delhi'
+    },
+    instrumentDetails: {
+      category: 'Fine Chemical Analytical Balance',
+      manufacturer: 'Pushpa-Sartorius Ultra-Lab',
+      model: 'SRT-PREC-95734 Precision Pro',
+      serialNumber: 'PS-SN-9573403',
+      accuracyClass: 'Class I (Special High Precision)',
+      maxCapacity: '500 g',
+      minCapacity: '1 mg',
+      verificationDivision: '1 mg (e)',
+      scaleInterval: '0.1 mg (d)',
+      modelApprovalNumber: 'IND-DLM-2026-PR-0959'
+    },
+    chainOfCustodyHash: '3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d',
+    riskFactors: ['Class I precision balance verified with E2 standard reference weights in temperature-controlled room'],
+    ocrComparison: [
+      { field: 'Serial Number', dbValue: 'PS-SN-9573403', docValue: 'PS-SN-9573403', status: 'MATCH' },
+      { field: 'Manufacturer', dbValue: 'Pushpa-Sartorius Ultra-Lab', docValue: 'Pushpa-Sartorius Ultra-Lab', status: 'MATCH' }
+    ],
+    documents: [
+      { name: 'Precision_E2_Certificate.pdf', size: '3.1 MB', uploadedAt: '2026-09-07 09:12', status: 'Verified' }
+    ],
+    inspection: {
+      id: 'INSP-2026-PS-003',
+      inspectorName: 'Insp. Kavita Iyer (Badge: INSP-SZ-2011)',
+      scheduledDate: '2026-09-08',
+      completedDate: '2026-09-08 14:45 IST',
+      gpsCoordinates: '28.6210° N, 77.2140° E',
+      checklist: [
+        { item: 'Instrument available at registered site', passed: true },
+        { item: 'Serial number visible', passed: true },
+        { item: 'Draft shield and zero functional', passed: true }
+      ],
+      measurements: [
+        { testWeight: '100 g E2 Standard', readingKg: 0.1000001, errorG: 0.0001, toleranceG: 0.0002, result: 'PASS' },
+        { testWeight: '500 g E2 Standard', readingKg: 0.4999998, errorG: -0.0002, toleranceG: 0.0005, result: 'PASS' }
+      ],
+      photosCount: 4,
+      sealNumber: 'MV-SEAL-2026-PS95736',
+      remarks: 'Cleanroom balance verified with zero thermal drift. Class I performance validated.',
+      status: 'RECOMMENDED_FOR_APPROVAL'
+    }
+  },
+  {
+    id: 'MV-APP-PS95734-04',
+    applicationNo: 'MV-APP-PS95734-04',
+    instrumentId: 'MV-INS-PS-004',
+    instrumentType: 'Automatic Checkweigher Belt',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    submissionDate: '2026-08-15',
+    status: 'APPROVED',
+    currentStep: 8,
+    assignedInspector: 'Insp. Vikram Singh (Badge: INSP-NZ-4082)',
+    assignedOfficer: 'Shri R. Sen',
+    certificateId: 'MV-CERT-PS95734-04',
+    riskScore: 20,
+    riskLevel: 'LOW',
+    slaRemainingDays: 0,
+    statutoryFee: {
+      amount: '₹4,000.00',
+      receiptNo: 'MTR-FEE-PS-004',
+      paidAt: '15/08/2026 14:20 IST',
+      paymentMode: 'Net Banking'
+    },
+    traderDetails: {
+      proprietor: 'Pushpendra Singh',
+      email: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+      phone: '+91 95734 00000',
+      gstin: '07AAAPS95734Z1',
+      address: 'Conveyor Line 2, Industrial Complex, New Delhi'
+    },
+    instrumentDetails: {
+      category: 'Automatic Gravimetric Filling & Checkweighing',
+      manufacturer: 'Pushpa-Ishida Dynamic Systems',
+      model: 'PM-CKW-95734 Dynamic',
+      serialNumber: 'PS-SN-9573404',
+      accuracyClass: 'Class XIII(1) Automatic',
+      maxCapacity: '25 kg',
+      minCapacity: '20 g',
+      verificationDivision: '1 g (e)',
+      scaleInterval: '0.2 g (d)',
+      modelApprovalNumber: 'IND-DLM-2026-AC-0960'
+    },
+    chainOfCustodyHash: '5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f',
+    documents: [
+      { name: 'Factory_Calibration_Report.pdf', size: '2.7 MB', uploadedAt: '2026-08-15 14:25', status: 'Verified' }
+    ]
+  },
   {
     id: 'MV-APP-000123',
     instrumentId: 'MV-INS-000123',
@@ -558,6 +952,64 @@ export const MOCK_APPLICATIONS = [
 
 export const MOCK_CERTIFICATES = [
   {
+    id: 'MV-CERT-PS95734-01',
+    certificateNo: 'MV-CERT-PS95734-01',
+    applicationId: 'MV-APP-PS95734-01',
+    instrumentId: 'MV-INS-PS-001',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    ownerName: 'Pushpendra Singh',
+    ownerEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    businessAddress: 'Plot 24, Cyber Park & Logistics Complex, Sector 18, New Delhi - 110001',
+    gstin: '07AAAPS95734Z1',
+    instrumentType: 'Digital Weighing Scale',
+    category: 'Non-Automatic Weighing Instrument (NAWI)',
+    manufacturer: 'Pushpa Metrology Tech',
+    model: 'PM-DS-95734 Ultra-Precision',
+    serialNumber: 'PS-SN-9573401',
+    capacity: '60 kg',
+    minCapacity: '100 g',
+    accuracyClass: 'Class III (Medium Accuracy)',
+    verificationDivision: 'e = 2 g, d = 0.5 g',
+    sealNumber: 'MV-SEAL-2026-PS95734',
+    modelApprovalNumber: 'IND-DLM-2026-PS-0957',
+    issueDate: '05 September 2026',
+    validUntil: '05 September 2027',
+    issuingOfficer: 'Dr. Anita Deshmukh',
+    issuingAuthority: 'State Legal Metrology Verification Directorate, Delhi HQ',
+    securityHash: '9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e',
+    status: 'VALID',
+    verificationCount: 58
+  },
+  {
+    id: 'MV-CERT-PS95734-04',
+    certificateNo: 'MV-CERT-PS95734-04',
+    applicationId: 'MV-APP-PS95734-04',
+    instrumentId: 'MV-INS-PS-004',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    ownerName: 'Pushpendra Singh',
+    ownerEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    businessAddress: 'Plot 24, Cyber Park & Logistics Complex, Sector 18, New Delhi - 110001',
+    gstin: '07AAAPS95734Z1',
+    instrumentType: 'Automatic Checkweigher Belt',
+    category: 'Automatic Gravimetric Filling & Checkweighing',
+    manufacturer: 'Pushpa-Ishida Dynamic Systems',
+    model: 'PM-CKW-95734 Dynamic',
+    serialNumber: 'PS-SN-9573404',
+    capacity: '25 kg',
+    minCapacity: '20 g',
+    accuracyClass: 'Class XIII(1) Automatic',
+    verificationDivision: 'e = 1 g, d = 0.2 g',
+    sealNumber: 'MV-SEAL-2026-PS95735',
+    modelApprovalNumber: 'IND-DLM-2026-AC-0960',
+    issueDate: '15 August 2026',
+    validUntil: '15 August 2027',
+    issuingOfficer: 'Shri R. Sen',
+    issuingAuthority: 'State Legal Metrology Verification Directorate',
+    securityHash: '5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f',
+    status: 'VALID',
+    verificationCount: 114
+  },
+  {
     id: 'MV-CERT-000123',
     applicationId: 'MV-APP-000123',
     instrumentId: 'MV-INS-000123',
@@ -659,6 +1111,144 @@ export const MOCK_CERTIFICATES = [
 ];
 
 export const MOCK_INSPECTION_ASSIGNMENTS = [
+  {
+    id: 'INSP-2026-PS-001',
+    applicationId: 'MV-APP-PS95734-01',
+    instrumentId: 'MV-INS-PS-001',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    contactPerson: 'Pushpendra Singh (Proprietor)',
+    contactEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    businessPhone: '+91 95734 00000',
+    instrumentType: 'Digital Weighing Scale',
+    category: 'Non-Automatic Weighing Instrument (NAWI)',
+    serialNumber: 'PS-SN-9573401',
+    manufacturer: 'Pushpa Metrology Tech',
+    model: 'PM-DS-95734 Ultra-Precision',
+    accuracyClass: 'Class III',
+    maxCapacity: '60 kg',
+    minCapacity: '100 g',
+    verificationDivision: '2 g (e)',
+    location: 'Main Logistics & Distribution Bay A, Cyber Park, Sector 18, New Delhi',
+    scheduledDate: '2026-09-05',
+    timeSlot: '11:00 AM - 12:15 PM',
+    priority: 'NORMAL',
+    riskScore: 12,
+    status: 'COMPLETED',
+    assignedInspector: 'Insp. Vikram Singh (Badge: INSP-NZ-4082)',
+    targetGps: {
+      lat: 28.6139,
+      lng: 77.2090,
+      address: 'Plot 24, Cyber Park & Logistics Complex, Sector 18, New Delhi',
+      geofenceRadiusMeters: 50
+    },
+    standardWeightsRequired: 'Class M1 Standard Weights (5kg, 10kg, 20kg calibrated blocks)',
+    completedAt: '2026-09-05 11:30 AM IST',
+    inspectionReport: {
+      checklist: {
+        instrumentAvailable: true,
+        serialNumberVisible: true,
+        manufacturerDetailsVisible: true,
+        displayFunctioning: true,
+        requiredMarkingsVisible: true,
+        requiredDocumentsAvailable: true
+      },
+      gpsLocation: '28.6139° N, 77.2090° E (Geofence Verified • 3.4m precision)',
+      timestamp: '05/09/2026, 11:28:10 AM IST',
+      measurements: [
+        { testWeight: '10 kg Class M1 Standard', readingKg: 10.000, errorG: 0, toleranceG: 5, result: 'PASS' },
+        { testWeight: '30 kg Class M1 Standard', readingKg: 30.001, errorG: 1, toleranceG: 10, result: 'PASS' },
+        { testWeight: '60 kg Full Scale Test', readingKg: 60.002, errorG: 2, toleranceG: 15, result: 'PASS' }
+      ],
+      photoCount: 5,
+      sealNumber: 'MV-SEAL-2026-PS95734',
+      recommendation: 'RECOMMEND_APPROVAL',
+      remarks: 'Device verified in pristine condition. Zero drift observed. Complies with Legal Metrology Rules 2011.'
+    }
+  },
+  {
+    id: 'INSP-2026-PS-002',
+    applicationId: 'MV-APP-PS95734-02',
+    instrumentId: 'MV-INS-PS-002',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    contactPerson: 'Pushpendra Singh',
+    contactEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    businessPhone: '+91 95734 00000',
+    instrumentType: 'Heavy Duty Platform Scale',
+    category: 'Industrial Platform Scale',
+    serialNumber: 'PS-SN-9573402',
+    manufacturer: 'Pushpa-Apex Metrology Systems',
+    model: 'PM-PL-3000 Heavy Master',
+    accuracyClass: 'Class III',
+    maxCapacity: '3000 kg',
+    minCapacity: '5 kg',
+    verificationDivision: '50 g (e)',
+    location: 'Heavy Freight Terminal & Loading Bay 4, Sector 18, New Delhi',
+    scheduledDate: '2026-09-20',
+    timeSlot: '10:00 AM - 11:30 AM',
+    priority: 'HIGH',
+    riskScore: 24,
+    status: 'PENDING',
+    assignedInspector: 'Insp. Vikram Singh (Badge: INSP-NZ-4082)',
+    targetGps: {
+      lat: 28.6145,
+      lng: 77.2085,
+      address: 'Sector 18 Freight Terminal, New Delhi',
+      geofenceRadiusMeters: 50
+    },
+    standardWeightsRequired: 'Class M1 500kg & 1000kg test block crane slabs'
+  },
+  {
+    id: 'INSP-2026-PS-003',
+    applicationId: 'MV-APP-PS95734-03',
+    instrumentId: 'MV-INS-PS-003',
+    businessId: 'usr_pushpa_01',
+    businessName: 'Singh Legal Metrology & Enterprise Tech',
+    contactPerson: 'Pushpendra Singh',
+    contactEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    businessPhone: '+91 95734 00000',
+    instrumentType: 'Precision Laboratory Micro-Balance',
+    category: 'Fine Chemical Analytical Balance',
+    serialNumber: 'PS-SN-9573403',
+    manufacturer: 'Pushpa-Sartorius Ultra-Lab',
+    model: 'SRT-PREC-95734 Precision Pro',
+    accuracyClass: 'Class I',
+    maxCapacity: '500 g',
+    minCapacity: '1 mg',
+    verificationDivision: '1 mg (e)',
+    location: 'Advanced Calibration & Metrology Cleanroom Lab, New Delhi',
+    scheduledDate: '2026-09-08',
+    timeSlot: '02:00 PM - 03:15 PM',
+    priority: 'MEDIUM',
+    riskScore: 18,
+    status: 'COMPLETED',
+    assignedInspector: 'Insp. Kavita Iyer (Badge: INSP-SZ-2011)',
+    targetGps: {
+      lat: 28.6210,
+      lng: 77.2140,
+      address: 'Metrology Cleanroom Lab, New Delhi',
+      geofenceRadiusMeters: 30
+    },
+    standardWeightsRequired: 'Class E2 High-Precision Metric Analytical Weights',
+    completedAt: '2026-09-08 02:45 PM IST',
+    inspectionReport: {
+      checklist: {
+        instrumentAvailable: true,
+        serialNumberVisible: true,
+        draftShieldFunctional: true,
+        zeroBalanceFunctional: true,
+        requiredMarkingsVisible: true
+      },
+      measurements: [
+        { testWeight: '100 g E2 Standard', readingKg: 0.1000001, errorG: 0.0001, toleranceG: 0.0002, result: 'PASS' },
+        { testWeight: '500 g E2 Standard', readingKg: 0.4999998, errorG: -0.0002, toleranceG: 0.0005, result: 'PASS' }
+      ],
+      photoCount: 4,
+      recommendation: 'RECOMMEND_APPROVAL',
+      remarks: 'Cleanroom balance verified with zero thermal drift. Class I performance validated.'
+    }
+  },
   {
     id: 'INSP-2026-00104',
     applicationId: 'MV-APP-000124',
@@ -819,11 +1409,11 @@ export const MOCK_INSPECTION_ASSIGNMENTS = [
 
 export const MOCK_STATS = {
   business: {
-    totalInstruments: 3,
+    totalInstruments: 4,
     pendingApplications: 2,
     underInspection: 1,
-    approved: 1,
-    activeCertificates: 1
+    approved: 2,
+    activeCertificates: 2
   },
   inspector: {
     assignedInspections: 8,
@@ -839,3 +1429,93 @@ export const MOCK_STATS = {
     rejectedTotal: 7
   }
 };
+
+export const MOCK_REPORTS = [
+  {
+    id: 'REP-PS-2026-001',
+    reportNo: 'METRA-REP-PS-001',
+    title: 'Legal Metrology Compliance & Calibration Audit Report',
+    userId: 'usr_pushpa_01',
+    userEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    userName: 'Pushpendra Singh',
+    organization: 'Singh Legal Metrology & Enterprise Tech',
+    reportType: 'CALIBRATION_AUDIT',
+    overallStatus: 'FULLY_COMPLIANT',
+    complianceIndex: '99.4%',
+    verifiedInstrumentsCount: 4,
+    zeroFaultsDetected: true,
+    trustChainBlockHash: '3a8f9c2d1e4b506789abcdef0123456789abcdef0123456789abcdef01234567',
+    blockIndex: 8914,
+    generatedAt: '2026-09-08',
+    summary: 'All 4 operational instruments validated in full accordance with Legal Metrology (General) Rules 2011.'
+  },
+  {
+    id: 'REP-PS-2026-002',
+    reportNo: 'METRA-REP-PS-002',
+    title: 'Real-time Field Telematics & Geofence Verification Report',
+    userId: 'usr_pushpa_01',
+    userEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    userName: 'Pushpendra Singh',
+    organization: 'Singh Legal Metrology & Enterprise Tech',
+    reportType: 'TELEMATICS_INSPECTION',
+    inspector: 'Insp. Vikram Singh (INSP-NZ-4082)',
+    gpsLock: '28.6139° N, 77.2090° E',
+    geofenceDeviationMeters: 3.4,
+    antiSpoofingStatus: 'VERIFIED_GENUINE_HARDWARE',
+    signalIntegrity: '100%',
+    generatedAt: '2026-09-05',
+    summary: 'On-site presence confirmed within 3.4m of registered enterprise site in Sector 18, New Delhi.'
+  },
+  {
+    id: 'REP-PS-2026-003',
+    reportNo: 'METRA-REP-PS-003',
+    title: 'Maximum Permissible Error (MPE) Multi-Point Accuracy Analysis',
+    userId: 'usr_pushpa_01',
+    userEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    userName: 'Pushpendra Singh',
+    organization: 'Singh Legal Metrology & Enterprise Tech',
+    reportType: 'MPE_ACCURACY_ANALYSIS',
+    targetInstrument: 'PS-SN-9573401 (PM-DS-95734)',
+    testStages: [
+      { load: '10 kg', mpeTolerance: '±5 g', observedError: '0 g', status: 'PASS' },
+      { load: '30 kg', mpeTolerance: '±10 g', observedError: '+1 g', status: 'PASS' },
+      { load: '60 kg', mpeTolerance: '±15 g', observedError: '+2 g', status: 'PASS' }
+    ],
+    meanRelativeError: '+0.0018%',
+    eccentricityCheck: 'PASSED (0.2g max variation)',
+    repeatabilitySpread: '0.1g spread across 10 trials',
+    generatedAt: '2026-09-05'
+  },
+  {
+    id: 'REP-PS-2026-004',
+    reportNo: 'METRA-REP-PS-004',
+    title: 'Blockchain Ledger Immutability & Custody Audit Trail',
+    userId: 'usr_pushpa_01',
+    userEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    userName: 'Pushpendra Singh',
+    organization: 'Singh Legal Metrology & Enterprise Tech',
+    reportType: 'BLOCKCHAIN_AUDIT_TRAIL',
+    merkleRoot: '99f8d1c7e6b5a43210fedcba9876543210fedcba9876543210fedcba98765432',
+    totalBlocksInEpoch: 1042,
+    publicVerificationHits: 158,
+    tamperAttemptsPrevented: 0,
+    cryptographicSignature: 'ECDSA_SECP256K1_VERIFIED',
+    generatedAt: '2026-09-08'
+  },
+  {
+    id: 'REP-PS-2026-005',
+    reportNo: 'METRA-REP-PS-005',
+    title: 'Annual Statutory Metrology Portfolio & Renewal Schedule',
+    userId: 'usr_pushpa_01',
+    userEmail: 'PuhspaGOat-singhpushpendra95734@gmail.com',
+    userName: 'Pushpendra Singh',
+    organization: 'Singh Legal Metrology & Enterprise Tech',
+    reportType: 'STATUTORY_PORTFOLIO',
+    activeLicenses: ['07AAAPS95734Z1'],
+    totalPaidFees: '₹15,000.00',
+    nextScheduledRenewal: '05 September 2027',
+    riskRating: 'TIER_1_EXEMPLARY',
+    generatedAt: '2026-09-08'
+  }
+];
+

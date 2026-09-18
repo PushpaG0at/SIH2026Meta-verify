@@ -40,6 +40,9 @@ export function getStoredUserByEmail(email) {
  */
 export function formatNameFromEmail(email, role = 'BUSINESS') {
   if (!email) return '';
+  if (email.toLowerCase().includes('pushpendra') || email.toLowerCase().includes('puhspagoat')) {
+    return 'Pushpendra Singh';
+  }
   const localPart = email.split('@')[0];
   const cleaned = localPart.replace(/[._\-+]/g, ' ');
   const words = cleaned
@@ -63,6 +66,29 @@ export function formatNameFromEmail(email, role = 'BUSINESS') {
  */
 export function getDemoUser(email, roleHint, customName = null) {
   const cleanEmail = (email || '').trim().toLowerCase();
+
+  // Explicit recognition for primary user Pushpendra Singh
+  if (cleanEmail.includes('pushpendra') || cleanEmail.includes('puhspagoat')) {
+    let role = (roleHint || '').toUpperCase();
+    if (!role || !['BUSINESS', 'INSPECTOR', 'OFFICER', 'ADMIN'].includes(role)) {
+      role = 'BUSINESS';
+    }
+    const pushpaUser = {
+      id: 'usr_pushpa_01',
+      name: (customName && customName.trim()) ? customName.trim() : 'Pushpendra Singh',
+      email: cleanEmail,
+      username: 'singhpushpendra95734_db_user',
+      role,
+      phone: '+91 95734 00000',
+      orgName: 'Singh Legal Metrology & Enterprise Tech',
+      licenseNo: '07AAAPS95734Z1',
+      gstin: '07AAAPS95734Z1',
+      address: 'Plot 24, Cyber Park & Logistics Complex, Sector 18, New Delhi - 110001',
+      authenticated: true
+    };
+    saveRegisteredUser(pushpaUser);
+    return pushpaUser;
+  }
 
   // Determine role
   let role = (roleHint || '').toUpperCase();

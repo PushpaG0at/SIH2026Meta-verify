@@ -1,5 +1,6 @@
 import apiClient from './api';
 import { MOCK_INSTRUMENTS } from '../utils/mockData';
+import { getCurrentUser, isDemoSeedUser, getUserStorageKey } from '../utils/userScope';
 
 let localInstruments = [...MOCK_INSTRUMENTS];
 
@@ -51,19 +52,32 @@ export function normalizeInstrument(inst) {
 
 export const instrumentService = {
   /**
-   * Fetch all registered instruments via GET /instruments
+   * Fetch registered instruments for the authenticated user
    */
   async getInstruments() {
+    const user = getCurrentUser();
     try {
       const res = await apiClient.get('/instruments');
-      const rawList = res.data?.instruments || (Array.isArray(res.data) ? res.data : []);
-      if (rawList && rawList.length > 0) {
+      const rawList = res.data?.instruments !== undefined
+        ? res.data.instruments
+        : (Array.isArray(res.data) ? res.data : null);
+
+      if (Array.isArray(rawList)) {
         return rawList.map(normalizeInstrument);
       }
-      return localInstruments.map(normalizeInstrument);
+      return [];
     } catch (error) {
-      console.warn('[instrumentService] Real API fetch failed, using local registry fallback:', error.message);
-      return localInstruments.map(normalizeInstrument);
+      console.warn('[instrumentService] Real API fetch failed, using local user storage:', error.message);
+
+      if (isDemoSeedUser(user)) {
+        return localInstruments.map(normalizeInstrument);
+      }
+
+      // For new / custom business owners, return their own user-scoped instruments (empty if none registered yet)
+      const key = getUserStorageKey('mv_instruments', user);
+      const stored = localStorage.getItem(key);
+      const userList = stored ? JSON.parse(stored) : [];
+      return userList.map(normalizeInstrument);
     }
   },
 
@@ -71,6 +85,7 @@ export const instrumentService = {
    * Fetch single instrument by ID or UIN via GET /instruments/:id
    */
   async getInstrumentById(id) {
+    const user = getCurrentUser();
     try {
       const res = await apiClient.get(`/instruments/${id}`);
       const raw = res.data?.instrument || res.data;
@@ -81,13 +96,27 @@ export const instrumentService = {
       console.warn(`[instrumentService] GET /instruments/${id} failed:`, error.message);
     }
 
-    // Local fallback
-    const found = localInstruments.find(
+    // Check user-scoped local records first
+    const key = getUserStorageKey('mv_instruments', user);
+    const stored = localStorage.getItem(key);
+    const userList = stored ? JSON.parse(stored) : [];
+    const foundUserInst = userList.find(
       (item) => item.id === id || item.uin === id || item.serialNumber === id || item.serialNo === id
     );
-    if (found) {
-      return normalizeInstrument(found);
+    if (foundUserInst) {
+      return normalizeInstrument(foundUserInst);
     }
+
+    // Demo seed fallback only if demo account
+    if (isDemoSeedUser(user)) {
+      const found = localInstruments.find(
+        (item) => item.id === id || item.uin === id || item.serialNumber === id || item.serialNo === id
+      );
+      if (found) {
+        return normalizeInstrument(found);
+      }
+    }
+
     throw new Error(`Instrument '${id}' not found in registry.`);
   },
 
@@ -95,6 +124,10 @@ export const instrumentService = {
    * Register new instrument via POST /instruments
    */
   async createInstrument(payload) {
+    const user = getCurrentUser();
+    const currentUserId = user?.id || `usr_biz_${Date.now()}`;
+    const currentUserName = user?.orgName || user?.name || payload.ownerName || 'Commercial Enterprise';
+
     try {
       // Map UI form fields to backend schema
       const backendPayload = {
@@ -114,30 +147,46 @@ export const instrumentService = {
       const created = res.data?.instrument || res.data;
       const normalized = normalizeInstrument(created);
 
-      // Prepend to local cache as well
-      localInstruments = [normalized, ...localInstruments];
+      // Save to user storage as well
+      const key = getUserStorageKey('mv_instruments', user);
+      const stored = localStorage.getItem(key);
+      const userList = stored ? JSON.parse(stored) : [];
+      localStorage.setItem(key, JSON.stringify([normalized, ...userList]));
+
+      if (isDemoSeedUser(user)) {
+        localInstruments = [normalized, ...localInstruments];
+      }
+
       return normalized;
     } catch (error) {
-      console.warn('[instrumentService] Backend registration failed, preserving local record:', error.message);
+      console.warn('[instrumentService] Backend registration failed, preserving user record locally:', error.message);
 
       const newId = `MV-INS-${String(Math.floor(100000 + Math.random() * 900000))}`;
       const newInstrument = normalizeInstrument({
         id: newId,
         uin: `IND-LM-2026-${newId.replace('MV-INS-', 'W')}`,
-        businessId: 'usr_biz_01',
-        businessName: payload.ownerName || 'Sharma Traders & Co.',
+        businessId: currentUserId,
+        businessName: currentUserName,
         category: payload.category || payload.instrumentType || 'ELECTRONIC_WEIGHING_SCALE',
         brand: payload.manufacturer || payload.brand || 'Digital Scales Inc.',
         modelNo: payload.model || payload.modelNo || 'DS-500',
         serialNo: payload.serialNumber || payload.serialNo || `SN-${Date.now().toString().slice(-6)}`,
-        maxCapacity: parseFloat(payload.capacity || 30),
-        leastCount: 0.005,
-        installationAddress: payload.location || payload.installationAddress || 'Industrial Area, Delhi',
+        maxCapacity: parseFloat(payload.capacity || payload.maxCapacity || 30),
+        leastCount: parseFloat(payload.leastCount || 0.005),
+        installationAddress: payload.location || payload.installationAddress || 'Commercial Trade Premises',
         currentStatus: 'UNVERIFIED',
         applicationsCount: 0
       });
 
-      localInstruments = [newInstrument, ...localInstruments];
+      const key = getUserStorageKey('mv_instruments', user);
+      const stored = localStorage.getItem(key);
+      const userList = stored ? JSON.parse(stored) : [];
+      localStorage.setItem(key, JSON.stringify([newInstrument, ...userList]));
+
+      if (isDemoSeedUser(user)) {
+        localInstruments = [newInstrument, ...localInstruments];
+      }
+
       return newInstrument;
     }
   }

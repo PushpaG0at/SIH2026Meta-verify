@@ -261,7 +261,7 @@ export const OfficerDashboard = () => {
                 Rule 14 & 24 Legal Metrology Act, 2009
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight font-heading">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight font-heading text-white" style={{ color: '#ffffff' }}>
               {user?.name || 'Dr. Anita Deshmukh'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300">

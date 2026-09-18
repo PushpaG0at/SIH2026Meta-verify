@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Scale,
   FileText,
@@ -12,7 +12,13 @@ import {
   ChevronRight,
   Eye,
   QrCode,
-  ExternalLink
+  ExternalLink,
+  User,
+  Search,
+  Lightbulb,
+  HelpCircle,
+  ShieldCheck,
+  Building
 } from 'lucide-react';
 import { applicationService } from '../../services/applicationService';
 import { instrumentService } from '../../services/instrumentService';
@@ -27,10 +33,24 @@ import { useAuth } from '../../hooks/useAuth';
 
 export const BusinessDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [quickVerifyId, setQuickVerifyId] = useState('');
   const [applications, setApplications] = useState([]);
   const [instruments, setInstruments] = useState([]);
   const [selectedAppId, setSelectedAppId] = useState('MV-APP-000123');
   const [loading, setLoading] = useState(true);
+
+  const handleQuickVerify = (e) => {
+    e.preventDefault();
+    if (quickVerifyId.trim()) {
+      navigate(`/verify/${quickVerifyId.trim()}`);
+    }
+  };
+
+  const cleanName = user?.name
+    ? user.name.replace(/^(shri|dr\.?|mr\.?|ms\.?|mrs\.?)\s+/i, '').trim()
+    : '';
+  const welcomeName = cleanName ? cleanName.split(' ')[0] : (user?.name?.split(' ')[0] || 'Trader');
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -203,49 +223,271 @@ export const BusinessDashboard = () => {
 
   return (
     <div className="space-y-8">
-      {/* Welcome Banner & Quick Action Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden">
-        {/* Subtle decorative glow */}
-        <div className="absolute right-0 top-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+      {/* 1. Official Hero Banner matching Image 2 */}
+      <div className="bg-gradient-to-r from-[#031130] via-[#092257] to-[#041338] rounded-2xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden border border-blue-900/40">
+        {/* Ambient glow effects */}
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-sky-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold border border-blue-400/20">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Commercial Trader Compliance Hub • SIH 2026</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-heading text-white">
-            Welcome back, {user?.name || 'Rajesh Sharma'}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-            {user?.organization || 'Sharma Traders & Co.'} • Active Trade Registration:{' '}
-            <span className="font-mono text-blue-300 font-medium">
-              {user?.registrationNumber || 'GSTIN07AAACS1429B1Z8'}
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Left Column: Legal Metrology Tag, Heading, Description */}
+          <div className="lg:col-span-5 space-y-2.5">
+            <span className="text-[11px] font-extrabold uppercase tracking-widest text-sky-400 block font-mono">
+              LEGAL METROLOGY
             </span>
+            <h1 className="text-2xl sm:text-3xl xl:text-4xl font-black tracking-tight text-white font-heading leading-tight">
+              Accurate Measurements.<br />
+              Fair Trade.
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md">
+              Metra Verify helps you check the authenticity and validity of weighing and measuring instruments issued under the Legal Metrology Act, 2009.
+            </p>
+          </div>
+
+          {/* Center Column: Digital Bench Scale Image */}
+          <div className="lg:col-span-3 flex justify-center items-center py-1">
+            <div className="relative group">
+              <img
+                src="/images/banner-scale.jpg"
+                alt="Digital Weighing Scale"
+                className="w-full max-w-[240px] sm:max-w-[260px] h-auto object-contain rounded-xl drop-shadow-[0_15px_30px_rgba(0,180,255,0.35)] transform group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 rounded-xl ring-1 ring-sky-400/20 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Right Column: Verify a Measuring Instrument Card */}
+          <div className="lg:col-span-4">
+            <div className="bg-white text-slate-900 rounded-2xl p-5 shadow-2xl border border-slate-100/80">
+              <h3 className="text-sm font-bold text-slate-900 mb-3">
+                Verify a Measuring Instrument
+              </h3>
+
+              <form onSubmit={handleQuickVerify} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={quickVerifyId}
+                    onChange={(e) => setQuickVerifyId(e.target.value)}
+                    placeholder="Enter Certificate or Instrument ID"
+                    className="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all shadow-inner"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-[#0A2558] hover:bg-[#071a3e] text-white font-bold text-xs px-4 py-2 rounded-lg transition-colors shrink-0 shadow-xs cursor-pointer"
+                  >
+                    Verify
+                  </button>
+                </div>
+
+                <div className="relative flex py-0.5 items-center">
+                  <div className="flex-grow border-t border-slate-200" />
+                  <span className="flex-shrink mx-3 text-slate-400 text-[10px] font-bold tracking-wider">
+                    OR
+                  </span>
+                  <div className="flex-grow border-t border-slate-200" />
+                </div>
+
+                <Link
+                  to="/verify"
+                  className="w-full py-2 px-3 bg-[#EBF3FF] hover:bg-[#DCEDFF] text-[#0A2558] font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors border border-blue-200/80 shadow-xs"
+                >
+                  <QrCode className="w-4 h-4 text-blue-700" />
+                  <span>Scan QR Code</span>
+                </Link>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Dynamic Welcome Header: "Welcome, [User Name]!" */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 pb-0.5">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight">
+            Welcome, {welcomeName}!
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Here is a quick overview of your services and latest updates.
           </p>
         </div>
+        <div className="text-xs text-slate-500 font-medium sm:text-right shrink-0">
+          Last login: 12 Sep 2025, 10:24 AM
+        </div>
+      </div>
 
-        {/* Header Quick Actions */}
-        <div className="relative z-10 flex flex-wrap items-center gap-2.5">
-          <Link to="/business/instruments/new">
-            <Button
-              variant="primary"
-              size="md"
-              leftIcon={PlusCircle}
-              className="shadow-sm shadow-blue-500/20"
+      {/* 3. Four Role / Service Action Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+        {/* Public User Card */}
+        <Link
+          to="/verify"
+          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-400 transition-all flex flex-col justify-between group cursor-pointer"
+        >
+          <div>
+            <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <User className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">
+              Public User
+            </h3>
+            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+              Check instrument details, scan QR code, verify certificates.
+            </p>
+          </div>
+          <div className="mt-4 text-blue-600 group-hover:translate-x-1 transition-transform inline-flex items-center text-sm font-bold">
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </Link>
+
+        {/* Inspector Card */}
+        <Link
+          to="/inspector/dashboard"
+          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-emerald-400 transition-all flex flex-col justify-between group cursor-pointer"
+        >
+          <div>
+            <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">
+              Inspector
+            </h3>
+            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+              Conduct verification, record inspections, update status.
+            </p>
+          </div>
+          <div className="mt-4 text-emerald-600 group-hover:translate-x-1 transition-transform inline-flex items-center text-sm font-bold">
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </Link>
+
+        {/* Officer Card */}
+        <Link
+          to="/officer/dashboard"
+          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-purple-400 transition-all flex flex-col justify-between group cursor-pointer"
+        >
+          <div>
+            <div className="w-11 h-11 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <Award className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">
+              Officer
+            </h3>
+            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+              Manage applications, certificates, view reports and analytics.
+            </p>
+          </div>
+          <div className="mt-4 text-purple-600 group-hover:translate-x-1 transition-transform inline-flex items-center text-sm font-bold">
+            <ArrowRight className="w-4 h-4" />
+          </div>
+        </Link>
+
+        {/* Need Help? Card */}
+        <Link
+          to="/how-it-works"
+          className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-amber-400 transition-all flex flex-col justify-between group cursor-pointer"
+        >
+          <div>
+            <div className="w-11 h-11 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <Lightbulb className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">
+              Need Help?
+            </h3>
+            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+              Check our FAQs or contact support for any assistance.
+            </p>
+          </div>
+          <div className="mt-4 text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1 text-xs font-bold">
+            <span>Go to FAQs →</span>
+          </div>
+        </Link>
+      </div>
+
+      {/* 4. Two-Column Lower Section: How It Works & Latest Updates */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* How It Works Card (6 Steps) */}
+        <div className="lg:col-span-7 xl:col-span-8 bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-slate-900 font-heading tracking-tight">
+              How It Works
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              A simple and transparent process for verification and certification.
+            </p>
+          </div>
+
+          {/* 6 Step Interactive Flow */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-2 relative">
+            {[
+              { step: 1, label: 'Application Submitted', icon: FileText },
+              { step: 2, label: 'Inspector Assigned', icon: User },
+              { step: 3, label: 'Inspection Conducted', icon: Search },
+              { step: 4, label: 'Verification Completed', icon: ShieldCheck },
+              { step: 5, label: 'Approved by Officer', icon: CheckCircle2 },
+              { step: 6, label: 'Certificate Issued', icon: Award }
+            ].map((s, idx, arr) => {
+              const StepIcon = s.icon;
+              return (
+                <div key={s.step} className="flex flex-col items-center text-center relative group">
+                  {/* Number Badge */}
+                  <div className="w-5 h-5 rounded-full bg-[#0055D4] text-white text-[10px] font-bold flex items-center justify-center mb-2 shadow-2xs">
+                    {s.step}
+                  </div>
+
+                  {/* Icon Circle */}
+                  <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-200 text-[#0055D4] flex items-center justify-center mb-2.5 shadow-2xs group-hover:bg-blue-100 group-hover:scale-105 transition-all">
+                    <StepIcon className="w-5 h-5" />
+                  </div>
+
+                  {/* Step Label */}
+                  <span className="text-xs font-bold text-slate-800 leading-snug max-w-[100px]">
+                    {s.label}
+                  </span>
+
+                  {/* Connecting Arrow for larger screens */}
+                  {idx < arr.length - 1 && (
+                    <span className="hidden xl:block absolute top-7 -right-2 text-slate-300 font-bold text-xs pointer-events-none">
+                      →
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Latest Updates Card */}
+        <div className="lg:col-span-5 xl:col-span-4 bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-lg font-bold text-slate-900 font-heading tracking-tight">
+              Latest Updates
+            </h3>
+            <Link
+              to="/how-it-works"
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
             >
-              Register Instrument
-            </Button>
-          </Link>
-          <Link to="/business/applications/new">
-            <Button variant="outlineDark" size="md" leftIcon={FileText}>
-              New Application
-            </Button>
-          </Link>
-          <Link to="/verify/MV-2026-000123">
-            <Button variant="outlineDark" size="md" leftIcon={QrCode}>
-              Verify Certificate
-            </Button>
-          </Link>
+              <span>View All</span>
+              <span>→</span>
+            </Link>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              { date: '12 Sep 2025', title: 'Revised guidelines for instrument verification' },
+              { date: '05 Sep 2025', title: 'New application form for weights & measures' },
+              { date: '28 Aug 2025', title: 'System maintenance scheduled on 2nd Sept 2025' }
+            ].map((update, idx) => (
+              <div key={idx} className="flex items-start gap-3 text-xs">
+                <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0 mt-1.5" />
+                <span className="text-slate-400 font-mono text-[11px] shrink-0 font-medium">
+                  {update.date}
+                </span>
+                <span className="text-slate-700 font-medium leading-relaxed hover:text-blue-600 cursor-pointer transition-colors">
+                  {update.title}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

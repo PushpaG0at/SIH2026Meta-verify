@@ -2,9 +2,66 @@ import apiClient from './api';
 import { MOCK_USERS } from '../utils/mockData';
 
 /**
- * Resolves a high-fidelity synthetic demo user profile for offline/demonstration mode
+ * Persists registered / active users in a local registry so each unique email
+ * always keeps its distinct identity and personalized name across sessions.
  */
-function getDemoUser(email, roleHint) {
+export function saveRegisteredUser(userObj) {
+  if (!userObj || !userObj.email) return;
+  try {
+    const raw = localStorage.getItem('mv_registered_users');
+    const registry = raw ? JSON.parse(raw) : {};
+    registry[userObj.email.trim().toLowerCase()] = {
+      ...userObj,
+      email: userObj.email.trim().toLowerCase()
+    };
+    localStorage.setItem('mv_registered_users', JSON.stringify(registry));
+  } catch (e) {
+    console.warn('[authService] Failed to persist user in registry:', e);
+  }
+}
+
+export function getStoredUserByEmail(email) {
+  if (!email) return null;
+  try {
+    const raw = localStorage.getItem('mv_registered_users');
+    if (!raw) return null;
+    const registry = JSON.parse(raw);
+    return registry[email.trim().toLowerCase()] || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Formats a clean, professional human name dynamically from an email handle
+ * e.g. "pushpendra.singh@gmail.com" -> "Pushpendra Singh"
+ * e.g. "arun_kumar@yahoo.com" -> "Arun Kumar"
+ * e.g. "kavita@state.gov.in" -> "Kavita"
+ */
+export function formatNameFromEmail(email, role = 'BUSINESS') {
+  if (!email) return '';
+  const localPart = email.split('@')[0];
+  const cleaned = localPart.replace(/[._\-+]/g, ' ');
+  const words = cleaned
+    .split(/\s+/)
+    .map((w) => w.replace(/\d+/g, ''))
+    .filter(Boolean);
+
+  if (words.length === 0) {
+    return localPart.charAt(0).toUpperCase() + localPart.slice(1);
+  }
+
+  return words
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+/**
+ * Resolves a personalized demo user profile for offline/demonstration mode.
+ * Dynamically customizes names for Businessman, Inspector, and Officer based on
+ * the actual email or explicit custom name provided.
+ */
+export function getDemoUser(email, roleHint, customName = null) {
   const cleanEmail = (email || '').trim().toLowerCase();
 
   // Determine role
@@ -21,105 +78,121 @@ function getDemoUser(email, roleHint) {
     }
   }
 
-  // Pre-configured profiles matching SIH test credentials
+  // 1. Check if user already exists in persistent local registry
+  const existingUser = getStoredUserByEmail(cleanEmail);
+  if (existingUser) {
+    const userRole = (role || existingUser.role || 'BUSINESS').toUpperCase();
+    const finalName = (customName && customName.trim()) ? customName.trim() : existingUser.name;
+    const updated = {
+      ...existingUser,
+      name: finalName,
+      role: userRole,
+      authenticated: true
+    };
+    saveRegisteredUser(updated);
+    return updated;
+  }
+
+  // 2. Resolve display name: custom name > derived from email > role default preset
+  let resolvedName = (customName || '').trim();
+
+  const isGenericPresetEmail = (
+    cleanEmail === 'business@metra-demo.in' ||
+    cleanEmail === 'inspector@metra-demo.in' ||
+    cleanEmail === 'officer@metra-demo.in' ||
+    cleanEmail === 'ramesh@kirana.in' ||
+    !cleanEmail
+  );
+
+  if (!resolvedName && !isGenericPresetEmail) {
+    resolvedName = formatNameFromEmail(cleanEmail, role);
+  }
+
+  // Hash-based unique ID generator so same email always gets same ID
+  const hashId = cleanEmail
+    ? Math.abs(cleanEmail.split('').reduce((acc, char) => ((acc << 5) - acc) + char.charCodeAt(0), 0)) % 900000 + 100000
+    : '01';
+
+  // 3. Pre-configured or dynamically created profile for BUSINESS
   if (role === 'BUSINESS') {
-    if (cleanEmail === 'ramesh@kirana.in' || cleanEmail === 'business@metra-demo.in' || !cleanEmail) {
-      return {
-        id: 'usr_biz_01',
-        name: 'Ramesh Kumar',
-        email: cleanEmail || 'ramesh@kirana.in',
-        role: 'BUSINESS',
-        phone: '+91 98112 34567',
-        orgName: 'Ramesh Kirana & General Stores',
-        licenseNo: '07AAAAA0000A1Z5',
-        address: 'Shop 42, Central Mandi Market, Sector 18, New Delhi',
-        authenticated: true
-      };
-    }
-    return {
-      id: 'usr_biz_01',
-      name: MOCK_USERS.business?.name || 'Rajesh Sharma',
-      email: cleanEmail,
+    const defaultName = cleanEmail === 'ramesh@kirana.in' ? 'Ramesh Kumar' : (resolvedName || 'Ramesh Kumar');
+    const userObj = {
+      id: `usr_biz_${hashId}`,
+      name: defaultName,
+      email: cleanEmail || 'business@metra-demo.in',
       role: 'BUSINESS',
-      phone: MOCK_USERS.business?.phone || '+91 98765 43210',
-      orgName: MOCK_USERS.business?.organization || 'Sharma Traders & Co.',
-      licenseNo: MOCK_USERS.business?.registrationNumber || 'GSTIN07AAACS1429B1Z8',
-      address: MOCK_USERS.business?.address || 'Central Market, New Delhi',
+      phone: '+91 98112 34567',
+      orgName: `${defaultName}'s Trading Co.`,
+      licenseNo: `07AAB${cleanEmail ? cleanEmail.slice(0, 4).toUpperCase().replace(/[^A-Z]/g, 'X') : 'METR'}1Z5`,
+      address: 'Shop 42, Central Mandi Market, Sector 18, New Delhi',
       authenticated: true
     };
+    saveRegisteredUser(userObj);
+    return userObj;
   }
 
+  // 4. Pre-configured or dynamically created profile for INSPECTOR
   if (role === 'INSPECTOR') {
-    if (cleanEmail.includes('sharma') || cleanEmail === 'inspector@metra-demo.in' || !cleanEmail) {
-      return {
-        id: 'usr_insp_01',
-        name: 'Insp. Vikram Sharma',
-        email: cleanEmail || 'inspector.sharma@legalmetrology.gov.in',
-        role: 'INSPECTOR',
-        phone: '+91 94120 12345',
-        orgName: 'Legal Metrology Division (Zone 2, Central Delhi)',
-        badgeNumber: 'DL-LM-INS-042',
-        jurisdiction: 'Zone 2 - Central Delhi District',
-        authenticated: true
-      };
+    let defaultName = resolvedName;
+    if (!defaultName) {
+      defaultName = 'Insp. Vikram Sharma';
+    } else if (!defaultName.toLowerCase().startsWith('insp') && !defaultName.toLowerCase().startsWith('inspector')) {
+      defaultName = `Insp. ${defaultName}`;
     }
-    return {
-      id: 'usr_insp_02',
-      name: MOCK_USERS.inspector?.name || 'Vikram Singh',
-      email: cleanEmail,
+
+    const userObj = {
+      id: `usr_insp_${hashId}`,
+      name: defaultName,
+      email: cleanEmail || 'inspector@metra-demo.in',
       role: 'INSPECTOR',
-      phone: MOCK_USERS.inspector?.phone || '+91 98111 22334',
-      badgeNumber: MOCK_USERS.inspector?.badgeNumber || 'INSP-NZ-4082',
-      jurisdiction: MOCK_USERS.inspector?.jurisdiction || 'Zone 4 - North Delhi Metro & Industrial Cluster',
-      orgName: 'Legal Metrology Field Calibration Unit',
+      phone: '+91 94120 12345',
+      orgName: 'Legal Metrology Division (Zone 2, Central Delhi)',
+      badgeNumber: `DL-LM-INS-${cleanEmail ? (cleanEmail.charCodeAt(0) * 17 % 900 + 100) : '042'}`,
+      jurisdiction: 'Zone 2 - Central Delhi District',
       authenticated: true
     };
+    saveRegisteredUser(userObj);
+    return userObj;
   }
 
+  // 5. Pre-configured or dynamically created profile for OFFICER
   if (role === 'OFFICER') {
-    if (cleanEmail.includes('sen') || cleanEmail === 'officer@metra-demo.in' || !cleanEmail) {
-      return {
-        id: 'usr_off_01',
-        name: 'Shri R. Sen',
-        email: cleanEmail || 'officer.sen@legalmetrology.gov.in',
-        role: 'OFFICER',
-        phone: '+91 98100 54321',
-        designation: 'Authorized Legal Metrology Verification Officer',
-        orgName: 'Controllerate of Legal Metrology, Delhi State',
-        licenseNo: 'LMO-DL-CONT-01',
-        authenticated: true
-      };
-    }
-    return {
-      id: 'usr_off_03',
-      name: MOCK_USERS.officer?.name || 'Dr. Anita Deshmukh',
-      email: cleanEmail,
+    let defaultName = resolvedName || 'Shri R. Sen';
+
+    const userObj = {
+      id: `usr_off_${hashId}`,
+      name: defaultName,
+      email: cleanEmail || 'officer@metra-demo.in',
       role: 'OFFICER',
-      phone: MOCK_USERS.officer?.phone || '+91 99200 88776',
-      designation: MOCK_USERS.officer?.designation || 'Authorized Legal Metrology Verification Officer',
-      orgName: MOCK_USERS.officer?.office || 'Directorate of Legal Metrology, State HQ',
+      phone: '+91 98100 54321',
+      designation: 'Authorized Legal Metrology Verification Officer',
+      orgName: 'Controllerate of Legal Metrology, Delhi State',
+      licenseNo: `LMO-DL-${cleanEmail ? cleanEmail.slice(0, 4).toUpperCase().replace(/[^A-Z]/g, 'X') : 'SEN'}-01`,
       authenticated: true
     };
+    saveRegisteredUser(userObj);
+    return userObj;
   }
 
   // Generic fallback
-  const displayName = cleanEmail ? cleanEmail.split('@')[0].replace(/[._-]/g, ' ') : 'Administrator';
-  const formattedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-  return {
+  const finalFallbackName = resolvedName || 'Metra Administrator';
+  const userObj = {
     id: `usr_${Date.now().toString().slice(-6)}`,
-    name: formattedName,
+    name: finalFallbackName,
     email: cleanEmail || 'admin@metraverify.gov.in',
     role: role || 'BUSINESS',
     orgName: 'Legal Metrology Department',
     authenticated: true
   };
+  saveRegisteredUser(userObj);
+  return userObj;
 }
 
 export const authService = {
   /**
    * Real API login via POST /auth/login with seamless offline demonstration fallback
    */
-  async login(email, password, expectedRole = null) {
+  async login(email, password, expectedRole = null, customName = null) {
     const cleanEmail = email?.trim()?.toLowerCase();
     try {
       const res = await apiClient.post('/auth/login', {
@@ -134,9 +207,11 @@ export const authService = {
         const upperRole = (res.data.user.role || expectedRole || 'BUSINESS').toUpperCase();
         const userObj = {
           ...res.data.user,
+          name: customName?.trim() || res.data.user.name,
           role: upperRole,
           authenticated: true
         };
+        saveRegisteredUser(userObj);
         localStorage.setItem('mv_user_role', upperRole);
         localStorage.setItem('mv_user', JSON.stringify(userObj));
 
@@ -171,9 +246,10 @@ export const authService = {
       // Seamlessly activate SIH demonstration mode
       console.warn('[authService] Backend offline or unreachable at http://localhost:5000. Activating seamless SIH Quick Demo session:', error.message);
 
-      const demoUser = getDemoUser(cleanEmail, expectedRole);
+      const demoUser = getDemoUser(cleanEmail, expectedRole, customName);
       const demoToken = `mock_token_${demoUser.role.toLowerCase()}_${Date.now()}`;
 
+      saveRegisteredUser(demoUser);
       localStorage.setItem('mv_auth_token', demoToken);
       localStorage.setItem('mv_user_role', demoUser.role);
       localStorage.setItem('mv_user', JSON.stringify(demoUser));
@@ -254,6 +330,8 @@ export const authService = {
         licenseNo: licenseNo?.trim() || 'REG-DL-2026-001',
         authenticated: true
       };
+
+      saveRegisteredUser(userObj);
 
       localStorage.setItem('mv_auth_token', demoToken);
       localStorage.setItem('mv_user_role', assignedRole);

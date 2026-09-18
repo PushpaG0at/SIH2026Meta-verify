@@ -18,7 +18,7 @@ export const InstrumentNewPage = () => {
     accuracyClass: 'Class III (Medium Accuracy)',
     purchaseDate: new Date().toISOString().split('T')[0],
     location: '',
-    ownerName: user?.name || 'Rajesh Sharma'
+    ownerName: user?.name || 'Authorized Trader'
   });
 
   const [errors, setErrors] = useState({});
@@ -39,7 +39,7 @@ export const InstrumentNewPage = () => {
       accuracyClass: 'Class III (Medium Accuracy)',
       purchaseDate: '2026-02-14',
       location: 'Secondary Dispatch Counter, Delhi Terminal',
-      ownerName: user?.name || 'Rajesh Sharma'
+      ownerName: user?.name || 'Authorized Trader'
     });
   };
 

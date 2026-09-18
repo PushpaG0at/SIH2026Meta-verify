@@ -103,10 +103,10 @@ export const AuthProvider = ({ children }) => {
   /**
    * Login with strict role enforcement & cross-role access rejection
    */
-  const login = async (email, password, expectedPortalRole = null) => {
+  const login = async (email, password, expectedPortalRole = null, customName = null) => {
     setLoading(true);
     try {
-      const result = await authService.login(email, password, expectedPortalRole);
+      const result = await authService.login(email, password, expectedPortalRole, customName);
       const activeUser = result.user;
       const actualRole = (activeUser.role || expectedPortalRole || 'BUSINESS').toUpperCase();
 

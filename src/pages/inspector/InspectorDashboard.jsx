@@ -70,8 +70,12 @@ export const InspectorDashboard = () => {
               GNSS Telematics Active • Zone 4 North Delhi
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight font-heading">
-            Inspector {user?.name || 'Vikram Singh'}
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight font-heading text-white" style={{ color: '#ffffff' }}>
+            {user?.name?.toLowerCase().startsWith('insp')
+              ? user.name
+              : user?.name
+              ? `Inspector ${user.name}`
+              : 'Insp. Vikram Sharma'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-300">
             Badge: <span className="font-mono text-indigo-200 font-semibold">{user?.badgeNumber || 'INSP-NZ-4082'}</span> • Legal Metrology Field Enforcement Unit

@@ -1,52 +1,43 @@
 import React from 'react';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Scale,
+  Home,
   FileText,
   Award,
-  ClipboardCheck,
   ShieldCheck,
-  CheckCircle2,
-  X,
+  LayoutGrid,
+  HelpCircle,
+  Phone,
+  Settings,
+  Scale,
   LogOut,
-  ChevronRight,
-  UserCheck,
-  Sparkles
+  X
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 export const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { role, user, logout } = useAuth();
+  const { logout } = useAuth();
 
-  const userRole = (user?.role || role || 'BUSINESS').toUpperCase();
-
-  const businessNav = [
-    { label: 'Dashboard', path: '/business/dashboard', icon: LayoutDashboard },
-    { label: 'Instruments', path: '/business/instruments', icon: Scale },
-    { label: 'Applications', path: '/business/applications', icon: FileText },
+  const navItems = [
+    { label: 'Home', path: '/business/dashboard', icon: Home },
+    { label: 'My Applications', path: '/business/applications', icon: FileText },
     { label: 'Certificates', path: '/business/certificates', icon: Award },
+    { label: 'Inspections', path: '/business/instruments', icon: ShieldCheck },
+    { label: 'Services', path: '/business/applications/new', icon: LayoutGrid },
+    { label: 'FAQs', path: '/how-it-works', icon: HelpCircle },
+    { label: 'Contact Us', path: '/how-it-works#contact', icon: Phone },
+    { label: 'Settings', path: '/business/dashboard#settings', icon: Settings },
   ];
-
-  const inspectorNav = [
-    { label: 'Inspector Dashboard', path: '/inspector/dashboard', icon: LayoutDashboard },
-    { label: 'Field Assignments', path: '/inspector/assignments', icon: ClipboardCheck },
-    { label: 'Completed Inspections', path: '/inspector/inspections/completed', icon: CheckCircle2 },
-  ];
-
-  const officerNav = [
-    { label: 'Officer Dashboard', path: '/officer/dashboard', icon: LayoutDashboard },
-    { label: 'Verification Queue', path: '/officer/applications', icon: FileText },
-    { label: 'Inspections Review', path: '/officer/inspections', icon: ClipboardCheck },
-    { label: 'Issued Certificates', path: '/officer/certificates', icon: Award },
-  ];
-
-  const navItems = userRole === 'OFFICER' ? officerNav : userRole === 'INSPECTOR' ? inspectorNav : businessNav;
 
   const handleSignOut = async () => {
-    await logout();
-    navigate('/');
+    try {
+      await logout();
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+      navigate('/login');
+    }
   };
 
   return (
@@ -55,58 +46,30 @@ export const Sidebar = ({ isOpen, onClose }) => {
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 lg:hidden"
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-16 bottom-0 left-0 z-40 w-60 bg-[#07132B] text-slate-300 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } border-r border-slate-800`}
+        } border-r border-slate-800/80 select-none`}
       >
-        <div>
-          {/* Brand header */}
-          <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="font-extrabold text-sm tracking-tight text-white font-heading">
-                  METRA-VERIFY
-                </span>
-                <span className="block text-[10px] text-blue-400 font-mono capitalize">
-                  {userRole.toLowerCase()} Portal
-                </span>
-              </div>
-            </Link>
+        <div className="py-4">
+          {/* Mobile Close Button */}
+          <div className="lg:hidden flex items-center justify-end px-4 pb-2">
             <button
               type="button"
               onClick={onClose}
-              className="lg:hidden text-slate-400 hover:text-white p-1"
+              className="text-slate-400 hover:text-white p-1"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Non-editable Role pill badge */}
-          <div className="px-4 py-2.5 bg-slate-950/60 border-b border-slate-800/80 select-none">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span className="text-[11px] font-medium text-slate-300">
-                  Role: <strong className="text-white uppercase tracking-wider">{userRole}</strong>
-                </span>
-              </div>
-              <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                ACTIVE
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="px-3 py-4 space-y-1">
+          {/* Navigation Items */}
+          <nav className="px-3 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -115,61 +78,43 @@ export const Sidebar = ({ isOpen, onClose }) => {
                   to={item.path}
                   onClick={onClose}
                   className={({ isActive }) =>
-                    `flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                       isActive
-                        ? 'bg-blue-600 text-white shadow-xs font-bold'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-[#1E40AF] text-white shadow-sm font-bold'
+                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                     }`
                   }
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{item.label}</span>
                 </NavLink>
               );
             })}
           </nav>
         </div>
 
-        {/* User Card & Logout Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/40">
-          <div className="flex items-center gap-3 mb-3">
-            <img
-              src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
-              alt={user?.name || 'User'}
-              className="w-9 h-9 rounded-full object-cover border border-slate-700 shrink-0"
-            />
-            <div className="truncate">
-              <p className="text-xs font-semibold text-white truncate">{user?.name || 'Authorized User'}</p>
-              <p className="text-[10px] text-slate-400 truncate">{user?.organization || user?.designation || user?.email}</p>
+        {/* Bottom Statutory Emblem & Sign Out */}
+        <div className="p-4 text-center flex flex-col items-center justify-center border-t border-slate-800/60 space-y-3">
+          <div className="flex flex-col items-center">
+            <div className="w-10 h-10 rounded-full bg-slate-800/80 flex items-center justify-center text-sky-400 mb-1.5 border border-slate-700/60 shadow-inner">
+              <Scale className="w-5 h-5" />
             </div>
+            <span className="text-xs font-bold text-slate-200 block leading-tight">
+              Ensuring Accuracy
+            </span>
+            <span className="text-xs font-bold text-slate-200 block leading-tight mt-0.5">
+              Building Trust
+            </span>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
-            <Link
-              to="/ui-kit"
-              className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold"
-            >
-              <Sparkles className="w-3 h-3 text-blue-400" />
-              <span>UI Kit</span>
-            </Link>
-            <Link
-              to="/about"
-              className="text-[11px] text-slate-400 hover:text-white"
-            >
-              About
-            </Link>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="text-[11px] text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </aside>
     </>

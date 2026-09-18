@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, Search, ArrowRight, Menu, X, CheckCircle2 } from 'lucide-react';
 import Button from '../ui/Button';
+import MetraLogo from '../ui/MetraLogo';
 import { useAuth } from '../../hooks/useAuth';
 
 export const Navbar = () => {
@@ -71,23 +72,8 @@ export const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-600 flex items-center justify-center text-white shadow-sm ring-2 ring-blue-100">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-lg text-slate-900 tracking-tight font-heading">
-                  METRA-VERIFY
-                </span>
-                <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.2 rounded font-mono">
-                  v1.0
-                </span>
-              </div>
-              <p className="text-[10px] font-medium text-slate-500 tracking-wider uppercase">
-                Verify Once. Trust Everywhere.
-              </p>
-            </div>
+          <Link to="/" className="flex items-center gap-3 group">
+            <MetraLogo variant="light" showTagline={true} iconSize={44} />
           </Link>
 
           {/* Center Nav Links */}

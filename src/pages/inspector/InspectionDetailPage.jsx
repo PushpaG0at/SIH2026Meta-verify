@@ -154,7 +154,7 @@ export const InspectionDetailPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await inspectionService.getAssignmentById(id || 'INSP-2026-00104');
+      const data = await inspectionService.getAssignmentById(id || 'INSP-438242');
       setAssignment(data);
       if (data.inspectionReport) {
         if (data.inspectionReport.checklist) setChecklist(data.inspectionReport.checklist);

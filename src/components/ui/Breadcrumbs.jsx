@@ -35,12 +35,20 @@ export const Breadcrumbs = ({ items, className = '' }) => {
 
   if (breadcrumbItems.length === 0) return null;
 
+  const homePath = location.pathname.startsWith('/inspector')
+    ? '/inspector/dashboard'
+    : location.pathname.startsWith('/officer')
+    ? '/officer/dashboard'
+    : location.pathname.startsWith('/business')
+    ? '/business/dashboard'
+    : '/';
+
   return (
     <nav aria-label="Breadcrumb" className={`flex items-center space-x-1.5 text-xs text-slate-500 mb-4 ${className}`}>
       <Link
-        to="/"
+        to={homePath}
         className="flex items-center gap-1 hover:text-slate-800 transition-colors"
-        title="Home"
+        title="Dashboard"
       >
         <Home className="w-3.5 h-3.5" />
       </Link>

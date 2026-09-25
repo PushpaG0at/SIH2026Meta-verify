@@ -89,7 +89,13 @@ export const CertificateCard = ({ certificate, onDownload }) => {
           >
             PDF
           </Button>
-          <Link to={`/business/certificates/${certificate.id}`}>
+          <Link
+            to={
+              typeof window !== 'undefined' && window.location.pathname.startsWith('/officer')
+                ? `/officer/certificates/${certificate.id}`
+                : `/business/certificates/${certificate.id}`
+            }
+          >
             <Button variant="primary" size="sm" leftIcon={Eye}>
               View
             </Button>

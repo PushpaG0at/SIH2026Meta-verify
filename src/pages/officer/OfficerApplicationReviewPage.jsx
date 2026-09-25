@@ -19,7 +19,8 @@ import {
   Hash,
   ShieldAlert,
   Maximize2,
-  Compass
+  Compass,
+  ExternalLink
 } from 'lucide-react';
 import { applicationService } from '../../services/applicationService';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -67,7 +68,7 @@ export const OfficerApplicationReviewPage = () => {
     const fetchApp = async () => {
       setLoading(true);
       try {
-        const data = await applicationService.getApplicationById(id || 'MV-APP-000123');
+        const data = await applicationService.getApplicationById(id || 'MV-APP-438242');
         setApplication(data);
         if (data.status === 'REJECTED' && data.officerRemarks) {
           setRejectionRemarks(data.officerRemarks);
@@ -85,14 +86,14 @@ export const OfficerApplicationReviewPage = () => {
   const handleApproveConfirm = async () => {
     setIsProcessing(true);
     try {
-      const generatedCertId = `MV-2026-${application.id.replace('MV-APP-', '')}`;
+      const generatedCertId = `MV-2026-${(application.id || '').replace('MV-APP-', '')}`;
       await applicationService.updateStatus(application.id, 'APPROVED', approvalRemarks);
       showToast(
-        `Application ${application.id} approved. Certificate ${generatedCertId} cryptographically sealed under DSC signature.`,
+        `Application ${application.id} approved! Opening Form VI Certificate ${generatedCertId}...`,
         'success'
       );
       setApproveModalOpen(false);
-      navigate('/officer/dashboard');
+      navigate(`/officer/certificates/${generatedCertId}`);
     } catch (err) {
       console.error(err);
       showToast('Error approving application.', 'error');
@@ -138,6 +139,63 @@ export const OfficerApplicationReviewPage = () => {
   if (loading) return <LoadingState message="Loading regulatory verification dossier & trust chain..." />;
   if (error || !application) return <ErrorState message={error || 'Application dossier not found.'} />;
 
+  // Normalize checklist items whether provided as object or array
+  const getChecklistItems = (checklist) => {
+    if (!checklist) return [];
+    if (Array.isArray(checklist)) {
+      return checklist.map((c) => ({
+        item: c.item || c.title || c.label || 'Inspection Requirement',
+        passed: c.passed !== undefined ? c.passed : (c.checked !== undefined ? c.checked : true)
+      }));
+    }
+    if (typeof checklist === 'object') {
+      const labels = {
+        instrumentAvailable: 'Instrument Available On-Site for Inspection',
+        serialNumberVisible: 'Stamped Serial Number Clean & Legible',
+        manufacturerDetailsVisible: 'Model & Manufacturer Plate Intact',
+        displayFunctioning: 'Digital Display & Zero Indicator Operational',
+        requiredMarkingsVisible: 'Statutory Verification Markings Displayed',
+        requiredDocumentsAvailable: 'Model Approval Documentation Valid',
+        visualInspection: 'Visual Inspection & Housing Integrity',
+        sealingIntact: 'Calibration Tamper Seal Enclosure Intact',
+        zeroErrorCheck: 'Zero Tare Balance & Centered Level Vial',
+        repeatabilityPass: 'Multi-Trial Repeatability Tolerance Compliant'
+      };
+      return Object.entries(checklist).map(([key, val]) => ({
+        item: labels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase()),
+        passed: Boolean(val)
+      }));
+    }
+    return [];
+  };
+
+  // Normalize measurements whether stringified, partial, or formatted
+  const getMeasurementsList = (measurements) => {
+    if (!measurements) return [];
+    let list = measurements;
+    if (typeof list === 'string') {
+      try { list = JSON.parse(list); } catch { return []; }
+    }
+    if (!Array.isArray(list)) return [];
+    return list.map((m) => {
+      const load = m.testWeightKg !== undefined ? m.testWeightKg : (m.loadKg !== undefined ? m.loadKg : (m.testWeight ? parseFloat(String(m.testWeight).replace(/[^0-9.]/g, '')) : 5));
+      const reading = m.indicatedWeightKg !== undefined ? m.indicatedWeightKg : (m.readingKg !== undefined ? m.readingKg : (m.reading ? parseFloat(String(m.reading).replace(/[^0-9.]/g, '')) : load));
+      const errG = m.errorG !== undefined ? m.errorG : (m.error !== undefined ? m.error : Math.round(Math.abs(Number(reading) - Number(load)) * 1000));
+      const tolG = m.toleranceG !== undefined ? m.toleranceG : (m.tolerance !== undefined ? m.tolerance : 5);
+      const res = m.result || (Math.abs(Number(errG) || 0) <= (typeof tolG === 'number' ? tolG : 10) ? 'PASS' : 'FAIL');
+      return {
+        testWeight: m.testWeight || `${load} kg Class M1 Standard Test Block`,
+        readingKg: reading,
+        errorG: errG,
+        toleranceG: tolG,
+        result: res
+      };
+    });
+  };
+
+  const checklistItems = getChecklistItems(application.inspection?.checklist);
+  const measurementsList = getMeasurementsList(application.inspection?.measurements);
+
   // 7-Stage Digital Trust Chain Definition
   const trustChainStages = [
     {
@@ -181,7 +239,7 @@ export const OfficerApplicationReviewPage = () => {
       id: 'inspection',
       number: 5,
       title: 'Inspection',
-      badge: application.inspection?.checklist ? '6/6 Check' : 'In Progress',
+      badge: checklistItems.length > 0 ? `${checklistItems.filter(c => c.passed).length}/${checklistItems.length} Check` : 'In Progress',
       isPassed: !!application.inspection?.completedDate,
       desc: application.inspection?.inspectorName?.split(' ')[0] || 'Assigned',
       statusText: application.inspection?.completedDate ? 'Site Audit Done' : 'Field Pending'
@@ -190,15 +248,15 @@ export const OfficerApplicationReviewPage = () => {
       id: 'evidence',
       number: 6,
       title: 'Evidence',
-      badge: application.inspection?.measurements?.every((m) => m.result === 'PASS')
+      badge: measurementsList.length > 0 && measurementsList.every((m) => m.result === 'PASS')
         ? 'MPE Verified'
-        : 'MPE Exceeded',
-      isPassed: application.inspection?.measurements?.every((m) => m.result === 'PASS'),
-      isWarning: application.inspection?.measurements?.some((m) => m.result === 'FAIL'),
+        : (measurementsList.length === 0 ? 'Pending Field Audit' : 'MPE Exceeded'),
+      isPassed: measurementsList.length > 0 && measurementsList.every((m) => m.result === 'PASS'),
+      isWarning: measurementsList.some((m) => m.result === 'FAIL'),
       desc: 'GNSS & Photos',
-      statusText: application.inspection?.measurements?.every((m) => m.result === 'PASS')
+      statusText: measurementsList.length > 0 && measurementsList.every((m) => m.result === 'PASS')
         ? 'Tolerances Met'
-        : 'Error Tolerance Fail'
+        : (measurementsList.length === 0 ? 'Awaiting Field Visit' : 'Error Tolerance Fail')
     },
     {
       id: 'decision',
@@ -231,33 +289,60 @@ export const OfficerApplicationReviewPage = () => {
 
         {/* Adjudication Decision Quick Actions */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={FileQuestion}
-            onClick={() => setCorrectionModalOpen(true)}
-            className="text-xs shadow-xs"
-          >
-            Request Correction
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            leftIcon={XCircle}
-            onClick={() => setRejectModalOpen(true)}
-            className="text-xs shadow-xs"
-          >
-            Reject Verification
-          </Button>
-          <Button
-            variant="success"
-            size="sm"
-            leftIcon={CheckCircle2}
-            onClick={() => setApproveModalOpen(true)}
-            className="text-xs shadow-md font-bold"
-          >
-            Approve & Issue Certificate
-          </Button>
+          {application.status === 'APPROVED' ? (
+            <>
+              <Link to={`/officer/certificates/MV-2026-${(application.id || '').replace('MV-APP-', '')}`}>
+                <Button
+                  variant="success"
+                  size="sm"
+                  leftIcon={Award}
+                  className="text-xs shadow-md font-bold"
+                >
+                  View Issued Form VI Certificate
+                </Button>
+              </Link>
+              <Link to={`/verify/MV-2026-${(application.id || '').replace('MV-APP-', '')}`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={Eye}
+                  className="text-xs border-emerald-300 text-emerald-800 bg-emerald-50"
+                >
+                  Public Verification
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={FileQuestion}
+                onClick={() => setCorrectionModalOpen(true)}
+                className="text-xs shadow-xs"
+              >
+                Request Correction
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                leftIcon={XCircle}
+                onClick={() => setRejectModalOpen(true)}
+                className="text-xs shadow-xs"
+              >
+                Reject Verification
+              </Button>
+              <Button
+                variant="success"
+                size="sm"
+                leftIcon={CheckCircle2}
+                onClick={() => setApproveModalOpen(true)}
+                className="text-xs shadow-md font-bold"
+              >
+                Approve & Issue Certificate
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -325,7 +410,7 @@ export const OfficerApplicationReviewPage = () => {
               <button
                 key={stage.id}
                 type="button"
-                aria-label={`View stage ${stage.number}: ${stage.name}`}
+                aria-label={`View stage ${stage.number}: ${stage.title}`}
                 onClick={() => setActiveTrustStage(stage.id)}
                 className={`p-3 rounded-xl border text-left transition-all relative overflow-hidden flex flex-col justify-between ${
                   isSelected
@@ -571,7 +656,7 @@ export const OfficerApplicationReviewPage = () => {
           </div>
 
           <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden text-xs">
-            {application.documents?.map((doc, idx) => (
+            {(Array.isArray(application.documents) ? application.documents : []).map((doc, idx) => (
               <div
                 key={idx}
                 className="p-3.5 bg-slate-50/50 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -684,13 +769,13 @@ export const OfficerApplicationReviewPage = () => {
           </div>
 
           {/* Statutory 6-Item Physical Checklist Results */}
-          {application.inspection?.checklist && (
+          {checklistItems.length > 0 && (
             <div className="space-y-2 pt-1">
               <h4 className="text-xs font-bold text-slate-800">
                 Statutory Physical Examination Verification Checklist:
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {application.inspection.checklist.map((item, idx) => (
+                {checklistItems.map((item, idx) => (
                   <div
                     key={idx}
                     className={`p-2.5 rounded-xl border flex items-center justify-between ${
@@ -765,7 +850,7 @@ export const OfficerApplicationReviewPage = () => {
           </div>
 
           {/* Reference Standard Load Tests Table */}
-          {application.inspection?.measurements && (
+          {measurementsList.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-slate-800">
                 Statutory Reference Load Measurements vs MPE Tolerances (Legal Metrology Rules Schedule VII):
@@ -782,7 +867,7 @@ export const OfficerApplicationReviewPage = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {application.inspection.measurements.map((m, idx) => (
+                    {measurementsList.map((m, idx) => (
                       <tr key={idx}>
                         <td className="px-3.5 py-3 font-semibold text-slate-900">{m.testWeight}</td>
                         <td className="px-3.5 py-3 text-center font-mono font-bold text-slate-800">
@@ -910,44 +995,95 @@ export const OfficerApplicationReviewPage = () => {
           </div>
 
           {/* Adjudication Decision Execution Toolbar */}
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <h4 className="text-sm font-bold text-slate-900">Execute Statutory Order</h4>
-              <p className="text-xs text-slate-500">
-                Issue Legal Metrology Verification Certificate or Statutory Non-Compliance Order
-              </p>
+          {application.status === 'APPROVED' ? (
+            <div className="p-5 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white rounded-xl border border-emerald-500/40 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-800/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <Award className="w-6 h-6 text-emerald-400" />
+                  <div>
+                    <h4 className="text-sm font-bold text-white">
+                      Statutory Verification Certificate (Form VI) Cryptographically Issued
+                    </h4>
+                    <p className="text-[11px] text-emerald-300">
+                      e-Signed under Section 24, Legal Metrology Act, 2009 with Officer Class 3 DSC Token
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold text-emerald-300 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-600/50">
+                  MV-2026-{(application.id || '').replace('MV-APP-', '')}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="p-2.5 bg-emerald-950/60 rounded-lg border border-emerald-800/40">
+                  <span className="text-slate-400 block text-[10px]">Statutory Seal</span>
+                  <span className="font-mono font-bold text-white text-xs">{application.inspection?.sealNumber || 'MV-SEAL-2026-09412'}</span>
+                </div>
+                <div className="p-2.5 bg-emerald-950/60 rounded-lg border border-emerald-800/40">
+                  <span className="text-slate-400 block text-[10px]">Validity</span>
+                  <span className="font-bold text-white text-xs">12 Months (Active)</span>
+                </div>
+                <div className="p-2.5 bg-emerald-950/60 rounded-lg border border-emerald-800/40">
+                  <span className="text-slate-400 block text-[10px]">Signatory Officer</span>
+                  <span className="font-bold text-white text-xs">Dr. Anita Deshmukh</span>
+                </div>
+                <div className="p-2.5 bg-emerald-950/60 rounded-lg border border-emerald-800/40">
+                  <span className="text-slate-400 block text-[10px]">Status</span>
+                  <span className="font-bold text-emerald-400 text-xs">SEALED & ISSUED</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <Link to={`/officer/certificates/MV-2026-${(application.id || '').replace('MV-APP-', '')}`}>
+                  <Button variant="success" size="sm" leftIcon={Eye} className="font-bold text-xs shadow-md">
+                    View Form VI Certificate
+                  </Button>
+                </Link>
+                <Link to={`/verify/MV-2026-${(application.id || '').replace('MV-APP-', '')}`}>
+                  <Button variant="outline" size="sm" leftIcon={ExternalLink} className="text-xs bg-transparent border-emerald-600 text-emerald-300 hover:bg-emerald-900/50">
+                    Public Verification Page
+                  </Button>
+                </Link>
+              </div>
             </div>
+          ) : (
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <h4 className="text-sm font-bold text-slate-900">Execute Statutory Order</h4>
+                <p className="text-xs text-slate-500">
+                  Issue Legal Metrology Verification Certificate or Statutory Non-Compliance Order
+                </p>
+              </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                variant="outline"
-                size="md"
-                leftIcon={FileQuestion}
-                onClick={() => setCorrectionModalOpen(true)}
-                className="text-xs"
-              >
-                Request Correction
-              </Button>
-              <Button
-                variant="danger"
-                size="md"
-                leftIcon={XCircle}
-                onClick={() => setRejectModalOpen(true)}
-                className="text-xs shadow-xs"
-              >
-                Reject Order
-              </Button>
-              <Button
-                variant="success"
-                size="md"
-                leftIcon={CheckCircle2}
-                onClick={() => setApproveModalOpen(true)}
-                className="text-xs shadow-md font-bold"
-              >
-                Approve & Issue Certificate
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="outline"
+                  size="md"
+                  leftIcon={FileQuestion}
+                  onClick={() => setCorrectionModalOpen(true)}
+                  className="text-xs"
+                >
+                  Request Correction
+                </Button>
+                <Button
+                  variant="danger"
+                  size="md"
+                  leftIcon={XCircle}
+                  onClick={() => setRejectModalOpen(true)}
+                  className="text-xs shadow-xs"
+                >
+                  Reject Order
+                </Button>
+                <Button
+                  variant="success"
+                  size="md"
+                  leftIcon={CheckCircle2}
+                  onClick={() => setApproveModalOpen(true)}
+                  className="text-xs shadow-md font-bold"
+                >
+                  Approve & Issue Certificate
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 

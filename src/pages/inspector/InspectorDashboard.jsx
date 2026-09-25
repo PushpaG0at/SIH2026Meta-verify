@@ -51,11 +51,15 @@ export const InspectorDashboard = () => {
     };
 
     window.addEventListener('mv_inspection_updated', handleUpdate);
+    window.addEventListener('mv_application_updated', handleUpdate);
     window.addEventListener('focus', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
 
     return () => {
       window.removeEventListener('mv_inspection_updated', handleUpdate);
+      window.removeEventListener('mv_application_updated', handleUpdate);
       window.removeEventListener('focus', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
     };
   }, []);
 

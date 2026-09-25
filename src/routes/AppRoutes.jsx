@@ -134,6 +134,7 @@ export const AppRoutes = () => {
         <Route path="applications/:id" element={<OfficerApplicationReviewPage />} />
         <Route path="inspections" element={<AssignmentsListPage />} />
         <Route path="certificates" element={<CertificatesListPage />} />
+        <Route path="certificates/:id" element={<CertificateDetailPage />} />
       </Route>
 
       {/* Direct Access Denied Interception Page */}

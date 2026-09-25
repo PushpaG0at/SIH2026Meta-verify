@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   ClipboardCheck,
   MapPin,
@@ -24,12 +24,23 @@ import ErrorState from '../../components/ui/ErrorState';
 
 export const AssignmentsListPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isOfficer = location.pathname.startsWith('/officer');
+  const isCompletedRoute = location.pathname.includes('completed');
+
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
-  const [statusTab, setStatusTab] = useState('ALL'); // 'ALL' | 'PENDING' | 'COMPLETED'
+  const [statusTab, setStatusTab] = useState(isCompletedRoute ? 'COMPLETED' : 'ALL'); // 'ALL' | 'PENDING' | 'COMPLETED'
+
+  // Synchronize status tab if route changes between assignments and completed
+  useEffect(() => {
+    if (location.pathname.includes('completed')) {
+      setStatusTab('COMPLETED');
+    }
+  }, [location.pathname]);
 
   const fetchAssignments = async () => {
     setLoading(true);
@@ -47,6 +58,22 @@ export const AssignmentsListPage = () => {
 
   useEffect(() => {
     fetchAssignments();
+
+    const handleSync = () => {
+      fetchAssignments();
+    };
+
+    window.addEventListener('mv_inspection_updated', handleSync);
+    window.addEventListener('mv_application_updated', handleSync);
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('storage', handleSync);
+
+    return () => {
+      window.removeEventListener('mv_inspection_updated', handleSync);
+      window.removeEventListener('mv_application_updated', handleSync);
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
   }, []);
 
 
@@ -80,10 +107,14 @@ export const AssignmentsListPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-heading">
-            Field Inspection Assignments
+            {isOfficer
+              ? 'Inspection Oversight & Records'
+              : (isCompletedRoute ? 'Completed Field Audits' : 'Field Inspection Assignments')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Legal metrology physical inspection roster, GPS geofencing & reference weight audits
+            {isOfficer
+              ? 'Statutory oversight of field telemetry logs, GPS geofencing & calibration evidence'
+              : 'Legal metrology physical inspection roster, GPS geofencing & reference weight audits'}
           </p>
         </div>
 
@@ -260,11 +291,20 @@ export const AssignmentsListPage = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => navigate(`/inspector/assignments/${item.id}`)}
+                  onClick={() => {
+                    if (isOfficer) {
+                      const targetId = item.applicationId || item.id;
+                      navigate(`/officer/applications/${targetId}`);
+                    } else {
+                      navigate(`/inspector/assignments/${item.id}`);
+                    }
+                  }}
                   rightIcon={ArrowRight}
                   className="shadow-xs"
                 >
-                  {item.status === 'COMPLETED' ? 'View Full Report' : 'Execute Inspection'}
+                  {isOfficer
+                    ? 'Review Application'
+                    : (item.status === 'COMPLETED' ? 'View Full Report' : 'Execute Inspection')}
                 </Button>
               </div>
             </div>

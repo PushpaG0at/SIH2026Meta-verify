@@ -121,24 +121,24 @@ export const OfficerDashboard = () => {
   // Audit activity ticker items
   const auditTicker = [
     {
-      time: '12m ago',
-      type: 'INSPECTION_SUBMITTED',
-      text: 'Inspector Vikram Singh uploaded GNSS telematics & MPE test for MV-APP-000130 (70 L/min Flow Meter)',
-      badge: 'Telematics Verified',
+      time: 'Just now',
+      type: 'INSPECTION_ASSIGNED',
+      text: 'Field Inspector Vikram Sharma assigned to MV-APP-438242 (Electronic Bench Scale)',
+      badge: 'Inspector Assigned',
+      badgeColor: 'text-blue-700 bg-blue-50 border-blue-200'
+    },
+    {
+      time: '5m ago',
+      type: 'AI_PRECHECK_PASSED',
+      text: 'AI pre-verification passed with 94/100 trust score for MV-APP-438242',
+      badge: 'AI Verified',
       badgeColor: 'text-emerald-700 bg-emerald-50 border-emerald-200'
     },
     {
-      time: '34m ago',
-      type: 'AI_PRECHECK_ANOMALY',
-      text: 'AI OCR flagged 140kg error on MV-APP-000126 (Weighbridge 60T) exceeding Class IV MPE',
-      badge: 'High Risk Flag',
-      badgeColor: 'text-rose-700 bg-rose-50 border-rose-200'
-    },
-    {
-      time: '1h 15m ago',
-      type: 'CERTIFICATE_SEALED',
-      text: 'Statutory Certificate MV-2026-000123 cryptographically anchored by Officer Deshmukh',
-      badge: 'e-Signed SHA-256',
+      time: '20m ago',
+      type: 'SYSTEM_AUDIT',
+      text: 'National Legal Metrology index synchronization active for NCT of Delhi',
+      badge: 'System Healthy',
       badgeColor: 'text-purple-700 bg-purple-50 border-purple-200'
     }
   ];
@@ -255,15 +255,28 @@ export const OfficerDashboard = () => {
       header: 'Action',
       accessor: 'actions',
       render: (row) => (
-        <Link to={`/officer/applications/${row.id}`}>
-          <Button
-            variant={isPending(row.status) ? 'primary' : 'outline'}
-            size="sm"
-            className={isPending(row.status) ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
-          >
-            {isPending(row.status) ? 'Adjudicate' : 'Review Dossier'}
-          </Button>
-        </Link>
+        <div className="flex items-center gap-1.5">
+          {row.status === 'APPROVED' && (
+            <Link to={`/officer/certificates/MV-2026-${(row.id || '').replace('MV-APP-', '')}`}>
+              <Button
+                variant="success"
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-500 shadow-xs text-xs font-bold text-white px-2 py-1"
+              >
+                View Cert
+              </Button>
+            </Link>
+          )}
+          <Link to={`/officer/applications/${row.id}`}>
+            <Button
+              variant={isPending(row.status) ? 'primary' : 'outline'}
+              size="sm"
+              className={isPending(row.status) ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
+            >
+              {isPending(row.status) ? 'Adjudicate' : 'Dossier'}
+            </Button>
+          </Link>
+        </div>
       )
     }
   ];
@@ -374,14 +387,14 @@ export const OfficerDashboard = () => {
         />
         <StatCard
           title="Certificates Issued"
-          value={loading ? '-' : (approvedCount > 0 ? approvedCount : stats.approvedTotal)}
+          value={loading ? '-' : approvedCount}
           subtitle="Cryptographically sealed"
           icon={CheckCircle2}
           iconColor="text-emerald-600 bg-emerald-50"
         />
         <StatCard
           title="Rejections / Void"
-          value={loading ? '-' : (rejectedCount > 0 ? rejectedCount : stats.rejectedTotal)}
+          value={loading ? '-' : rejectedCount}
           subtitle="Statutory non-compliance"
           icon={XCircle}
           iconColor="text-rose-600 bg-rose-50"

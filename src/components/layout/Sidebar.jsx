@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Home,
   FileText,
@@ -7,28 +7,117 @@ import {
   ShieldCheck,
   LayoutGrid,
   HelpCircle,
-  Phone,
-  Settings,
   Scale,
   LogOut,
-  X
+  X,
+  LayoutDashboard,
+  ClipboardCheck,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
+// Role and domain-specific navigation configurations
+// Only options accessible by the respective domain user are included
+const DOMAIN_CONFIG = {
+  INSPECTOR: {
+    title: 'Inspector Telematics',
+    tag: 'Field Unit',
+    accentDot: 'bg-amber-400',
+    badgeClass: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+    items: [
+      { label: 'Dashboard', path: '/inspector/dashboard', icon: LayoutDashboard },
+      { label: 'Assignments Queue', path: '/inspector/assignments', icon: ClipboardCheck },
+      { label: 'Completed Audits', path: '/inspector/inspections/completed', icon: CheckCircle2 }
+    ]
+  },
+  OFFICER: {
+    title: 'Statutory Officer',
+    tag: 'Adjudication',
+    accentDot: 'bg-emerald-400',
+    badgeClass: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+    items: [
+      { label: 'Dashboard', path: '/officer/dashboard', icon: LayoutDashboard },
+      { label: 'Applications Review', path: '/officer/applications', icon: FileText },
+      { label: 'Inspections Oversight', path: '/officer/inspections', icon: ShieldCheck },
+      { label: 'Certificates', path: '/officer/certificates', icon: Award }
+    ]
+  },
+  BUSINESS: {
+    title: 'Applicant Portal',
+    tag: 'Trader Desk',
+    accentDot: 'bg-blue-400',
+    badgeClass: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',
+    items: [
+      { label: 'Dashboard', path: '/business/dashboard', icon: Home },
+      { label: 'My Applications', path: '/business/applications', icon: FileText },
+      { label: 'New Application', path: '/business/applications/new', icon: LayoutGrid },
+      { label: 'Instruments', path: '/business/instruments', icon: Scale },
+      { label: 'Certificates', path: '/business/certificates', icon: Award },
+      { label: 'Help & FAQs', path: '/how-it-works', icon: HelpCircle }
+    ]
+  }
+};
+
 export const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const location = useLocation();
+  const { logout, user, role } = useAuth();
 
-  const navItems = [
-    { label: 'Home', path: '/business/dashboard', icon: Home },
-    { label: 'My Applications', path: '/business/applications', icon: FileText },
-    { label: 'Certificates', path: '/business/certificates', icon: Award },
-    { label: 'Inspections', path: '/business/instruments', icon: ShieldCheck },
-    { label: 'Services', path: '/business/applications/new', icon: LayoutGrid },
-    { label: 'FAQs', path: '/how-it-works', icon: HelpCircle },
-    { label: 'Contact Us', path: '/how-it-works#contact', icon: Phone },
-    { label: 'Settings', path: '/business/dashboard#settings', icon: Settings },
-  ];
+  // Determine active domain: prioritize URL path, then fallback to authenticated role
+  const getDomain = () => {
+    if (location.pathname.startsWith('/inspector')) return 'INSPECTOR';
+    if (location.pathname.startsWith('/officer')) return 'OFFICER';
+    if (location.pathname.startsWith('/business')) return 'BUSINESS';
+
+    const effectiveRole = (user?.role || role || '').toUpperCase();
+    if (effectiveRole === 'INSPECTOR') return 'INSPECTOR';
+    if (effectiveRole === 'OFFICER') return 'OFFICER';
+    return 'BUSINESS';
+  };
+
+  const domain = getDomain();
+  const currentConfig = DOMAIN_CONFIG[domain] || DOMAIN_CONFIG.BUSINESS;
+  const navItems = currentConfig.items;
+
+  // Accurate active state matching tailored to domain sub-routes
+  const isItemActive = (item) => {
+    const currentPath = location.pathname;
+
+    // Exact matches for dashboards
+    if (
+      item.path === '/inspector/dashboard' ||
+      item.path === '/officer/dashboard' ||
+      item.path === '/business/dashboard'
+    ) {
+      return currentPath === item.path;
+    }
+
+    // Inspector completed audits vs general assignments queue
+    if (item.path === '/inspector/inspections/completed') {
+      return currentPath.includes('/completed');
+    }
+    if (item.path === '/inspector/assignments') {
+      return (
+        (currentPath.startsWith('/inspector/assignments') ||
+          currentPath.startsWith('/inspector/inspections')) &&
+        !currentPath.includes('/completed')
+      );
+    }
+
+    // Business applications: avoid highlighting "My Applications" when on "New Application"
+    if (item.path === '/business/applications') {
+      return (
+        currentPath.startsWith('/business/applications') &&
+        currentPath !== '/business/applications/new'
+      );
+    }
+    if (item.path === '/business/applications/new') {
+      return currentPath === '/business/applications/new';
+    }
+
+    // General prefix match for other routes
+    return currentPath.startsWith(item.path);
+  };
 
   const handleSignOut = async () => {
     try {
@@ -68,22 +157,34 @@ export const Sidebar = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          {/* Navigation Items */}
+          {/* Domain Category Pill Badge */}
+          <div className="px-4 pb-3 mb-2 border-b border-slate-800/70 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${currentConfig.accentDot}`} />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                {currentConfig.title}
+              </span>
+            </div>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tight ${currentConfig.badgeClass}`}>
+              {currentConfig.tag}
+            </span>
+          </div>
+
+          {/* Navigation Items (strictly domain-accessible only) */}
           <nav className="px-3 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const active = isItemActive(item);
               return (
                 <NavLink
                   key={item.path}
                   to={item.path}
                   onClick={onClose}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                      isActive
-                        ? 'bg-[#1E40AF] text-white shadow-sm font-bold'
-                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                    }`
-                  }
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    active
+                      ? 'bg-[#1E40AF] text-white shadow-sm font-bold'
+                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                  }`}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
                   <span>{item.label}</span>

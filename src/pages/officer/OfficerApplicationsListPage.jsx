@@ -289,15 +289,28 @@ export const OfficerApplicationsListPage = () => {
       header: 'Adjudication',
       accessor: 'action',
       render: (row) => (
-        <Link to={`/officer/applications/${row.id}`}>
-          <Button
-            variant={isPending(row.status) ? 'primary' : 'outline'}
-            size="sm"
-            className={isPending(row.status) ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
-          >
-            {isPending(row.status) ? 'Adjudicate' : 'Review Dossier'}
-          </Button>
-        </Link>
+        <div className="flex items-center gap-1.5">
+          {row.status === 'APPROVED' && (
+            <Link to={`/officer/certificates/MV-2026-${(row.id || '').replace('MV-APP-', '')}`}>
+              <Button
+                variant="success"
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-500 shadow-xs text-xs font-bold text-white px-2 py-1"
+              >
+                Form VI
+              </Button>
+            </Link>
+          )}
+          <Link to={`/officer/applications/${row.id}`}>
+            <Button
+              variant={isPending(row.status) ? 'primary' : 'outline'}
+              size="sm"
+              className={isPending(row.status) ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
+            >
+              {isPending(row.status) ? 'Adjudicate' : 'Review Dossier'}
+            </Button>
+          </Link>
+        </div>
       )
     }
   ];

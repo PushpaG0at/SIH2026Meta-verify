@@ -51,7 +51,7 @@ export const InspectorLayout = () => {
           <span>Assignments</span>
         </NavLink>
         <NavLink
-          to="/inspector/assignments/INSP-2026-00104"
+          to="/inspector/assignments/INSP-438242"
           className={({ isActive }) =>
             `flex flex-col items-center gap-1 text-[11px] font-semibold py-1 ${
               isActive ? 'text-blue-600' : 'text-slate-500'

@@ -86,17 +86,31 @@ export const CertificateDetailPage = () => {
   if (loading) return <LoadingState message="Loading legal metrology verification certificate..." />;
   if (error || !certificate) return <ErrorState message={error || 'Certificate record not found.'} />;
 
-  return (
+    const isOfficer = typeof window !== 'undefined' && window.location.pathname.startsWith('/officer');
+    const backPath = isOfficer ? '/officer/certificates' : '/business/certificates';
+
+    return (
     <div className="max-w-4xl mx-auto space-y-6 pb-16">
       {/* Top Action Bar (hidden in print) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <Link
-          to="/business/certificates"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Issued Certificates</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to={backPath}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>{isOfficer ? 'Back to Officer Certificates' : 'Back to Issued Certificates'}</span>
+          </Link>
+          {isOfficer && certificate.applicationId && (
+            <Link
+              to={`/officer/applications/${certificate.applicationId}`}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-md transition-colors"
+            >
+              <FileText className="w-3 h-3" />
+              <span>Review Application {certificate.applicationId}</span>
+            </Link>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* Direct Verify Button */}

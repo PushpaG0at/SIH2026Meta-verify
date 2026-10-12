@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Bell, ChevronDown, LogOut, User as UserIcon, Building2, ShieldCheck } from 'lucide-react';
+import { Menu, Bell, ChevronDown, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useLanguage } from '../../context/LanguageContext';
+import LanguageSelector from '../common/LanguageSelector';
 import EmblemIndia from '../common/EmblemIndia';
 
 export const Topbar = ({ onOpenSidebar }) => {
   const navigate = useNavigate();
   const { role, user, logout } = useAuth();
+  const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -27,12 +30,12 @@ export const Topbar = ({ onOpenSidebar }) => {
     : (cleanNameForInitials.slice(0, 2).toUpperCase() || 'MV');
 
   const userRoleLabel = effectiveRole === 'BUSINESS'
-    ? 'Business Owner'
+    ? t.roleBusinessOwner
     : effectiveRole === 'INSPECTOR'
-    ? 'Field Inspector'
+    ? t.roleFieldInspector
     : effectiveRole === 'OFFICER'
-    ? 'Statutory Officer'
-    : 'Business Owner';
+    ? t.roleStatutoryOfficer
+    : t.roleBusinessOwner;
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -62,7 +65,7 @@ export const Topbar = ({ onOpenSidebar }) => {
         <button
           type="button"
           onClick={onOpenSidebar}
-          className="lg:hidden p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 focus:outline-none"
+          className="lg:hidden p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 focus:outline-none cursor-pointer"
           title="Open Menu"
         >
           <Menu className="w-5 h-5" />
@@ -73,13 +76,13 @@ export const Topbar = ({ onOpenSidebar }) => {
           <EmblemIndia variant="light" className="w-7 h-9 shrink-0 drop-shadow-sm" />
           <div className="flex flex-col text-left">
             <span className="text-[11px] font-bold text-white leading-tight tracking-tight">
-              Government of India
+              {t.govIndia}
             </span>
             <span className="text-[9px] text-slate-300 leading-tight hidden sm:block">
-              Ministry of Consumer Affairs, Food & Public Distribution
+              {t.ministryDept}
             </span>
             <span className="text-[9px] text-slate-400 leading-tight hidden sm:block">
-              Department of Legal Metrology
+              {t.deptLegalMetrology}
             </span>
           </div>
         </div>
@@ -90,21 +93,24 @@ export const Topbar = ({ onOpenSidebar }) => {
         {/* Brand Title */}
         <div className="hidden sm:flex flex-col text-left">
           <span className="text-base sm:text-lg font-bold text-white tracking-tight leading-tight font-heading">
-            Metra - Verify
+            {t.metraVerify}
           </span>
           <span className="text-[10px] text-slate-300 leading-tight">
-            Legal Metrology Verification Portal
+            {t.verificationPortal}
           </span>
         </div>
       </div>
 
-      {/* Right: Notifications, User Profile & Sign Out Option */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      {/* Right: Language Selector, Notifications, User Profile & Sign Out Option */}
+      <div className="flex items-center gap-2.5 sm:gap-3.5">
+        {/* Language Selector Dropdown (Supports English & हिन्दी with instant global switch) */}
+        <LanguageSelector variant="dark" />
+
         {/* Notification Bell with alert dot */}
         <button
           type="button"
-          className="relative p-2 text-slate-300 hover:text-white transition-colors rounded-lg hover:bg-slate-800"
-          title="Notifications"
+          className="relative p-2 text-slate-300 hover:text-white transition-colors rounded-lg hover:bg-slate-800 cursor-pointer"
+          title={t.notifications}
         >
           <Bell className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#07132B]" />
@@ -149,7 +155,7 @@ export const Topbar = ({ onOpenSidebar }) => {
 
               {user?.organization && (
                 <div className="px-4 py-2 text-[11px] text-slate-400 border-b border-slate-800">
-                  <span className="block text-slate-500 text-[9px] uppercase font-bold">Organization</span>
+                  <span className="block text-slate-500 text-[9px] uppercase font-bold">{t.organization}</span>
                   <span className="text-slate-300 font-medium">{user.organization}</span>
                 </div>
               )}
@@ -161,7 +167,7 @@ export const Topbar = ({ onOpenSidebar }) => {
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-400 hover:text-white hover:bg-rose-600/20 rounded-xl transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 text-rose-400" />
-                  <span>Sign Out of Portal</span>
+                  <span>{t.signOutPortal}</span>
                 </button>
               </div>
             </div>
@@ -173,10 +179,10 @@ export const Topbar = ({ onOpenSidebar }) => {
           type="button"
           onClick={handleSignOut}
           className="flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-rose-500/15 hover:bg-rose-600/30 text-rose-300 hover:text-white border border-rose-500/30 hover:border-rose-400 text-xs font-bold transition-all cursor-pointer shadow-xs"
-          title="Sign Out"
+          title={t.signOut}
         >
           <LogOut className="w-3.5 h-3.5 text-rose-400" />
-          <span className="hidden sm:inline">Sign Out</span>
+          <span className="hidden sm:inline">{t.signOut}</span>
         </button>
       </div>
     </header>

@@ -1,9 +1,11 @@
 import React from 'react';
 import { getRiskConfig } from '../../utils/formatters';
+import { useLanguage } from '../../context/LanguageContext';
 import { ShieldAlert, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 export const RiskBadge = ({ level = 'LOW', score, showIcon = true, className = '' }) => {
-  const config = getRiskConfig(level);
+  const { isHindi } = useLanguage();
+  const config = getRiskConfig(level, isHindi);
 
   const getIcon = () => {
     switch (level?.toUpperCase()) {

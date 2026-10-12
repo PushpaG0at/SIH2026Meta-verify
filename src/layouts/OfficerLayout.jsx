@@ -4,16 +4,18 @@ import Sidebar from '../components/layout/Sidebar';
 import Topbar from '../components/layout/Topbar';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
 import ErrorBoundary from '../components/common/ErrorBoundary';
+import { useLanguage } from '../context/LanguageContext';
 
 export const OfficerLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isHindi } = useLanguage();
 
   return (
     <div className="min-h-screen bg-[#F0F4F8] text-slate-900 flex flex-col font-sans">
       {/* Official Government Full-Width Topbar */}
       <Topbar
         onOpenSidebar={() => setSidebarOpen(true)}
-        title="Authorized Verification Officer Desk"
+        title={isHindi ? 'अधिकृत सत्यापन अधिकारी डेस्क' : 'Authorized Verification Officer Desk'}
       />
 
       <div className="flex-1 flex min-w-0 relative">

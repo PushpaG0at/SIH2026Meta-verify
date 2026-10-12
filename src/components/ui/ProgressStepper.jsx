@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const STEPS = [
   { id: 'draft', label: 'Draft' },
@@ -12,7 +13,19 @@ export const STEPS = [
   { id: 'certificate', label: 'Certificate' }
 ];
 
+const STEP_LABELS_HI = {
+  draft: 'प्रारूप',
+  documents: 'दस्तावेज़',
+  ai_precheck: 'एआई प्री-चेक',
+  submitted: 'प्रस्तुत',
+  inspection: 'निरीक्षण',
+  officer_review: 'अधिकारी समीक्षा',
+  approved: 'स्वीकृत',
+  certificate: 'प्रमाणपत्र'
+};
+
 export const ProgressStepper = ({ currentStep = 1, steps = STEPS }) => {
+  const { isHindi } = useLanguage();
   return (
     <div className="w-full py-4 overflow-x-auto">
       <div className="flex items-center justify-between min-w-[620px] px-2">
@@ -45,7 +58,7 @@ export const ProgressStepper = ({ currentStep = 1, steps = STEPS }) => {
                       : 'text-slate-400'
                   }`}
                 >
-                  {step.label}
+                  {isHindi ? (STEP_LABELS_HI[step.id] || step.label) : step.label}
                 </span>
               </div>
 

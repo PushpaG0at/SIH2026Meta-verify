@@ -15,53 +15,53 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-
-// Role and domain-specific navigation configurations
-// Only options accessible by the respective domain user are included
-const DOMAIN_CONFIG = {
-  INSPECTOR: {
-    title: 'Inspector Telematics',
-    tag: 'Field Unit',
-    accentDot: 'bg-amber-400',
-    badgeClass: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
-    items: [
-      { label: 'Dashboard', path: '/inspector/dashboard', icon: LayoutDashboard },
-      { label: 'Assignments Queue', path: '/inspector/assignments', icon: ClipboardCheck },
-      { label: 'Completed Audits', path: '/inspector/inspections/completed', icon: CheckCircle2 }
-    ]
-  },
-  OFFICER: {
-    title: 'Statutory Officer',
-    tag: 'Adjudication',
-    accentDot: 'bg-emerald-400',
-    badgeClass: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
-    items: [
-      { label: 'Dashboard', path: '/officer/dashboard', icon: LayoutDashboard },
-      { label: 'Applications Review', path: '/officer/applications', icon: FileText },
-      { label: 'Inspections Oversight', path: '/officer/inspections', icon: ShieldCheck },
-      { label: 'Certificates', path: '/officer/certificates', icon: Award }
-    ]
-  },
-  BUSINESS: {
-    title: 'Applicant Portal',
-    tag: 'Trader Desk',
-    accentDot: 'bg-blue-400',
-    badgeClass: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',
-    items: [
-      { label: 'Dashboard', path: '/business/dashboard', icon: Home },
-      { label: 'My Applications', path: '/business/applications', icon: FileText },
-      { label: 'New Application', path: '/business/applications/new', icon: LayoutGrid },
-      { label: 'Instruments', path: '/business/instruments', icon: Scale },
-      { label: 'Certificates', path: '/business/certificates', icon: Award },
-      { label: 'Help & FAQs', path: '/how-it-works', icon: HelpCircle }
-    ]
-  }
-};
+import { useLanguage } from '../../context/LanguageContext';
 
 export const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user, role } = useAuth();
+  const { t } = useLanguage();
+
+  const domainConfig = {
+    INSPECTOR: {
+      title: t.inspectorTelematics || 'Inspector Telematics',
+      tag: t.fieldUnit || 'Field Unit',
+      accentDot: 'bg-amber-400',
+      badgeClass: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+      items: [
+        { label: t.dashboard || 'Dashboard', path: '/inspector/dashboard', icon: LayoutDashboard },
+        { label: t.assignmentsQueue || 'Assignments Queue', path: '/inspector/assignments', icon: ClipboardCheck },
+        { label: t.completedAudits || 'Completed Audits', path: '/inspector/inspections/completed', icon: CheckCircle2 }
+      ]
+    },
+    OFFICER: {
+      title: t.statutoryOfficer || 'Statutory Officer',
+      tag: t.adjudication || 'Adjudication',
+      accentDot: 'bg-emerald-400',
+      badgeClass: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+      items: [
+        { label: t.dashboard || 'Dashboard', path: '/officer/dashboard', icon: LayoutDashboard },
+        { label: t.applicationsReview || 'Applications Review', path: '/officer/applications', icon: FileText },
+        { label: t.inspectionsOversight || 'Inspections Oversight', path: '/officer/inspections', icon: ShieldCheck },
+        { label: t.certificates || 'Certificates', path: '/officer/certificates', icon: Award }
+      ]
+    },
+    BUSINESS: {
+      title: t.applicantPortal || 'Applicant Portal',
+      tag: t.traderDesk || 'Trader Desk',
+      accentDot: 'bg-blue-400',
+      badgeClass: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',
+      items: [
+        { label: t.dashboard || 'Dashboard', path: '/business/dashboard', icon: Home },
+        { label: t.myApplications || 'My Applications', path: '/business/applications', icon: FileText },
+        { label: t.newApplication || 'New Application', path: '/business/applications/new', icon: LayoutGrid },
+        { label: t.instruments || 'Instruments', path: '/business/instruments', icon: Scale },
+        { label: t.certificates || 'Certificates', path: '/business/certificates', icon: Award },
+        { label: t.helpFaqs || 'Help & FAQs', path: '/how-it-works', icon: HelpCircle }
+      ]
+    }
+  };
 
   // Determine active domain: prioritize URL path, then fallback to authenticated role
   const getDomain = () => {
@@ -76,7 +76,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const domain = getDomain();
-  const currentConfig = DOMAIN_CONFIG[domain] || DOMAIN_CONFIG.BUSINESS;
+  const currentConfig = domainConfig[domain] || domainConfig.BUSINESS;
   const navItems = currentConfig.items;
 
   // Accurate active state matching tailored to domain sub-routes
@@ -151,7 +151,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             <button
               type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-1"
+              className="text-slate-400 hover:text-white p-1 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -201,10 +201,10 @@ export const Sidebar = ({ isOpen, onClose }) => {
               <Scale className="w-5 h-5" />
             </div>
             <span className="text-xs font-bold text-slate-200 block leading-tight">
-              Ensuring Accuracy
+              {t.ensuringAccuracy || 'Ensuring Accuracy'}
             </span>
             <span className="text-xs font-bold text-slate-200 block leading-tight mt-0.5">
-              Building Trust
+              {t.buildingTrust || 'Building Trust'}
             </span>
           </div>
 
@@ -214,7 +214,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Sign Out</span>
+            <span>{t.signOut || 'Sign Out'}</span>
           </button>
         </div>
       </aside>

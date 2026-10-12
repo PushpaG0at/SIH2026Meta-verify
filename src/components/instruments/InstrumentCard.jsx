@@ -2,8 +2,10 @@ import React from 'react';
 import { Scale, MapPin, Calendar, Award, ChevronRight } from 'lucide-react';
 import StatusBadge from '../ui/StatusBadge';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const InstrumentCard = ({ instrument }) => {
+  const { isHindi } = useLanguage();
   if (!instrument) return null;
 
   return (
@@ -28,15 +30,15 @@ export const InstrumentCard = ({ instrument }) => {
 
         <div className="mt-4 pt-3 border-t border-slate-100 space-y-2 text-xs">
           <div className="flex justify-between">
-            <span className="text-slate-500">Make & Model:</span>
+            <span className="text-slate-500">{isHindi ? 'मेक और मॉडल:' : 'Make & Model:'}</span>
             <span className="font-medium text-slate-800 text-right">{instrument.manufacturer} ({instrument.model})</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Serial Number:</span>
+            <span className="text-slate-500">{isHindi ? 'सीरियल नंबर:' : 'Serial Number:'}</span>
             <span className="font-mono font-semibold text-slate-800">{instrument.serialNumber}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Capacity & Class:</span>
+            <span className="text-slate-500">{isHindi ? 'क्षमता और वर्ग:' : 'Capacity & Class:'}</span>
             <span className="font-medium text-slate-800">{instrument.capacity} • {instrument.accuracyClass}</span>
           </div>
           <div className="flex items-center gap-1 text-slate-500 pt-1 truncate">
@@ -49,13 +51,13 @@ export const InstrumentCard = ({ instrument }) => {
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5 text-slate-500">
           <Calendar className="w-3.5 h-3.5" />
-          <span>Purchased: {instrument.purchaseDate}</span>
+          <span>{isHindi ? 'खरीद तिथि:' : 'Purchased:'} {instrument.purchaseDate}</span>
         </div>
         <Link
           to={`/business/instruments/${instrument.id}`}
           className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 hover:underline"
         >
-          Details
+          {isHindi ? 'विवरण' : 'Details'}
           <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>

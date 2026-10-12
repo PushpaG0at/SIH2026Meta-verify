@@ -21,10 +21,12 @@ import FilterDropdown from '../../components/ui/FilterDropdown';
 import LoadingState from '../../components/ui/LoadingState';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const AssignmentsListPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t, isHindi } = useLanguage();
   const isOfficer = location.pathname.startsWith('/officer');
   const isCompletedRoute = location.pathname.includes('completed');
 
@@ -98,6 +100,34 @@ export const AssignmentsListPage = () => {
     return matchesSearch && matchesPriority && matchesStatus;
   });
 
+  const translateInstrumentType = (type) => {
+    if (!isHindi || !type) return type;
+    const map = {
+      'Electronic Bench Scale': 'इलेक्ट्रॉनिक बेंच स्केल',
+      'Digital Weighing Scale': 'डिजिटल वेइंग स्केल',
+      'Platform Scale': 'प्लेटफ़ॉर्म स्केल',
+      'Weighbridge': 'वेब्रिज',
+      'Fuel Dispenser': 'ईंधन डिस्पेंसर',
+      'Flow Meter': 'फ़्लो मीटर',
+      'Non-Automatic Weighing Instrument (NAWI)': 'गैर-स्वचालित वजन उपकरण (NAWI)',
+      'Automatic Gravimetric Filling Instrument': 'स्वचालित भरण उपकरण'
+    };
+    return map[type] || type;
+  };
+
+  const translateAccuracyClass = (cls) => {
+    if (!isHindi || !cls) return cls;
+    return cls
+      .replace(/Class III/g, 'वर्ग III')
+      .replace(/Class II/g, 'वर्ग II')
+      .replace(/Class I/g, 'वर्ग I')
+      .replace(/Class IV/g, 'वर्ग IV')
+      .replace(/Medium Accuracy/gi, 'मध्यम सटीकता')
+      .replace(/High Accuracy/gi, 'उच्च सटीकता')
+      .replace(/Special Accuracy/gi, 'विशेष सटीकता')
+      .replace(/Ordinary Accuracy/gi, 'साधारण सटीकता');
+  };
+
   const pendingCount = assignments.filter((a) => a.status === 'PENDING' || a.status === 'ASSIGNED' || a.status === 'INSPECTION_ASSIGNED').length;
   const completedCount = assignments.filter((a) => a.status === 'COMPLETED' || a.status === 'INSPECTION_COMPLETED').length;
 
@@ -108,13 +138,13 @@ export const AssignmentsListPage = () => {
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-heading">
             {isOfficer
-              ? 'Inspection Oversight & Records'
-              : (isCompletedRoute ? 'Completed Field Audits' : 'Field Inspection Assignments')}
+              ? (t.inspOversightTitle || 'Inspection Oversight & Records')
+              : (isCompletedRoute ? (t.completedFieldAudits || 'Completed Field Audits') : (t.fieldInspAssignments || 'Field Inspection Assignments'))}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             {isOfficer
-              ? 'Statutory oversight of field telemetry logs, GPS geofencing & calibration evidence'
-              : 'Legal metrology physical inspection roster, GPS geofencing & reference weight audits'}
+              ? (t.inspOversightSub || 'Statutory oversight of field telemetry logs, GPS geofencing & calibration evidence')
+              : (t.fieldInspSub || 'Legal metrology physical inspection roster, GPS geofencing & reference weight audits')}
           </p>
         </div>
 
@@ -129,7 +159,7 @@ export const AssignmentsListPage = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            All ({assignments.length})
+            {t.all || 'All'} ({assignments.length})
           </button>
           <button
             type="button"
@@ -140,7 +170,7 @@ export const AssignmentsListPage = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Pending ({pendingCount})
+            {t.pending || 'Pending'} ({pendingCount})
           </button>
           <button
             type="button"
@@ -151,7 +181,7 @@ export const AssignmentsListPage = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Completed ({completedCount})
+            {t.completed || 'Completed'} ({completedCount})
           </button>
         </div>
       </div>
@@ -161,37 +191,36 @@ export const AssignmentsListPage = () => {
         <SearchBar
           value={search}
           onChange={setSearch}
-          placeholder="Search by business, serial no, location, application..."
+          placeholder={t.searchAssignments || "Search by business, serial no, location, application..."}
           className="flex-1"
         />
         <FilterDropdown
           value={priorityFilter}
           onChange={setPriorityFilter}
-          label="Priority"
+          label={isHindi ? 'प्राथमिकता' : 'Priority'}
           options={[
-            { label: 'All Priorities', value: '' },
-            { label: 'High Priority', value: 'HIGH' },
-            { label: 'Medium Priority', value: 'MEDIUM' },
-            { label: 'Normal', value: 'NORMAL' }
+            { label: isHindi ? 'सभी प्राथमिकताएं' : 'All Priorities', value: '' },
+            { label: isHindi ? 'उच्च प्राथमिकता' : 'High Priority', value: 'HIGH' },
+            { label: isHindi ? 'मध्यम प्राथमिकता' : 'Medium Priority', value: 'MEDIUM' },
+            { label: isHindi ? 'सामान्य' : 'Normal', value: 'NORMAL' }
           ]}
         />
       </div>
 
       {/* Assignments Card Grid */}
       {loading ? (
-        <LoadingState message="Fetching assigned inspection routes..." />
+        <LoadingState message={isHindi ? 'असाइन किए गए निरीक्षण मार्ग प्राप्त किए जा रहे हैं...' : 'Fetching assigned inspection routes...'} />
       ) : error ? (
         <ErrorState
-          title="Unable to load inspection routes"
+          title={isHindi ? 'निरीक्षण मार्ग लोड करने में असमर्थ' : 'Unable to load inspection routes'}
           message={error}
           onRetry={fetchAssignments}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-
-          title="No assignments found"
-          description="Try adjusting your search query or filter criteria."
-          actionText="Clear Filters"
+          title={isHindi ? 'कोई असाइनमेंट नहीं मिला' : 'No assignments found'}
+          description={isHindi ? 'अपनी खोज या फ़िल्टर मानदंड समायोजित करने का प्रयास करें।' : 'Try adjusting your search query or filter criteria.'}
+          actionText={isHindi ? 'फ़िल्टर हटाएं' : 'Clear Filters'}
           onAction={() => {
             setSearch('');
             setPriorityFilter('');
@@ -228,15 +257,15 @@ export const AssignmentsListPage = () => {
                 {/* Details Section */}
                 <div className="mt-3 space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Instrument:</span>
-                    <span className="font-semibold text-slate-900">{item.instrumentType}</span>
+                    <span className="text-slate-500">{t.labelInstrument || 'Instrument:'}</span>
+                    <span className="font-semibold text-slate-900">{translateInstrumentType(item.instrumentType)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Make / Model:</span>
+                    <span className="text-slate-500">{t.labelMakeModel || 'Make / Model:'}</span>
                     <span className="font-medium text-slate-800">{item.manufacturer} {item.model}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Serial Number:</span>
+                    <span className="text-slate-500">{t.labelSerialNo || 'Serial Number:'}</span>
                     <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
                       {item.serialNumber}
                     </span>
@@ -244,9 +273,9 @@ export const AssignmentsListPage = () => {
 
                   {item.maxCapacity && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Capacity & Class:</span>
+                      <span className="text-slate-500">{t.labelCapacityClass || 'Capacity & Class:'}</span>
                       <span className="text-slate-700 font-medium">
-                        {item.maxCapacity} • {item.accuracyClass || 'Class III'}
+                        {String(item.maxCapacity).replace(/\s*kg/i, isHindi ? ' किग्रा' : ' kg')} • {translateAccuracyClass(item.accuracyClass || 'Class III')}
                       </span>
                     </div>
                   )}
@@ -261,7 +290,7 @@ export const AssignmentsListPage = () => {
                     <div className="flex items-center justify-between text-[11px] pt-1">
                       <span className="flex items-center gap-1 font-mono text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                         <Radio className="w-3 h-3 text-emerald-600 animate-pulse" />
-                        Target Locked (50m radius)
+                        {t.targetLocked || 'Target Locked (50m radius)'}
                       </span>
                       {item.businessPhone && (
                         <a
@@ -270,7 +299,7 @@ export const AssignmentsListPage = () => {
                           className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-semibold"
                         >
                           <Phone className="w-3 h-3" />
-                          <span>Call Trader</span>
+                          <span>{t.callTrader || 'Call Trader'}</span>
                         </a>
                       )}
                     </div>
@@ -281,7 +310,7 @@ export const AssignmentsListPage = () => {
               {/* Bottom Action Footer */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
                 <div className="text-xs text-slate-500">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Slot</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">{t.slot || 'SLOT'}</span>
                   <span className="font-semibold text-slate-800 flex items-center gap-1">
                     <Clock className="w-3 h-3 text-slate-400" />
                     {item.timeSlot || item.scheduledDate}
@@ -303,8 +332,8 @@ export const AssignmentsListPage = () => {
                   className="shadow-xs"
                 >
                   {isOfficer
-                    ? 'Review Application'
-                    : (item.status === 'COMPLETED' ? 'View Full Report' : 'Execute Inspection')}
+                    ? (t.reviewApplication || 'Review Application')
+                    : (item.status === 'COMPLETED' ? (t.viewFullReport || 'View Full Report') : (t.executeInspection || 'Execute Inspection'))}
                 </Button>
               </div>
             </div>

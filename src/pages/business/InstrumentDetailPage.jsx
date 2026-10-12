@@ -21,9 +21,11 @@ import Button from '../../components/ui/Button';
 import Timeline from '../../components/ui/Timeline';
 import LoadingState from '../../components/ui/LoadingState';
 import ErrorState from '../../components/ui/ErrorState';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const InstrumentDetailPage = () => {
   const { id } = useParams();
+  const { t, isHindi } = useLanguage();
   const [instrument, setInstrument] = useState(null);
   const [relatedApplications, setRelatedApplications] = useState([]);
   const [certificate, setCertificate] = useState(null);
@@ -97,11 +99,11 @@ export const InstrumentDetailPage = () => {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Instruments</span>
+          <span>{t.backToInstruments || 'Back to Instruments'}</span>
         </Link>
         <Link to={`/business/applications/new?instrumentId=${instrument.id}`}>
           <Button variant="primary" size="sm" leftIcon={PlusCircle}>
-            Apply for Re-verification
+            {t.applyReverification || 'Apply for Re-verification'}
           </Button>
         </Link>
       </div>
@@ -130,7 +132,7 @@ export const InstrumentDetailPage = () => {
           </div>
 
           <div className="text-left md:text-right text-xs space-y-1">
-            <p className="text-slate-400 font-medium">Registered Owner</p>
+            <p className="text-slate-400 font-medium">{t.registeredOwner || 'Registered Owner'}</p>
             <p className="text-slate-900 font-bold">{instrument.businessName}</p>
             <p className="text-slate-500">{instrument.ownerName}</p>
           </div>
@@ -139,31 +141,31 @@ export const InstrumentDetailPage = () => {
         {/* Specifications Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 text-xs">
           <div>
-            <span className="text-slate-400 font-medium block">Serial Number</span>
+            <span className="text-slate-400 font-medium block">{t.specSerial || 'Serial Number'}</span>
             <span className="font-mono font-bold text-slate-900 text-sm mt-0.5 block">{instrument.serialNumber}</span>
           </div>
           <div>
-            <span className="text-slate-400 font-medium block">Capacity</span>
+            <span className="text-slate-400 font-medium block">{t.specCapacity || 'Capacity'}</span>
             <span className="font-bold text-slate-900 text-sm mt-0.5 block">{instrument.capacity}</span>
           </div>
           <div>
-            <span className="text-slate-400 font-medium block">Accuracy Class</span>
+            <span className="text-slate-400 font-medium block">{t.specAccuracyClass || 'Accuracy Class'}</span>
             <span className="font-semibold text-slate-900 mt-0.5 block">{instrument.accuracyClass}</span>
           </div>
           <div>
-            <span className="text-slate-400 font-medium block">Division / Resolution</span>
+            <span className="text-slate-400 font-medium block">{t.specDivision || 'Division / Resolution'}</span>
             <span className="font-semibold text-slate-900 mt-0.5 block">{instrument.verificationDivision || 'e = 5 g'}</span>
           </div>
           <div>
-            <span className="text-slate-400 font-medium block">Purchase Date</span>
+            <span className="text-slate-400 font-medium block">{t.specPurchaseDate || 'Purchase Date'}</span>
             <span className="text-slate-800 mt-0.5 block">{instrument.purchaseDate}</span>
           </div>
           <div>
-            <span className="text-slate-400 font-medium block">Next Due Verification</span>
+            <span className="text-slate-400 font-medium block">{t.specNextDue || 'Next Due Verification'}</span>
             <span className="font-bold text-emerald-700 mt-0.5 block">{instrument.nextDueCheck}</span>
           </div>
           <div className="sm:col-span-2">
-            <span className="text-slate-400 font-medium block">Registered Installation Site</span>
+            <span className="text-slate-400 font-medium block">{t.specSite || 'Registered Installation Site'}</span>
             <span className="text-slate-800 mt-0.5 flex items-center gap-1 truncate">
               <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               {instrument.location}
@@ -179,7 +181,7 @@ export const InstrumentDetailPage = () => {
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-base font-bold text-slate-900">Active Verification Certificate</h3>
+              <h3 className="text-base font-bold text-slate-900">{t.activeVerifCert || 'Active Verification Certificate'}</h3>
             </div>
             {certificate && <StatusBadge status={certificate.status} size="sm" />}
           </div>
@@ -188,15 +190,15 @@ export const InstrumentDetailPage = () => {
             <div className="space-y-3 text-xs">
               <div className="p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-200/80 space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Certificate ID:</span>
+                  <span className="text-slate-500">{t.certIdLabel || 'Certificate ID:'}</span>
                   <span className="font-mono font-bold text-slate-900">{certificate.id}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Validity Period:</span>
+                  <span className="text-slate-500">{t.validityPeriodLabel || 'Validity Period:'}</span>
                   <span className="font-semibold text-emerald-800">{certificate.issueDate} → {certificate.validUntil}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Issuing Officer:</span>
+                  <span className="text-slate-500">{t.issuingOfficerLabel || 'Issuing Officer:'}</span>
                   <span className="font-medium text-slate-800">{certificate.issuingOfficer}</span>
                 </div>
               </div>
@@ -204,19 +206,19 @@ export const InstrumentDetailPage = () => {
               <div className="flex gap-2 pt-2">
                 <Link to={`/verify/${certificate.id}`} className="flex-1">
                   <Button variant="outline" size="sm" className="w-full" leftIcon={ExternalLink}>
-                    Public QR Verification
+                    {isHindi ? 'सार्वजनिक क्यूआर सत्यापन' : 'Public QR Verification'}
                   </Button>
                 </Link>
                 <Link to={`/business/certificates/${certificate.id}`} className="flex-1">
                   <Button variant="primary" size="sm" className="w-full">
-                    View Full Certificate
+                    {isHindi ? 'पूर्ण प्रमाणपत्र देखें' : 'View Full Certificate'}
                   </Button>
                 </Link>
               </div>
             </div>
           ) : (
             <div className="p-6 text-center text-xs text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-              No active certificate on record. Submit a verification application to obtain digital legal certification.
+              {isHindi ? 'रिकॉर्ड पर कोई सक्रिय प्रमाणपत्र नहीं है। डिजिटल कानूनी प्रमाणन प्राप्त करने के लिए सत्यापन आवेदन जमा करें।' : 'No active certificate on record. Submit a verification application to obtain digital legal certification.'}
             </div>
           )}
         </div>
@@ -226,7 +228,7 @@ export const InstrumentDetailPage = () => {
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-600" />
-              <h3 className="text-base font-bold text-slate-900">Verification Applications</h3>
+              <h3 className="text-base font-bold text-slate-900">{t.verificationApplicationsTitle || 'Verification Applications'}</h3>
             </div>
             <span className="text-xs text-slate-400 font-medium">({relatedApplications.length})</span>
           </div>
@@ -241,7 +243,7 @@ export const InstrumentDetailPage = () => {
                   >
                     {app.id}
                   </Link>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Submitted: {app.submissionDate}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{isHindi ? 'प्रस्तुत:' : 'Submitted:'} {app.submissionDate}</p>
                 </div>
                 <StatusBadge status={app.status} size="sm" />
               </div>
@@ -253,7 +255,7 @@ export const InstrumentDetailPage = () => {
       {/* Verification History / Lifecycle Timeline */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
         <h3 className="text-base font-bold text-slate-900 mb-6">
-          Official Verification Audit History
+          {isHindi ? 'आधिकारिक सत्यापन ऑडिट इतिहास' : 'Official Verification Audit History'}
         </h3>
         <Timeline items={historyEvents} />
       </div>

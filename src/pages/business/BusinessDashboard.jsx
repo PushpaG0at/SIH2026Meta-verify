@@ -28,9 +28,11 @@ import DataTable from '../../components/ui/DataTable';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import { useAuth } from '../../hooks/useAuth';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const BusinessDashboard = () => {
   const { user } = useAuth();
+  const { t, isHindi } = useLanguage();
   const navigate = useNavigate();
   const [quickVerifyId, setQuickVerifyId] = useState('');
   const [applications, setApplications] = useState([]);
@@ -133,75 +135,87 @@ export const BusinessDashboard = () => {
   const timelineStages = activeApp ? [
     {
       num: 1,
-      title: 'Digital Instrument Registration',
-      actor: activeApp.businessName || user?.name || 'Trader (Owner)',
+      title: t.stage1Title || 'Digital Instrument Registration',
+      actor: isHindi ? 'व्यावसायिक लाइसेंसधारी' : (activeApp.businessName || user?.name || 'Trader (Owner)'),
       date: activeApp.submissionDate || '01 Sep 2026',
-      desc: `Asset minted with Digital ID ${activeApp.instrumentId || activeApp.id || 'IND-LM-2026-PS01'} & serial plate ${activeApp.instrumentDetails?.serialNumber || activeApp.serialNumber || 'PS-SN-9573401'}.`,
+      desc: isHindi
+        ? `डिजिटल आईडी ${activeApp.instrumentId || activeApp.id || 'IND-LM-2026-PS01'} और सीरियल ${activeApp.instrumentDetails?.serialNumber || activeApp.serialNumber || 'PS-SN-9573401'} के साथ पंजीकृत।`
+        : `Asset minted with Digital ID ${activeApp.instrumentId || activeApp.id || 'IND-LM-2026-PS01'} & serial plate ${activeApp.instrumentDetails?.serialNumber || activeApp.serialNumber || 'PS-SN-9573401'}.`,
       status: 'completed'
     },
     {
       num: 2,
-      title: 'Document & Invoice Upload',
-      actor: 'Business Licensee',
+      title: t.stage2Title || 'Document & Invoice Upload',
+      actor: isHindi ? 'व्यावसायिक लाइसेंसधारी' : 'Business Licensee',
       date: activeApp.submissionDate || '01 Sep 2026',
-      desc: `${activeApp.documents?.length || 4} statutory document(s) uploaded and verified.`,
+      desc: isHindi
+        ? `${activeApp.documents?.length || 1} वैधानिक दस्तावेज़ अपलोड और सत्यापित किए गए।`
+        : `${activeApp.documents?.length || 1} statutory document(s) uploaded and verified.`,
       status: 'completed'
     },
     {
       num: 3,
-      title: 'AI Pre-check & OCR Scrutiny',
-      actor: 'METRA-AI Vision Engine',
+      title: t.stage3Title || 'AI Pre-check & OCR Scrutiny',
+      actor: isHindi ? 'मेट्रा-एआई विज़न इंजन' : 'METRA-AI Vision Engine',
       date: activeApp.submissionDate || '01 Sep 2026',
-      desc: `Automated scrutiny complete. Advisory risk evaluated as ${activeApp.riskLevel || 'Low'} (${activeApp.riskScore || 12}/100).`,
+      desc: isHindi
+        ? `स्वचालित जांच पूर्ण। सलाहकार जोखिम: ${activeApp.riskLevel || 'कम'} (${activeApp.riskScore || 12}/100)।`
+        : `Automated scrutiny complete. Advisory risk evaluated as ${activeApp.riskLevel || 'Low'} (${activeApp.riskScore || 12}/100).`,
       status: ['AI_REVIEWED', 'AI_PRECHECK', 'DOCUMENTS', 'SUBMITTED', 'INSPECTION', 'INSPECTION_ASSIGNED', 'INSPECTION_SCHEDULED', 'INSPECTION_COMPLETED', 'OFFICER_REVIEW', 'OFFICER_APPROVED', 'APPROVED'].includes(activeApp.status?.toUpperCase()) ? 'completed' : 'pending'
     },
     {
       num: 4,
-      title: 'Statutory Fee Clearance',
-      actor: 'e-Treasury Gateway',
+      title: t.stage4Title || 'Statutory Fee Clearance',
+      actor: isHindi ? 'ई-कोषालय गेटवे' : 'e-Treasury Gateway',
       date: activeApp.submissionDate || '02 Sep 2026',
-      desc: `Government scheduled fee of ${activeApp.statutoryFee?.amount || '₹2,500.00'} received with receipt ${activeApp.statutoryFee?.receiptNo || 'MTR-FEE-PS-001'}.`,
+      desc: isHindi
+        ? `रसीद ${activeApp.statutoryFee?.receiptNo || 'TR-571495'} के साथ निर्धारित शुल्क ₹2,500.00 प्राप्त।`
+        : `Government scheduled fee of ${activeApp.statutoryFee?.amount || '₹2,500.00'} received with receipt ${activeApp.statutoryFee?.receiptNo || 'TR-571495'}.`,
       status: activeApp.status !== 'DRAFT' ? 'completed' : 'pending'
     },
     {
       num: 5,
-      title: 'Inspector Assignment',
-      actor: 'Legal Metrology Dispatch',
+      title: t.stage5Title || 'Inspector Assignment',
+      actor: isHindi ? 'विधिक मापविज्ञान प्रेषण' : 'Legal Metrology Dispatch',
       date: activeApp.submissionDate || '03 Sep 2026',
-      desc: `Field Inspector ${activeApp.assignedInspector || 'Insp. Vikram Singh (Badge INSP-NZ-4082)'} dispatched.`,
+      desc: isHindi
+        ? `फील्ड निरीक्षक ${activeApp.assignedInspector || 'इन्स्पेक्टर विक्रम शर्मा (बैज: DL-LM-INS-985)'} नियुक्त।`
+        : `Field Inspector ${activeApp.assignedInspector || 'Insp. Vikram Sharma (Badge: DL-LM-INS-985)'} dispatched.`,
       status: ['INSPECTION', 'INSPECTION_ASSIGNED', 'INSPECTION_SCHEDULED', 'INSPECTION_COMPLETED', 'OFFICER_REVIEW', 'OFFICER_APPROVED', 'APPROVED'].includes(activeApp.status?.toUpperCase()) ? 'completed' : 'pending'
     },
     {
       num: 6,
-      title: 'On-Site Geofenced Audit',
-      actor: activeApp.assignedInspector || 'Inspector Vikram Singh',
+      title: t.stage6Title || 'On-Site Geofenced Audit',
+      actor: isHindi ? (activeApp.assignedInspector || 'इन्स्पेक्टर विक्रम शर्मा (बैज: DL-LM-INS-985)') : (activeApp.assignedInspector || 'Insp. Vikram Sharma (Badge: DL-LM-INS-985)'),
       date: '05 Sep 2026',
-      desc: activeApp.inspection ? 'Physical verification with standard weights at registered GPS geofence. Zero error verified.' : 'On-site physical test with standard weights.',
+      desc: isHindi ? 'मानक बाटों के साथ साइट पर भौतिक परीक्षण।' : (activeApp.inspection ? 'Physical verification with standard weights at registered GPS geofence. Zero error verified.' : 'On-site physical test with standard weights.'),
       status: ['INSPECTION_COMPLETED', 'OFFICER_REVIEW', 'OFFICER_APPROVED', 'APPROVED'].includes(activeApp.status?.toUpperCase()) || activeApp.currentStep >= 6 ? 'completed' : 'pending'
     },
     {
       num: 7,
-      title: 'Officer Adjudication',
-      actor: `${activeApp.assignedOfficer || 'Dr. Anita Deshmukh'} (Officer)`,
+      title: t.stage7Title || 'Officer Adjudication',
+      actor: isHindi ? `${activeApp.assignedOfficer || 'डॉ. अनीता देशमुख'} (अधिकारी)` : `${activeApp.assignedOfficer || 'Dr. Anita Deshmukh'} (Officer)`,
       date: '08 Sep 2026',
-      desc: ['APPROVED', 'OFFICER_APPROVED'].includes(activeApp.status?.toUpperCase()) ? 'Review completed with positive recommendation. Statutory clearance granted.' : 'Officer review & adjudication in progress.',
+      desc: isHindi ? 'अधिकारी समीक्षा एवं निर्णय प्रक्रिया जारी।' : (['APPROVED', 'OFFICER_APPROVED'].includes(activeApp.status?.toUpperCase()) ? 'Review completed with positive recommendation. Statutory clearance granted.' : 'Officer review & adjudication in progress.'),
       status: ['APPROVED', 'OFFICER_APPROVED'].includes(activeApp.status?.toUpperCase()) || activeApp.currentStep >= 7 ? 'completed' : 'pending'
     },
     {
       num: 8,
-      title: 'Digital QR Certificate Issued',
-      actor: 'State Directorate',
-      date: activeApp.status === 'APPROVED' ? (activeApp.submissionDate || '08 Sep 2026') : 'Pending Final Review',
-      desc: activeApp.certificateId
-        ? `Certificate #${activeApp.certificateId} sealed with SHA-256 cryptographic signature.`
-        : (activeApp.status === 'APPROVED' ? 'Verification certificate sealed & generated.' : 'Digital certificate issued upon officer sign-off.'),
+      title: t.stage8Title || 'Digital QR Certificate Issued',
+      actor: isHindi ? 'राज्य निदेशालय' : 'State Directorate',
+      date: activeApp.status === 'APPROVED' ? (activeApp.submissionDate || '08 Sep 2026') : (t.pendingFinalReview || 'Pending Final Review'),
+      desc: isHindi
+        ? (activeApp.certificateId ? `प्रमाणपत्र #${activeApp.certificateId} SHA-256 क्रिप्टोग्राफिक हस्ताक्षर से सील।` : 'अधिकारी के हस्ताक्षर पर डिजिटल प्रमाणपत्र जारी।')
+        : (activeApp.certificateId
+          ? `Certificate #${activeApp.certificateId} sealed with SHA-256 cryptographic signature.`
+          : (activeApp.status === 'APPROVED' ? 'Verification certificate sealed & generated.' : 'Digital certificate issued upon officer sign-off.')),
       status: (activeApp.status === 'APPROVED' || activeApp.status === 'OFFICER_APPROVED' || activeApp.certificateId) ? 'completed' : 'pending'
     }
   ] : [];
 
   const appColumns = [
     {
-      header: 'Application ID',
+      header: isHindi ? 'आवेदन आईडी' : 'Application ID',
       accessor: 'id',
       render: (row) => (
         <button
@@ -222,7 +236,7 @@ export const BusinessDashboard = () => {
       )
     },
     {
-      header: 'Instrument Type',
+      header: isHindi ? 'उपकरण का प्रकार' : 'Instrument Type',
       accessor: 'instrumentType',
       render: (row) => (
         <div>
@@ -232,22 +246,22 @@ export const BusinessDashboard = () => {
       )
     },
     {
-      header: 'Submitted',
+      header: isHindi ? 'जमा किया गया' : 'Submitted',
       accessor: 'submissionDate',
       render: (row) => <span className="text-xs text-slate-500">{row.submissionDate}</span>
     },
     {
-      header: 'AI Risk Score',
+      header: isHindi ? 'एआई जोखिम स्कोर' : 'AI Risk Score',
       accessor: 'riskLevel',
       render: (row) => <RiskBadge level={row.riskLevel} score={row.riskScore} />
     },
     {
-      header: 'Status',
+      header: isHindi ? 'स्थिति' : 'Status',
       accessor: 'status',
       render: (row) => <StatusBadge status={row.status} />
     },
     {
-      header: 'Actions',
+      header: isHindi ? 'कार्रवाई' : 'Actions',
       accessor: 'actions',
       render: (row) => (
         <div className="flex items-center gap-2">
@@ -257,7 +271,7 @@ export const BusinessDashboard = () => {
             className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>Dossier</span>
+            <span>{isHindi ? 'डॉसियर' : 'Dossier'}</span>
           </Link>
           {row.certificateId && (
             <Link
@@ -266,7 +280,7 @@ export const BusinessDashboard = () => {
               className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 hover:underline inline-flex items-center gap-1"
             >
               <Award className="w-3.5 h-3.5" />
-              <span>Certificate</span>
+              <span>{isHindi ? 'प्रमाणपत्र' : 'Certificate'}</span>
             </Link>
           )}
         </div>
@@ -289,11 +303,10 @@ export const BusinessDashboard = () => {
               LEGAL METROLOGY
             </span>
             <h1 className="text-2xl sm:text-3xl xl:text-4xl font-black tracking-tight text-white font-heading leading-tight">
-              Accurate Measurements.<br />
-              Fair Trade.
+              {t.accurateMeasurements || 'Accurate Measurements. Fair Trade.'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md">
-              Metra Verify helps you check the authenticity and validity of weighing and measuring instruments issued under the Legal Metrology Act, 2009.
+              {t.bannerSubtext || 'Metra Verify helps you check the authenticity and validity of weighing and measuring instruments issued under the Legal Metrology Act, 2009.'}
             </p>
           </div>
 
@@ -313,7 +326,7 @@ export const BusinessDashboard = () => {
           <div className="lg:col-span-4">
             <div className="bg-white text-slate-900 rounded-2xl p-5 shadow-2xl border border-slate-100/80">
               <h3 className="text-sm font-bold text-slate-900 mb-3">
-                Verify a Measuring Instrument
+                {t.verifyInstrumentCard || 'Verify a Measuring Instrument'}
               </h3>
 
               <form onSubmit={handleQuickVerify} className="space-y-3">
@@ -322,21 +335,21 @@ export const BusinessDashboard = () => {
                     type="text"
                     value={quickVerifyId}
                     onChange={(e) => setQuickVerifyId(e.target.value)}
-                    placeholder="Enter Certificate or Instrument ID"
+                    placeholder={t.certOrInstPlaceholder || 'Enter Certificate or Instrument ID'}
                     className="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all shadow-inner"
                   />
                   <button
                     type="submit"
                     className="bg-[#0A2558] hover:bg-[#071a3e] text-white font-bold text-xs px-4 py-2 rounded-lg transition-colors shrink-0 shadow-xs cursor-pointer"
                   >
-                    Verify
+                    {t.btnVerify || 'Verify'}
                   </button>
                 </div>
 
                 <div className="relative flex py-0.5 items-center">
                   <div className="flex-grow border-t border-slate-200" />
                   <span className="flex-shrink mx-3 text-slate-400 text-[10px] font-bold tracking-wider">
-                    OR
+                    {t.orDivider || 'OR'}
                   </span>
                   <div className="flex-grow border-t border-slate-200" />
                 </div>
@@ -346,7 +359,7 @@ export const BusinessDashboard = () => {
                   className="w-full py-2 px-3 bg-[#EBF3FF] hover:bg-[#DCEDFF] text-[#0A2558] font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors border border-blue-200/80 shadow-xs"
                 >
                   <QrCode className="w-4 h-4 text-blue-700" />
-                  <span>Scan QR Code</span>
+                  <span>{t.tabQr || 'Scan QR Code'}</span>
                 </Link>
               </form>
             </div>
@@ -358,10 +371,10 @@ export const BusinessDashboard = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 pb-0.5">
         <div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading tracking-tight">
-            Welcome, {welcomeName}!
+            {t.welcomeUser || 'Welcome'}, {welcomeName}!
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Here is a quick overview of your services and latest updates.
+            {t.overviewSubtext || 'Here is a quick overview of your services and latest updates.'}
           </p>
         </div>
         <div className="text-xs text-slate-500 font-medium sm:text-right shrink-0">
@@ -375,7 +388,7 @@ export const BusinessDashboard = () => {
 
       {/* 3. Four Role / Service Action Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
-        {/* Public User Card */}
+        {/* Business User Card */}
         <Link
           to="/verify"
           className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-400 transition-all flex flex-col justify-between group cursor-pointer"
@@ -385,10 +398,10 @@ export const BusinessDashboard = () => {
               <User className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900">
-              Public User
+              {t.roleBusiness || 'Business User'}
             </h3>
             <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-              Check instrument details, scan QR code, verify certificates.
+              {t.descBusiness || 'Check instrument details, scan QR code, verify certificates.'}
             </p>
           </div>
           <div className="mt-4 text-blue-600 group-hover:translate-x-1 transition-transform inline-flex items-center text-sm font-bold">
@@ -406,10 +419,10 @@ export const BusinessDashboard = () => {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900">
-              Inspector
+              {t.roleInspector || 'Inspector'}
             </h3>
             <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-              Conduct verification, record inspections, update status.
+              {t.descInspector || 'Conduct verification, record inspections, update status.'}
             </p>
           </div>
           <div className="mt-4 text-emerald-600 group-hover:translate-x-1 transition-transform inline-flex items-center text-sm font-bold">
@@ -427,10 +440,10 @@ export const BusinessDashboard = () => {
               <Award className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900">
-              Officer
+              {t.roleOfficer || 'Officer'}
             </h3>
             <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-              Manage applications, certificates, view reports and analytics.
+              {t.descOfficer || 'Manage applications, certificates, view reports and analytics.'}
             </p>
           </div>
           <div className="mt-4 text-purple-600 group-hover:translate-x-1 transition-transform inline-flex items-center text-sm font-bold">
@@ -448,14 +461,14 @@ export const BusinessDashboard = () => {
               <Lightbulb className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900">
-              Need Help?
+              {t.needHelpTitle || 'Need Help?'}
             </h3>
             <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-              Check our FAQs or contact support for any assistance.
+              {t.needHelpDesc || 'Check our FAQs or contact support for any assistance.'}
             </p>
           </div>
           <div className="mt-4 text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1 text-xs font-bold">
-            <span>Go to FAQs →</span>
+            <span>{t.goToFaqs || 'Go to FAQs →'}</span>
           </div>
         </Link>
       </div>
@@ -466,22 +479,22 @@ export const BusinessDashboard = () => {
         <div className="lg:col-span-7 xl:col-span-8 bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
           <div className="mb-6">
             <h3 className="text-lg font-bold text-slate-900 font-heading tracking-tight">
-              How It Works
+              {t.howWorksTitle || 'How It Works'}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              A simple and transparent process for verification and certification.
+              {t.howWorksSubtitle || 'A simple and transparent process for verification and certification.'}
             </p>
           </div>
 
           {/* 6 Step Interactive Flow */}
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-2 relative">
             {[
-              { step: 1, label: 'Application Submitted', icon: FileText },
-              { step: 2, label: 'Inspector Assigned', icon: User },
-              { step: 3, label: 'Inspection Conducted', icon: Search },
-              { step: 4, label: 'Verification Completed', icon: ShieldCheck },
-              { step: 5, label: 'Approved by Officer', icon: CheckCircle2 },
-              { step: 6, label: 'Certificate Issued', icon: Award }
+              { step: 1, label: t.step1 || 'Application Submitted', icon: FileText },
+              { step: 2, label: t.step2 || 'Inspector Assigned', icon: User },
+              { step: 3, label: t.step3 || 'Inspection Conducted', icon: Search },
+              { step: 4, label: t.step4 || 'Verification Completed', icon: ShieldCheck },
+              { step: 5, label: t.step5 || 'Approved by Officer', icon: CheckCircle2 },
+              { step: 6, label: t.step6 || 'Certificate Issued', icon: Award }
             ].map((s, idx, arr) => {
               const StepIcon = s.icon;
               return (
@@ -517,13 +530,13 @@ export const BusinessDashboard = () => {
         <div className="lg:col-span-5 xl:col-span-4 bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-slate-900 font-heading tracking-tight">
-              Latest Updates
+              {t.latestUpdates || 'Latest Updates'}
             </h3>
             <Link
               to="/how-it-works"
               className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
             >
-              <span>View All</span>
+              <span>{t.viewAll || 'View All'}</span>
               <span>→</span>
             </Link>
           </div>
@@ -561,37 +574,37 @@ export const BusinessDashboard = () => {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <StatCard
-            title="Total Instruments"
+            title={t.totalInstruments || "Total Instruments"}
             value={stats.totalInstruments}
-            subtitle="Registered weighing devices"
+            subtitle={t.statInstrumentsSub || "Registered weighing devices"}
             icon={Scale}
             iconColor="text-blue-600 bg-blue-50"
           />
           <StatCard
-            title="Pending Applications"
+            title={t.pendingApplications || "Pending Applications"}
             value={stats.pendingApplications}
-            subtitle="Awaiting processing"
+            subtitle={t.statPendingSub || "Awaiting processing"}
             icon={Clock}
             iconColor="text-amber-600 bg-amber-50"
           />
           <StatCard
-            title="Under Inspection"
+            title={t.underInspection || "Under Inspection"}
             value={stats.underInspection}
-            subtitle="Inspector assigned"
+            subtitle={t.statUnderInspectionSub || "Inspector assigned"}
             icon={FileText}
             iconColor="text-indigo-600 bg-indigo-50"
           />
           <StatCard
-            title="Approved"
+            title={t.approved || "Approved"}
             value={stats.approved}
-            subtitle="Legally verified"
+            subtitle={t.statApprovedSub || "Legally verified"}
             icon={CheckCircle2}
             iconColor="text-emerald-600 bg-emerald-50"
           />
           <StatCard
-            title="Certificates"
+            title={t.certificates || "Certificates"}
             value={stats.activeCertificates}
-            subtitle="Valid & QR verified"
+            subtitle={t.statCertificatesSub || "Valid & QR verified"}
             icon={Award}
             iconColor="text-purple-600 bg-purple-50"
           />
@@ -604,11 +617,11 @@ export const BusinessDashboard = () => {
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Quick Actions</h3>
-            <p className="text-xs text-slate-500">Fast-track statutory compliance workflows</p>
+            <h3 className="text-base font-bold text-slate-900">{t.quickActions || 'Quick Actions'}</h3>
+            <p className="text-xs text-slate-500">{t.quickActionsSub || 'Fast-track statutory compliance workflows'}</p>
           </div>
           <span className="text-xs font-mono font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-            Self-Service Hub
+            {t.selfServiceHub || 'Self-Service Hub'}
           </span>
         </div>
 
@@ -622,10 +635,10 @@ export const BusinessDashboard = () => {
             </div>
             <div>
               <span className="text-xs font-bold text-slate-900 block group-hover:text-blue-700">
-                Register Instrument
+                {t.qaRegisterInst || 'Register Instrument'}
               </span>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Onboard new scale, capacity & serial plate details
+                {t.qaRegisterInstDesc || 'Onboard new scale, capacity & serial plate details'}
               </p>
             </div>
           </Link>
@@ -639,10 +652,10 @@ export const BusinessDashboard = () => {
             </div>
             <div>
               <span className="text-xs font-bold text-slate-900 block group-hover:text-indigo-700">
-                New Application
+                {t.qaNewApp || 'New Application'}
               </span>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                File calibration audit with AI document pre-check
+                {t.qaNewAppDesc || 'File calibration audit with AI document pre-check'}
               </p>
             </div>
           </Link>
@@ -656,10 +669,10 @@ export const BusinessDashboard = () => {
             </div>
             <div>
               <span className="text-xs font-bold text-slate-900 block group-hover:text-emerald-700">
-                Digital Certificates
+                {t.qaCertificates || 'Digital Certificates'}
               </span>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Download legal verification certificates with QR seal
+                {t.qaCertificatesDesc || 'Download legal verification certificates with QR seal'}
               </p>
             </div>
           </Link>
@@ -673,10 +686,10 @@ export const BusinessDashboard = () => {
             </div>
             <div>
               <span className="text-xs font-bold text-slate-900 block group-hover:text-purple-700">
-                Verify Public QR
+                {t.qaVerifyQr || 'Verify Public QR'}
               </span>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Test SHA-256 public lookup as seen by shoppers
+                {t.qaVerifyQrDesc || 'Test SHA-256 public lookup as seen by shoppers'}
               </p>
             </div>
           </Link>
@@ -692,7 +705,7 @@ export const BusinessDashboard = () => {
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
               <h3 className="text-base font-bold text-slate-900">
-                Application Lifecycle Timeline
+                {t.appLifecycleTimeline || 'Application Lifecycle Timeline'}
               </h3>
               {activeApp && (
                 <Badge variant="primary" size="sm" className="font-mono">
@@ -701,13 +714,13 @@ export const BusinessDashboard = () => {
               )}
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              End-to-end statutory progression from digital asset onboarding to QR certificate issuance
+              {t.appLifecycleDesc || 'End-to-end statutory progression from digital asset onboarding to QR certificate issuance'}
             </p>
           </div>
 
           {applications.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">Switch Application:</span>
+              <span className="text-xs text-slate-500">{t.switchApplication || 'Switch Application:'}</span>
               <select
                 value={selectedAppId || ''}
                 onChange={(e) => setSelectedAppId(e.target.value)}
@@ -722,7 +735,7 @@ export const BusinessDashboard = () => {
               {activeApp && (
                 <Link to={`/business/applications/${activeApp.id}`}>
                   <Button variant="outline" size="sm" rightIcon={ExternalLink}>
-                    View Dossier
+                    {t.viewDossier || 'View Dossier'}
                   </Button>
                 </Link>
               )}
@@ -736,20 +749,20 @@ export const BusinessDashboard = () => {
               <Clock className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900">No Verification Applications Yet</h4>
+              <h4 className="text-sm font-bold text-slate-900">{t.noAppsYet || 'No Verification Applications Yet'}</h4>
               <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                Once you register an instrument and file a calibration audit, its live 8-stage statutory lifecycle tracking will appear here.
+                {t.noAppsYetDesc || 'Once you register an instrument and file a calibration audit, its live 8-stage statutory lifecycle tracking will appear here.'}
               </p>
             </div>
             <div className="pt-2 flex justify-center gap-3">
               <Link to="/business/instruments/new">
                 <Button variant="outline" size="sm" leftIcon={PlusCircle}>
-                  1. Register Instrument
+                  {t.stepRegisterInst || '1. Register Instrument'}
                 </Button>
               </Link>
               <Link to="/business/applications/new">
                 <Button variant="primary" size="sm" rightIcon={ArrowRight}>
-                  2. File Application
+                  {t.stepFileApp || '2. File Application'}
                 </Button>
               </Link>
             </div>
@@ -781,7 +794,7 @@ export const BusinessDashboard = () => {
                           {isDone ? <Check className="w-3.5 h-3.5" /> : stage.num}
                         </span>
                         <span className="text-[10px] font-bold text-slate-400 font-mono">
-                          STAGE 0{stage.num}
+                          {t.stagePrefix || 'STAGE'} 0{stage.num}
                         </span>
                       </div>
                       <span className="text-[10px] font-semibold text-slate-500">
@@ -796,7 +809,7 @@ export const BusinessDashboard = () => {
                       {stage.desc}
                     </p>
                     <span className="text-[10px] font-medium text-slate-400 block pt-1 border-t border-slate-100">
-                      By: {stage.actor}
+                      {t.stageBy || 'By:'} {stage.actor}
                     </span>
                   </div>
                 );
@@ -814,15 +827,15 @@ export const BusinessDashboard = () => {
           <div>
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-blue-600" />
-              <h3 className="text-base font-bold text-slate-900">Recent Verification Applications</h3>
+              <h3 className="text-base font-bold text-slate-900">{t.recentApplications || 'Recent Verification Applications'}</h3>
             </div>
             <p className="text-xs text-slate-500">
-              Statutory verification requests and calibration dossiers submitted by your enterprise
+              {t.recentAppsDesc || 'Statutory verification requests and calibration dossiers submitted by your enterprise'}
             </p>
           </div>
           <Link to="/business/applications">
             <Button variant="outline" size="sm" rightIcon={ArrowRight}>
-              View All Applications ({applications.length})
+              {t.viewAllApps || 'View All Applications'} ({applications.length})
             </Button>
           </Link>
         </div>
@@ -849,10 +862,10 @@ export const BusinessDashboard = () => {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Scale className="w-4 h-4 text-blue-600" />
-                <h3 className="text-base font-bold text-slate-900">Instrument Inventory Summary</h3>
+                <h3 className="text-base font-bold text-slate-900">{t.inventorySummary || 'Instrument Inventory Summary'}</h3>
               </div>
               <Link to="/business/instruments" className="text-xs font-semibold text-blue-600 hover:underline">
-                View Full Inventory ({instruments.length})
+                {t.viewFullInventory || 'View Full Inventory'} ({instruments.length})
               </Link>
             </div>
 
@@ -862,15 +875,15 @@ export const BusinessDashboard = () => {
                   <Scale className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">No Instruments Registered</h4>
+                  <h4 className="text-sm font-bold text-slate-900">{t.noInstrumentsRegistered || 'No Instruments Registered'}</h4>
                   <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                    You have not registered any weighing or measuring devices. Onboard your scale to begin tracking statutory compliance.
+                    {t.noInstrumentsDesc || 'You have not registered any weighing or measuring devices. Onboard your scale to begin tracking statutory compliance.'}
                   </p>
                 </div>
                 <div className="pt-1">
                   <Link to="/business/instruments/new">
                     <Button variant="primary" size="sm" leftIcon={PlusCircle}>
-                      Onboard Instrument
+                      {t.onboardInstrument || 'Onboard Instrument'}
                     </Button>
                   </Link>
                 </div>
@@ -881,28 +894,28 @@ export const BusinessDashboard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
                   <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 block">
-                      Retail Weighing
+                      {t.retailWeighing || 'Retail Weighing'}
                     </span>
                     <p className="text-lg font-bold text-blue-950 font-mono mt-0.5">
-                      {instruments.filter((i) => /digital|bench|nawi|retail|scale/i.test(i.instrumentType || i.category || '')).length} Units
+                      {instruments.filter((i) => /digital|bench|nawi|retail|scale/i.test(i.instrumentType || i.category || '')).length} {t.unitsCount || 'Units'}
                     </p>
                     <span className="text-[10px] text-blue-600">Class III NAWI</span>
                   </div>
                   <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
-                      Heavy Platform
+                      {t.heavyPlatform || 'Heavy Platform'}
                     </span>
                     <p className="text-lg font-bold text-indigo-950 font-mono mt-0.5">
-                      {instruments.filter((i) => /platform|weighbridge|heavy|industrial/i.test(i.instrumentType || i.category || '')).length} Units
+                      {instruments.filter((i) => /platform|weighbridge|heavy|industrial/i.test(i.instrumentType || i.category || '')).length} {t.unitsCount || 'Units'}
                     </p>
                     <span className="text-[10px] text-indigo-600">Industrial Scales</span>
                   </div>
                   <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-100">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block">
-                      Precision Analytical
+                      {t.precisionAnalytical || 'Precision Analytical'}
                     </span>
                     <p className="text-lg font-bold text-purple-950 font-mono mt-0.5">
-                      {instruments.filter((i) => /precision|analytical|balance|micro/i.test(i.instrumentType || i.category || '')).length} Units
+                      {instruments.filter((i) => /precision|analytical|balance|micro/i.test(i.instrumentType || i.category || '')).length} {t.unitsCount || 'Units'}
                     </p>
                     <span className="text-[10px] text-purple-600">Class I/II Balances</span>
                   </div>
@@ -923,7 +936,7 @@ export const BusinessDashboard = () => {
                           <span className="font-mono text-[10px] text-slate-400">({item.id})</span>
                         </div>
                         <p className="text-slate-500 text-[11px] mt-0.5 font-mono">
-                          Serial: {item.serialNumber} • Capacity: {item.capacity} • {item.accuracyClass || 'Standard'}
+                          {isHindi ? 'सीरियल:' : 'Serial:'} {item.serialNumber} • {isHindi ? 'क्षमता:' : 'Capacity:'} {item.capacity} • {item.accuracyClass || 'Standard'}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -932,7 +945,7 @@ export const BusinessDashboard = () => {
                           to={`/business/instruments/${item.id}`}
                           className="text-xs font-semibold text-blue-600 hover:underline inline-flex items-center gap-0.5"
                         >
-                          <span>Details</span>
+                          <span>{isHindi ? 'विवरण' : 'Details'}</span>
                           <ChevronRight className="w-3 h-3" />
                         </Link>
                       </div>
@@ -945,11 +958,11 @@ export const BusinessDashboard = () => {
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
             <span className="text-xs text-slate-500">
-              All commercial units comply with Legal Metrology (General) Rules 2011.
+              {t.complianceNotice || 'All commercial units comply with Legal Metrology (General) Rules 2011.'}
             </span>
             <Link to="/business/instruments/new">
               <Button variant="primary" size="sm" leftIcon={PlusCircle}>
-                Onboard Instrument
+                {t.onboardInstrument || 'Onboard Instrument'}
               </Button>
             </Link>
           </div>
@@ -961,13 +974,13 @@ export const BusinessDashboard = () => {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-emerald-600" />
-                <h3 className="text-base font-bold text-slate-900">Active Legal Certificate</h3>
+                <h3 className="text-base font-bold text-slate-900">{t.activeLegalCert || 'Active Legal Certificate'}</h3>
               </div>
               {activeCert ? (
                 <StatusBadge status="VALID" size="sm" />
               ) : (
                 <span className="text-[11px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                  None Active
+                  {t.noneActive || 'None Active'}
                 </span>
               )}
             </div>
@@ -977,10 +990,10 @@ export const BusinessDashboard = () => {
                 <div className="mt-4 p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl shadow-xs space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono text-blue-300 uppercase">
-                      Digital Certificate ID
+                      {t.digitalCertId || 'Digital Certificate ID'}
                     </span>
                     <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/30">
-                      SEAL VALID
+                      {t.sealValid || 'SEAL VALID'}
                     </span>
                   </div>
                   <p className="font-mono text-lg font-extrabold tracking-tight text-white">
@@ -988,15 +1001,15 @@ export const BusinessDashboard = () => {
                   </p>
                   <div className="text-[11px] text-slate-300 space-y-1 pt-1 border-t border-slate-700/80">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Device:</span>
+                      <span className="text-slate-400">{t.deviceLabel || 'Device:'}</span>
                       <span className="font-medium text-white">{activeCert.instrumentType || 'Weighing Scale'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Serial:</span>
+                      <span className="text-slate-400">{t.serialLabel || 'Serial:'}</span>
                       <span className="font-mono text-white">{activeCert.serialNumber || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Valid Until:</span>
+                      <span className="text-slate-400">{t.validUntilLabel || 'Valid Until:'}</span>
                       <span className="text-emerald-400 font-semibold">{activeCert.validUntil || 'Active'}</span>
                     </div>
                   </div>
@@ -1005,10 +1018,10 @@ export const BusinessDashboard = () => {
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-[11px] text-slate-600 mt-3 space-y-1">
                   <div className="flex items-center gap-1.5 font-bold text-slate-800">
                     <QrCode className="w-3.5 h-3.5 text-blue-600" />
-                    <span>QR Physical Verification</span>
+                    <span>{t.qrPhysicalVerif || 'QR Physical Verification'}</span>
                   </div>
                   <p className="text-slate-500">
-                    Tamper-proof digital seal with SHA-256 audit proof for consumer verification.
+                    {t.qrVerifDesc || 'Tamper-proof digital seal with SHA-256 audit proof for consumer verification.'}
                   </p>
                 </div>
               </>
@@ -1018,9 +1031,9 @@ export const BusinessDashboard = () => {
                   <Award className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-800">No Active Certificates Yet</h4>
+                  <h4 className="text-xs font-bold text-slate-800">{t.noActiveCertsYet || 'No Active Certificates Yet'}</h4>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Digital certificates with cryptographic QR seals will be issued here once your applications are verified and approved by the Legal Metrology officer.
+                    {t.noActiveCertsDesc || 'Digital certificates with cryptographic QR seals will be issued here once your applications are verified and approved by the Legal Metrology officer.'}
                   </p>
                 </div>
               </div>
@@ -1032,19 +1045,19 @@ export const BusinessDashboard = () => {
               <>
                 <Link to={`/business/certificates/${activeCert.id}`} className="w-full">
                   <Button variant="primary" size="sm" className="w-full" rightIcon={ArrowRight}>
-                    Open Full Certificate
+                    {t.openFullCert || 'Open Full Certificate'}
                   </Button>
                 </Link>
                 <Link to={`/verify/${activeCert.id}`} className="w-full">
                   <Button variant="outline" size="sm" className="w-full" leftIcon={ExternalLink}>
-                    Public QR Registry View
+                    {t.publicQrRegistry || 'Public QR Registry View'}
                   </Button>
                 </Link>
               </>
             ) : (
               <Link to="/business/applications/new" className="w-full">
                 <Button variant="primary" size="sm" className="w-full" leftIcon={PlusCircle}>
-                  Apply for Verification
+                  {t.applyForVerif || 'Apply for Verification'}
                 </Button>
               </Link>
             )}

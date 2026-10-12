@@ -17,10 +17,12 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import RiskBadge from '../../components/ui/RiskBadge';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const OfficerApplicationsListPage = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t, isHindi } = useLanguage();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
@@ -155,7 +157,7 @@ export const OfficerApplicationsListPage = () => {
 
   const columns = [
     {
-      header: 'Application ID & Custody',
+      header: isHindi ? 'आवेदन आईडी और अभिरक्षा' : 'Application ID & Custody',
       accessor: 'id',
       render: (row) => (
         <div>
@@ -168,7 +170,7 @@ export const OfficerApplicationsListPage = () => {
           </Link>
           <div className="flex items-center gap-1.5 mt-1">
             {/* 7-stage trust chain mini progress bar */}
-            <div className="flex items-center gap-0.5" title="Digital Trust Chain: 6 of 7 Stages Complete">
+            <div className="flex items-center gap-0.5" title="Digital Trust Chain">
               {[1, 2, 3, 4, 5, 6, 7].map((step) => (
                 <span
                   key={step}
@@ -185,20 +187,20 @@ export const OfficerApplicationsListPage = () => {
               ))}
             </div>
             <span className="text-[9px] font-mono text-slate-400">
-              {row.status === 'APPROVED' ? '7/7 Sealed' : '6/7 Passed'}
+              {row.status === 'APPROVED' ? (isHindi ? '7/7 सील' : '7/7 Sealed') : (isHindi ? '6/7 उत्तीर्ण' : '6/7 Passed')}
             </span>
           </div>
         </div>
       )
     },
     {
-      header: 'Trading Business Entity',
+      header: t.colTraderEntity || 'Trading Business Entity',
       accessor: 'businessName',
       render: (row) => (
         <div>
           <span className="text-xs font-bold text-slate-900 block">{row.businessName}</span>
           <span className="text-[11px] text-slate-500 font-mono">
-            {row.traderDetails?.gstin || 'GSTIN Validated'}
+            {row.traderDetails?.gstin || (isHindi ? 'जीएसटीआईएन सत्यापित' : 'GSTIN Validated')}
           </span>
           <span className="text-[10px] text-slate-400 block truncate max-w-[180px]">
             {row.traderDetails?.address?.split(',')[0]}
@@ -207,7 +209,7 @@ export const OfficerApplicationsListPage = () => {
       )
     },
     {
-      header: 'Instrument Specifications',
+      header: t.colInstSpecs || 'Instrument Specifications',
       accessor: 'instrumentType',
       render: (row) => (
         <div>
@@ -224,7 +226,7 @@ export const OfficerApplicationsListPage = () => {
       )
     },
     {
-      header: 'Filing & Statutory SLA',
+      header: t.colFilingSla || 'Filing & Statutory SLA',
       accessor: 'submissionDate',
       render: (row) => {
         const isUrgent = (row.slaRemainingDays || 0) <= 1.0;
@@ -237,14 +239,14 @@ export const OfficerApplicationsListPage = () => {
               }`}
             >
               <Clock className="w-3 h-3" />
-              {row.slaRemainingDays ? `${row.slaRemainingDays}d SLA remaining` : 'On Target'}
+              {row.slaRemainingDays ? `${row.slaRemainingDays}d ${t.remainingLabel || 'remaining'}` : (t.onTargetLabel || 'On Target')}
             </span>
           </div>
         );
       }
     },
     {
-      header: 'AI Pre-Check Risk',
+      header: t.colAiRisk || 'AI Pre-Check Risk',
       accessor: 'riskLevel',
       render: (row) => (
         <div>
@@ -261,32 +263,32 @@ export const OfficerApplicationsListPage = () => {
       )
     },
     {
-      header: 'Field Telematics & Seal',
+      header: t.colFieldTelematics || 'Field Telematics & Seal',
       accessor: 'inspection',
       render: (row) => (
         <div>
           <span className="text-xs font-medium text-slate-800 block">
-            {row.inspection?.inspectorName?.split('(')[0] || row.assignedInspector?.split('(')[0] || 'Unassigned'}
+            {row.inspection?.inspectorName?.split('(')[0] || row.assignedInspector?.split('(')[0] || (isHindi ? 'अनअसाइन' : 'Unassigned')}
           </span>
           <span className="text-[10px] font-mono text-slate-500">
             {row.inspection?.sealNumber ? (
               <span className="text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded font-semibold border border-blue-200">
-                Seal: {row.inspection.sealNumber.split('-')[0] + '...'}
+                {isHindi ? 'सील:' : 'Seal:'} {row.inspection.sealNumber.split('-')[0] + '...'}
               </span>
             ) : (
-              <span className="text-slate-400">Pending Field Audit</span>
+              <span className="text-slate-400">{isHindi ? 'फील्ड ऑडिट लंबित' : 'Pending Field Audit'}</span>
             )}
           </span>
         </div>
       )
     },
     {
-      header: 'Audit Status',
+      header: t.colAuditStatus || 'Audit Status',
       accessor: 'status',
       render: (row) => <StatusBadge status={row.status} />
     },
     {
-      header: 'Adjudication',
+      header: t.colAdjudication || 'Adjudication',
       accessor: 'action',
       render: (row) => (
         <div className="flex items-center gap-1.5">
@@ -297,7 +299,7 @@ export const OfficerApplicationsListPage = () => {
                 size="sm"
                 className="bg-emerald-600 hover:bg-emerald-500 shadow-xs text-xs font-bold text-white px-2 py-1"
               >
-                Form VI
+                {t.btnFormVi || 'Form VI'}
               </Button>
             </Link>
           )}
@@ -307,7 +309,7 @@ export const OfficerApplicationsListPage = () => {
               size="sm"
               className={isPending(row.status) ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
             >
-              {isPending(row.status) ? 'Adjudicate' : 'Review Dossier'}
+              {isPending(row.status) ? (t.btnAdjudicate || 'Adjudicate') : (t.btnReviewDossier || 'Review Dossier')}
             </Button>
           </Link>
         </div>
@@ -329,14 +331,14 @@ export const OfficerApplicationsListPage = () => {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-purple-500" />
             <span className="text-xs font-mono text-purple-700 uppercase font-bold tracking-wider">
-              Legal Metrology Statutory Adjudication Registry
+              {t.statutoryRegistryTag || 'Legal Metrology Statutory Adjudication Registry'}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-heading">
-            Regulatory Verification Applications
+            {t.officerRegTitle || 'Regulatory Verification Applications'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Cross-examine AI pre-check extractions, inspector field telemetry, and issue statutory seals
+            {t.officerRegSub || 'Cross-examine AI pre-check extractions, inspector field telemetry, and issue statutory seals'}
           </p>
         </div>
 
@@ -372,7 +374,7 @@ export const OfficerApplicationsListPage = () => {
             onClick={handleExportRegister}
             className="text-xs shadow-xs"
           >
-            Export Register (CSV)
+            {t.exportRegisterCsv || 'Export Register (CSV)'}
           </Button>
         </div>
       </div>
@@ -380,41 +382,41 @@ export const OfficerApplicationsListPage = () => {
       {/* Summary KPI Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] text-slate-500 block font-medium">Pending Adjudication</span>
+          <span className="text-[11px] text-slate-500 block font-medium">{t.pendingAdjudication || 'Pending Adjudication'}</span>
           <div className="flex items-baseline gap-2 mt-0.5">
             <span className="text-xl font-bold font-mono text-purple-700">{pendingCount}</span>
             <span className="text-[10px] font-semibold text-purple-600 bg-purple-50 px-1.5 rounded">
-              Ready for Order
+              {t.readyForOrder || 'Ready for Order'}
             </span>
           </div>
         </div>
 
         <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] text-slate-500 block font-medium">High-Risk Escalations</span>
+          <span className="text-[11px] text-slate-500 block font-medium">{t.highRiskEscalations || 'High-Risk Escalations'}</span>
           <div className="flex items-baseline gap-2 mt-0.5">
             <span className="text-xl font-bold font-mono text-rose-600">{highRiskCount}</span>
             <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-1.5 rounded">
-              Anomaly Triggered
+              {t.anomalyTriggered || 'Anomaly Triggered'}
             </span>
           </div>
         </div>
 
         <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] text-slate-500 block font-medium">Under Field Inspection</span>
+          <span className="text-[11px] text-slate-500 block font-medium">{t.underFieldInspection || 'Under Field Inspection'}</span>
           <div className="flex items-baseline gap-2 mt-0.5">
             <span className="text-xl font-bold font-mono text-indigo-600">{inspectionCount}</span>
             <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 rounded">
-              GNSS Telematics
+              {t.gnssTelematics || 'GNSS Telematics'}
             </span>
           </div>
         </div>
 
         <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] text-slate-500 block font-medium">Certificates Sealed</span>
+          <span className="text-[11px] text-slate-500 block font-medium">{t.certificatesSealed || 'Certificates Sealed'}</span>
           <div className="flex items-baseline gap-2 mt-0.5">
             <span className="text-xl font-bold font-mono text-emerald-600">{approvedCount}</span>
             <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 rounded">
-              e-Signed Form VI
+              {t.eSignedFormVi || 'e-Signed Form VI'}
             </span>
           </div>
         </div>
@@ -429,7 +431,7 @@ export const OfficerApplicationsListPage = () => {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by ID, business name, serial number, GSTIN, inspector..."
+              placeholder={t.searchOfficerApps || "Search by ID, business name, serial number, GSTIN, inspector..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-slate-400"
@@ -447,7 +449,7 @@ export const OfficerApplicationsListPage = () => {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              All ({applications.length})
+              {t.all || 'All'} ({applications.length})
             </button>
             <button
               type="button"
@@ -458,7 +460,7 @@ export const OfficerApplicationsListPage = () => {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Pending Adjudication ({pendingCount})
+              {t.tabAdjudicationQueue || 'Pending Adjudication'} ({pendingCount})
             </button>
             <button
               type="button"
@@ -469,7 +471,7 @@ export const OfficerApplicationsListPage = () => {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Field Audits ({inspectionCount})
+              {t.tabFieldAudits || 'Field Audits'} ({inspectionCount})
             </button>
             <button
               type="button"
@@ -480,7 +482,7 @@ export const OfficerApplicationsListPage = () => {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Approved ({approvedCount})
+              {t.approved || 'Approved'} ({approvedCount})
             </button>
             <button
               type="button"
@@ -491,7 +493,7 @@ export const OfficerApplicationsListPage = () => {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Rejected ({rejectedCount})
+              {t.rejectionsVoid || 'Rejected'} ({rejectedCount})
             </button>
           </div>
         </div>
@@ -500,7 +502,7 @@ export const OfficerApplicationsListPage = () => {
         <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-3 text-xs">
           <div className="flex items-center gap-1.5 text-slate-500 font-medium">
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-            <span>Filters:</span>
+            <span>{isHindi ? 'फ़िल्टर:' : 'Filters:'}</span>
           </div>
 
           {/* Risk Filter */}
@@ -509,11 +511,11 @@ export const OfficerApplicationsListPage = () => {
             onChange={(e) => setRiskFilter(e.target.value)}
             className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium focus:ring-1 focus:ring-purple-500"
           >
-            <option value="ALL">All Risk Profiles</option>
-            <option value="CRITICAL">Critical Risk (&ge; 75)</option>
-            <option value="HIGH">High Risk (60-74)</option>
-            <option value="MEDIUM">Medium Risk (30-59)</option>
-            <option value="LOW">Low Risk (&lt; 30)</option>
+            <option value="ALL">{t.allRiskProfiles || 'All Risk Profiles'}</option>
+            <option value="CRITICAL">{t.criticalRiskOpt || 'Critical Risk (≥ 75)'}</option>
+            <option value="HIGH">{t.highRiskOpt || 'High Risk (60-74)'}</option>
+            <option value="MEDIUM">{t.mediumRiskOpt || 'Medium Risk (30-59)'}</option>
+            <option value="LOW">{t.lowRiskOpt || 'Low Risk (< 30)'}</option>
           </select>
 
           {/* Accuracy Class Filter */}
@@ -522,11 +524,11 @@ export const OfficerApplicationsListPage = () => {
             onChange={(e) => setAccuracyClassFilter(e.target.value)}
             className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium focus:ring-1 focus:ring-purple-500"
           >
-            <option value="ALL">All Metrology Classes</option>
-            <option value="Class I">Class I (Micro-Balance)</option>
-            <option value="Class III">Class III (Commercial NAWI)</option>
-            <option value="Class IV">Class IV (Weighbridges)</option>
-            <option value="Class 0.5">Class 0.5 (Liquid Fuel)</option>
+            <option value="ALL">{t.allClassesOpt || 'All Metrology Classes'}</option>
+            <option value="Class I">{isHindi ? 'वर्ग I (माइक्रो-बैलेंस)' : 'Class I (Micro-Balance)'}</option>
+            <option value="Class III">{isHindi ? 'वर्ग III (वाणिज्यिक NAWI)' : 'Class III (Commercial NAWI)'}</option>
+            <option value="Class IV">{isHindi ? 'वर्ग IV (वेब्रिज)' : 'Class IV (Weighbridges)'}</option>
+            <option value="Class 0.5">{isHindi ? 'वर्ग 0.5 (तरल ईंधन)' : 'Class 0.5 (Liquid Fuel)'}</option>
           </select>
 
           {/* SLA Urgency Filter */}
@@ -535,9 +537,9 @@ export const OfficerApplicationsListPage = () => {
             onChange={(e) => setSlaFilter(e.target.value)}
             className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium focus:ring-1 focus:ring-purple-500"
           >
-            <option value="ALL">All SLA Windows</option>
-            <option value="URGENT">Urgent SLA (&le; 24h Remaining)</option>
-            <option value="NORMAL">Normal SLA (&gt; 24h)</option>
+            <option value="ALL">{t.allSlaWindows || 'All SLA Windows'}</option>
+            <option value="URGENT">{t.urgentSlaOpt || 'Urgent SLA (≤ 24h Remaining)'}</option>
+            <option value="NORMAL">{t.normalSlaOpt || 'Normal SLA (> 24h)'}</option>
           </select>
 
           {/* Sort By Dropdown */}
@@ -548,10 +550,10 @@ export const OfficerApplicationsListPage = () => {
               onChange={(e) => setSortBy(e.target.value)}
               className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium focus:ring-1 focus:ring-purple-500"
             >
-              <option value="newest">Sort: Newest Submissions</option>
-              <option value="risk_desc">Sort: Highest AI Risk Score</option>
-              <option value="sla_asc">Sort: Nearest SLA Deadline</option>
-              <option value="trader">Sort: Trader Name (A-Z)</option>
+              <option value="newest">{t.sortNewest || 'Sort: Newest Submissions'}</option>
+              <option value="risk_desc">{t.sortHighestRisk || 'Sort: Highest AI Risk Score'}</option>
+              <option value="sla_asc">{t.sortNearestSla || 'Sort: Nearest SLA Deadline'}</option>
+              <option value="trader">{t.sortTraderName || 'Sort: Trader Name (A-Z)'}</option>
             </select>
           </div>
         </div>
@@ -595,35 +597,35 @@ export const OfficerApplicationsListPage = () => {
                 {/* Instrument Specifications */}
                 <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Serial No:</span>
+                    <span className="text-slate-500">{isHindi ? 'सीरियल नंबर:' : 'Serial No:'}</span>
                     <span className="font-mono font-bold text-slate-800">{app.instrumentDetails?.serialNumber || 'WS123456'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Accuracy Class:</span>
+                    <span className="text-slate-500">{isHindi ? 'सटीकता वर्ग:' : 'Accuracy Class:'}</span>
                     <span className="font-semibold text-indigo-700">{app.instrumentDetails?.accuracyClass?.split(' ')[0] || 'Class III'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Capacity:</span>
+                    <span className="text-slate-500">{isHindi ? 'क्षमता:' : 'Capacity:'}</span>
                     <span className="font-bold text-slate-800">{app.instrumentDetails?.maxCapacity}</span>
                   </div>
                 </div>
 
                 {/* AI Risk Profile */}
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-xs text-slate-500">AI Risk Assessment:</span>
+                  <span className="text-xs text-slate-500">{isHindi ? 'एआई जोखिम मूल्यांकन:' : 'AI Risk Assessment:'}</span>
                   <RiskBadge level={app.riskLevel} score={app.riskScore} />
                 </div>
 
                 {/* SLA remaining */}
                 <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
-                  <span className="text-slate-500">Statutory SLA:</span>
+                  <span className="text-slate-500">{t.statutorySlaLabel || 'Statutory SLA:'}</span>
                   <span
                     className={`font-mono font-bold flex items-center gap-1 ${
                       (app.slaRemainingDays || 0) <= 1.0 ? 'text-rose-600 animate-pulse' : 'text-emerald-700'
                     }`}
                   >
                     <Clock className="w-3 h-3" />
-                    {app.slaRemainingDays ? `${app.slaRemainingDays}d remaining` : 'On Schedule'}
+                    {app.slaRemainingDays ? `${app.slaRemainingDays}d ${t.remainingLabel || 'remaining'}` : (t.onScheduleLabel || 'On Schedule')}
                   </span>
                 </div>
               </div>
@@ -638,7 +640,7 @@ export const OfficerApplicationsListPage = () => {
                   }`}
                   rightIcon={ChevronRight}
                 >
-                  {isPending(app.status) ? 'Adjudicate File' : 'Open Statutory Dossier'}
+                  {isPending(app.status) ? (t.btnAdjudicateFile || 'Adjudicate File') : (t.btnOpenDossier || 'Open Statutory Dossier')}
                 </Button>
               </div>
             </div>

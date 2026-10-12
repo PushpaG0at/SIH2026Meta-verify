@@ -28,11 +28,13 @@ import LoadingState from '../../components/ui/LoadingState';
 import ErrorState from '../../components/ui/ErrorState';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const InspectionDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t, isHindi } = useLanguage();
 
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -320,12 +322,66 @@ export const InspectionDetailPage = () => {
 
   // Tab navigation helpers
   const tabs = [
-    { id: 'specs', label: 'Specs', icon: Info },
-    { id: 'checklist', label: 'Checklist', icon: CheckSquare },
-    { id: 'measurements', label: 'MPE Tests', icon: Scale },
-    { id: 'evidence', label: 'Evidence & GPS', icon: Camera },
-    { id: 'summary', label: 'Summary', icon: FileCheck2 }
+    { id: 'specs', label: isHindi ? 'विनिर्देश' : 'Specs', icon: Info },
+    { id: 'checklist', label: isHindi ? 'चेकलिस्ट' : 'Checklist', icon: CheckSquare },
+    { id: 'measurements', label: isHindi ? 'एमपीई परीक्षण' : 'MPE Tests', icon: Scale },
+    { id: 'evidence', label: isHindi ? 'साक्ष्य एवं जीपीएस' : 'Evidence & GPS', icon: Camera },
+    { id: 'summary', label: isHindi ? 'सारांश' : 'Summary', icon: FileCheck2 }
   ];
+
+  const translateInstrumentType = (type) => {
+    if (!isHindi || !type) return type;
+    const map = {
+      'Electronic Bench Scale': 'इलेक्ट्रॉनिक बेंच स्केल',
+      'Digital Weighing Scale': 'डिजिटल वेइंग स्केल',
+      'Platform Scale': 'प्लेटफ़ॉर्म स्केल',
+      'Weighbridge': 'वेब्रिज',
+      'Fuel Dispenser': 'ईंधन डिस्पेंसर',
+      'Flow Meter': 'फ़्लो मीटर',
+      'Non-Automatic Weighing Instrument (NAWI)': 'गैर-स्वचालित वजन उपकरण (NAWI)',
+      'Automatic Gravimetric Filling Instrument': 'स्वचालित भरण उपकरण'
+    };
+    return map[type] || type;
+  };
+
+  const translateTestWeight = (str) => {
+    if (!isHindi || !str) return str;
+    return str
+      .replace(/Minimum Load Test/gi, 'न्यूनतम भार परीक्षण')
+      .replace(/Quarter Load Test/gi, 'तिमाही भार परीक्षण')
+      .replace(/Half Capacity Test/gi, 'अर्ध क्षमता परीक्षण')
+      .replace(/Full Capacity Test/gi, 'पूर्ण क्षमता परीक्षण')
+      .replace(/Mid-range Test/gi, 'मध्य-रेंज परीक्षण')
+      .replace(/Calibration Load/gi, 'अंशांकन भार')
+      .replace(/Class M1 Standard/gi, 'वर्ग M1 मानक')
+      .replace(/Class M2 Standard/gi, 'वर्ग M2 मानक')
+      .replace(/Class F1 Standard/gi, 'वर्ग F1 मानक')
+      .replace(/Load/gi, 'भार')
+      .replace(/\s*kg/gi, ' किग्रा');
+  };
+
+  const getPhotoMeta = (p) => {
+    if (!isHindi) return { title: p.title, desc: p.description };
+    const map = {
+      plate: {
+        title: 'नेमप्लेट एवं सीरियल स्टैम्पिंग',
+        desc: 'निर्माता, मॉडल एवं सीरियल प्लेट दर्शाती स्पष्ट फ़ोटो'
+      },
+      scale: {
+        title: 'उपकरण की समग्र स्थापना',
+        desc: 'प्लेटफ़ॉर्म, लोड रिसीवर एवं परिवेश को दर्शाने वाला संपूर्ण दृश्य'
+      },
+      seal: {
+        title: 'सुरक्षा तार एवं सील',
+        desc: 'अंशांकित लेड सील या छेड़छाड़ रोधी संकेतक का नज़दीकी दृश्य'
+      },
+      display: {
+        title: 'शून्य संकेत एवं लेवल बबल',
+        desc: 'शून्य टेयर एवं केंद्रित लेवल वायल दर्शाने वाला डिस्प्ले इंडिकेटर'
+      }
+    };
+    return map[p.id] || { title: p.title, desc: p.description };
+  };
 
   const currentTabIndex = tabs.findIndex((t) => t.id === activeTab);
   const nextTab = () => {
@@ -342,7 +398,7 @@ export const InspectionDetailPage = () => {
   // Submit Final Report
   const handleSubmitReport = async () => {
     if (!inspectorDeclaration) {
-      showToast('Please certify the digital declaration before submission.', 'warning');
+      showToast(isHindi ? 'कृपया जमा करने से पहले डिजिटल घोषणा को प्रमाणित करें।' : 'Please certify the digital declaration before submission.', 'warning');
       return;
     }
     setSubmitting(true);
@@ -365,17 +421,17 @@ export const InspectionDetailPage = () => {
         completedAt: reportPayload.completedAt,
         inspectionReport: reportPayload
       }));
-      showToast('Field inspection successfully signed and submitted to Officer queue.', 'success');
+      showToast(isHindi ? 'फ़ील्ड निरीक्षण सफलतापूर्वक हस्ताक्षरित एवं अधिकारी कतार में जमा।' : 'Field inspection successfully signed and submitted to Officer queue.', 'success');
       setShowSuccessModal(true);
     } catch (err) {
       console.error(err);
-      showToast('Failed to submit inspection report.', 'error');
+      showToast(isHindi ? 'निरीक्षण रिपोर्ट जमा करने में विफल।' : 'Failed to submit inspection report.', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return <LoadingState message="Loading field inspection telematics..." />;
+  if (loading) return <LoadingState message={isHindi ? 'फ़ील्ड निरीक्षण टेलीमैटिक्स लोड हो रहा है...' : 'Loading field inspection telematics...'} />;
   if (error || !assignment) {
     return (
       <div className="max-w-4xl mx-auto p-4 space-y-4">
@@ -384,11 +440,11 @@ export const InspectionDetailPage = () => {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Assignments Roster</span>
+          <span>{isHindi ? 'असाइनमेंट रोस्टर पर वापस लौटें' : 'Back to Assignments Roster'}</span>
         </Link>
         <ErrorState
-          title="Inspection Assignment Not Found"
-          message={error || `Assignment '${id}' could not be located in your active roster.`}
+          title={isHindi ? 'निरीक्षण असाइनमेंट नहीं मिला' : 'Inspection Assignment Not Found'}
+          message={error || (isHindi ? `असाइनमेंट '${id}' आपके सक्रिय रोस्टर में नहीं मिला।` : `Assignment '${id}' could not be located in your active roster.`)}
           onRetry={fetchAssignment}
         />
       </div>
@@ -409,7 +465,7 @@ export const InspectionDetailPage = () => {
             className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Assignments</span>
+            <span>{isHindi ? 'असाइनमेंट' : 'Assignments'}</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -425,7 +481,7 @@ export const InspectionDetailPage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-100">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-              {assignment.instrumentType}
+              {translateInstrumentType(assignment.instrumentType)}
             </h2>
             <p className="text-xs text-slate-600">
               {assignment.businessName} • SN: <span className="font-mono font-bold text-slate-900">{assignment.serialNumber}</span>
@@ -434,7 +490,7 @@ export const InspectionDetailPage = () => {
 
           <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl text-emerald-800 text-xs font-semibold self-start sm:self-auto">
             <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-            <span>Geofence Locked • {gpsData.distanceMeters}m</span>
+            <span>{isHindi ? 'जियोफेंस लॉक' : 'Geofence Locked'} • {gpsData.distanceMeters}m</span>
           </div>
         </div>
 
@@ -489,7 +545,9 @@ export const InspectionDetailPage = () => {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Building className="w-4 h-4 text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900">Registered Business & Premises</h3>
+                <h3 className="text-sm font-bold text-slate-900">
+                  {isHindi ? 'पंजीकृत व्यवसाय एवं परिसर' : 'Registered Business & Premises'}
+                </h3>
               </div>
               {assignment.businessPhone && (
                 <a
@@ -497,26 +555,34 @@ export const InspectionDetailPage = () => {
                   className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200"
                 >
                   <Phone className="w-3.5 h-3.5" />
-                  <span>Call: {assignment.businessPhone}</span>
+                  <span>{isHindi ? 'कॉल: ' : 'Call: '}{assignment.businessPhone}</span>
                 </a>
               )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="text-slate-400 font-medium">Business Name:</span>
+                <span className="text-slate-400 font-medium">
+                  {isHindi ? 'व्यवसाय का नाम:' : 'Business Name:'}
+                </span>
                 <p className="font-bold text-slate-900 text-sm mt-0.5">{assignment.businessName}</p>
                 {assignment.contactPerson && (
                   <p className="text-slate-600 mt-0.5">{assignment.contactPerson}</p>
                 )}
               </div>
               <div>
-                <span className="text-slate-400 font-medium">Application Reference:</span>
+                <span className="text-slate-400 font-medium">
+                  {isHindi ? 'आवेदन संदर्भ:' : 'Application Reference:'}
+                </span>
                 <p className="font-mono font-bold text-blue-600 text-sm mt-0.5">{assignment.applicationId}</p>
-                <p className="text-slate-500 mt-0.5">Instrument ID: {assignment.instrumentId}</p>
+                <p className="text-slate-500 mt-0.5">
+                  {isHindi ? 'उपकरण आईडी:' : 'Instrument ID:'} {assignment.instrumentId}
+                </p>
               </div>
               <div className="sm:col-span-2 pt-2 border-t border-slate-100">
-                <span className="text-slate-400 font-medium">Premises Inspection Location:</span>
+                <span className="text-slate-400 font-medium">
+                  {isHindi ? 'परिसर निरीक्षण स्थल:' : 'Premises Inspection Location:'}
+                </span>
                 <p className="text-slate-800 font-medium flex items-start gap-1.5 mt-1">
                   <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                   <span>{assignment.location}</span>
@@ -530,37 +596,62 @@ export const InspectionDetailPage = () => {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Scale className="w-4 h-4 text-indigo-600" />
-                <h3 className="text-sm font-bold text-slate-900">Instrument Technical Parameters</h3>
+                <h3 className="text-sm font-bold text-slate-900">
+                  {isHindi ? 'उपकरण तकनीकी पैरामीटर' : 'Instrument Technical Parameters'}
+                </h3>
               </div>
               <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                {assignment.accuracyClass || 'Class III NAWI'}
+                {isHindi
+                  ? (assignment.accuracyClass
+                      ? assignment.accuracyClass
+                          .replace(/Class III/g, 'वर्ग III')
+                          .replace(/Class II/g, 'वर्ग II')
+                          .replace(/Class I/g, 'वर्ग I')
+                          .replace(/Class IV/g, 'वर्ग IV')
+                          .replace(/Medium Accuracy/gi, 'मध्यम सटीकता')
+                          .replace(/High Accuracy/gi, 'उच्च सटीकता')
+                          .replace(/Special Accuracy/gi, 'विशेष सटीकता')
+                          .replace(/Ordinary Accuracy/gi, 'साधारण सटीकता')
+                      : 'वर्ग III (मध्यम सटीकता)')
+                  : (assignment.accuracyClass || 'Class III (Medium Accuracy)')}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">Manufacturer</span>
+                <span className="text-slate-400 block font-medium">{isHindi ? 'निर्माता' : 'Manufacturer'}</span>
                 <span className="font-bold text-slate-900 text-sm">{assignment.manufacturer}</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">Model Designation</span>
+                <span className="text-slate-400 block font-medium">{isHindi ? 'मॉडल' : 'Model Designation'}</span>
                 <span className="font-bold text-slate-900 text-sm">{assignment.model}</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">Serial Number</span>
+                <span className="text-slate-400 block font-medium">{isHindi ? 'सीरियल नंबर' : 'Serial Number'}</span>
                 <span className="font-mono font-bold text-slate-900 text-sm">{assignment.serialNumber}</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">Max Capacity (Max)</span>
-                <span className="font-bold text-slate-900 text-sm">{assignment.maxCapacity || '1500 kg'}</span>
+                <span className="text-slate-400 block font-medium">{isHindi ? 'अधिकतम क्षमता (Max)' : 'Max Capacity (Max)'}</span>
+                <span className="font-bold text-slate-900 text-sm">
+                  {String(assignment.maxCapacity || '1500 kg')
+                    .replace(/\s*kg\s*kg/i, ' kg')
+                    .replace(/kg/i, isHindi ? ' किग्रा' : ' kg')}
+                </span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">Min Capacity (Min)</span>
-                <span className="font-bold text-slate-900 text-sm">{assignment.minCapacity || '2 kg'}</span>
+                <span className="text-slate-400 block font-medium">{isHindi ? 'न्यूनतम क्षमता (Min)' : 'Min Capacity (Min)'}</span>
+                <span className="font-bold text-slate-900 text-sm">
+                  {String(assignment.minCapacity || '2 kg')
+                    .replace(/\s*kg/i, isHindi ? ' किग्रा' : ' kg')
+                    .replace(/\s*g\b/i, isHindi ? ' ग्राम' : ' g')}
+                </span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">Verification Division (e)</span>
-                <span className="font-bold text-slate-900 text-sm">{assignment.verificationDivision || '10 g'}</span>
+                <span className="text-slate-400 block font-medium">{isHindi ? 'सत्यापन डिवीज़न (e)' : 'Verification Division (e)'}</span>
+                <span className="font-bold text-slate-900 text-sm">
+                  {String(assignment.verificationDivision || '10 g')
+                    .replace(/\s*g\b/i, isHindi ? ' ग्राम' : ' g')}
+                </span>
               </div>
             </div>
 
@@ -568,10 +659,23 @@ export const InspectionDetailPage = () => {
             <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-start gap-2.5">
               <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold">Standard Weights Calibration Protocol:</p>
+                <p className="font-bold">
+                  {isHindi ? 'मानक बाट अंशांकन प्रोटोकॉल:' : 'Standard Weights Calibration Protocol:'}
+                </p>
                 <p className="text-blue-800 text-[11px] mt-0.5">
-                  {assignment.standardWeightsRequired ||
-                    'Class M1 Standard Weights (10kg, 20kg, 50kg calibrated slabs) required for full range verification.'}
+                  {isHindi
+                    ? (assignment.standardWeightsRequired
+                        ? assignment.standardWeightsRequired
+                            .replace(/Class M1 Standard Weights/g, 'वर्ग M1 मानक बाट')
+                            .replace(/Class M2 Standard Weights/g, 'वर्ग M2 मानक बाट')
+                            .replace(/Class F1 Standard Weights/g, 'वर्ग F1 मानक बाट')
+                            .replace(/calibrated blocks/g, 'अंशांकित ब्लॉक')
+                            .replace(/calibrated slabs/g, 'अंशांकित स्लैब')
+                            .replace(/required for full range verification/g, 'पूर्ण रेंज सत्यापन के लिए आवश्यक')
+                            .replace(/\s*kg/g, ' किग्रा')
+                        : 'पूर्ण रेंज सत्यापन के लिए वर्ग M1 मानक बाट (10 किग्रा, 20 किग्रा, 50 किग्रा अंशांकित स्लैब) आवश्यक हैं।')
+                    : (assignment.standardWeightsRequired ||
+                        'Class M1 Standard Weights (10kg, 20kg, 50kg calibrated slabs) required for full range verification.')}
                 </p>
               </div>
             </div>
@@ -588,18 +692,20 @@ export const InspectionDetailPage = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  Statutory Physical Verification Checklist
+                  {isHindi ? 'वैधानिक भौतिक सत्यापन चेकलिस्ट' : 'Statutory Physical Verification Checklist'}
                 </h3>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                   passedChecklistCount === 6
                     ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-amber-100 text-amber-800'
                 }`}>
-                  {passedChecklistCount} / 6 Satisfied
+                  {passedChecklistCount} / 6 {isHindi ? 'संतुष्ट' : 'Satisfied'}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Tap items to toggle compliance under Legal Metrology (General) Rules
+                {isHindi
+                  ? 'विधिक मापविज्ञान (सामान्य) नियमों के तहत अनुपालन को टॉगल करने के लिए मदों पर टैप करें'
+                  : 'Tap items to toggle compliance under Legal Metrology (General) Rules'}
               </p>
             </div>
 
@@ -610,7 +716,7 @@ export const InspectionDetailPage = () => {
               onClick={passAllChecklist}
               className="text-xs self-start sm:self-auto"
             >
-              Pass All Items
+              {isHindi ? 'सभी मदों को पास करें' : 'Pass All Items'}
             </Button>
           </div>
 
@@ -618,33 +724,33 @@ export const InspectionDetailPage = () => {
             {[
               {
                 id: 'instrumentAvailable',
-                title: 'Instrument Available on Registered Premises',
-                desc: 'Verified physical presence at the registered warehouse/shop address'
+                title: isHindi ? 'पंजीकृत परिसर में उपकरण उपलब्ध' : 'Instrument Available on Registered Premises',
+                desc: isHindi ? 'पंजीकृत गोदाम/दुकान के पते पर भौतिक उपस्थिति सत्यापित' : 'Verified physical presence at the registered warehouse/shop address'
               },
               {
                 id: 'serialNumberVisible',
-                title: 'Serial Number Stamping Intact & Match',
-                desc: 'Metallic serial plate is permanently attached without tampering or erasure'
+                title: isHindi ? 'सीरियल नंबर स्टैम्पिंग अक्षुण्ण एवं मेल खाती है' : 'Serial Number Stamping Intact & Match',
+                desc: isHindi ? 'धात्विक सीरियल प्लेट बिना किसी छेड़छाड़ या मिटाए स्थायी रूप से संलग्न है' : 'Metallic serial plate is permanently attached without tampering or erasure'
               },
               {
                 id: 'manufacturerDetailsVisible',
-                title: 'Manufacturer Details & Model Approval Plate',
-                desc: 'Includes model number, year of manufacture & approval registration mark'
+                title: isHindi ? 'निर्माता विवरण एवं मॉडल अनुमोदन प्लेट' : 'Manufacturer Details & Model Approval Plate',
+                desc: isHindi ? 'मॉडल नंबर, निर्माण का वर्ष एवं अनुमोदन पंजीकरण चिह्न शामिल है' : 'Includes model number, year of manufacture & approval registration mark'
               },
               {
                 id: 'displayFunctioning',
-                title: 'Display Indicator & Zero-Tracking Stability',
-                desc: 'Digital display digits sharp, responsive tare and automatic zero stabilization'
+                title: isHindi ? 'डिस्प्ले इंडिकेटर एवं शून्य-ट्रैकिंग स्थिरता' : 'Display Indicator & Zero-Tracking Stability',
+                desc: isHindi ? 'डिजिटल डिस्प्ले अंक स्पष्ट, उत्तरदायी टेयर और स्वचालित शून्य स्थिरीकरण' : 'Digital display digits sharp, responsive tare and automatic zero stabilization'
               },
               {
                 id: 'requiredMarkingsVisible',
-                title: 'Statutory Verification Divisions Inscription',
-                desc: 'Max, Min, and scale interval (e = 10g) clearly legible in metric units'
+                title: isHindi ? 'वैधानिक सत्यापन डिवीज़न अंकित' : 'Statutory Verification Divisions Inscription',
+                desc: isHindi ? 'अधिकतम (Max), न्यूनतम (Min) और पैमाना अंतराल (e = 10g) मीट्रिक इकाइयों में स्पष्ट रूप से पठनीय' : 'Max, Min, and scale interval (e = 10g) clearly legible in metric units'
               },
               {
                 id: 'levelBubbleCentered',
-                title: 'Level Indicator & Adjustable Footings',
-                desc: 'Spirit bubble vial is centered and all load-cell support footings firmly locked'
+                title: isHindi ? 'लेवल संकेतक एवं समायोज्य आधार (पाद)' : 'Level Indicator & Adjustable Footings',
+                desc: isHindi ? 'स्पिरिट बबल शीशी केंद्रित है और सभी लोड-सेल सपोर्ट पैर मजबूती से स्थिर हैं' : 'Spirit bubble vial is centered and all load-cell support footings firmly locked'
               }
             ].map((item) => {
               const isChecked = checklist[item.id];
@@ -688,14 +794,16 @@ export const InspectionDetailPage = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  Reference Standard Tests (MPE Calculator)
+                  {isHindi ? 'संदर्भ मानक परीक्षण (एमपीई कैलकुलेटर)' : 'Reference Standard Tests (MPE Calculator)'}
                 </h3>
                 <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                  {passedMeasurementsCount} of {measurements.length} Passed
+                  {passedMeasurementsCount} {isHindi ? 'में से' : 'of'} {measurements.length} {isHindi ? 'उत्तीर्ण' : 'Passed'}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Calculates Error = Reading - Load against Maximum Permissible Error (MPE)
+                {isHindi
+                  ? 'अधिकतम स्वीकार्य त्रुटि (एमपीई) के विरुद्ध त्रुटि = पाठ्यांक - भार की गणना करता है'
+                  : 'Calculates Error = Reading - Load against Maximum Permissible Error (MPE)'}
               </p>
             </div>
 
@@ -706,7 +814,7 @@ export const InspectionDetailPage = () => {
               onClick={addMeasurementRow}
               className="text-xs self-start sm:self-auto"
             >
-              Add Test Load
+              {isHindi ? '+ परीक्षण भार जोड़ें' : 'Add Test Load'}
             </Button>
           </div>
 
@@ -715,12 +823,12 @@ export const InspectionDetailPage = () => {
             <table className="min-w-full divide-y divide-slate-200 text-xs">
               <thead className="bg-slate-50 font-semibold text-slate-700">
                 <tr>
-                  <th className="px-3 py-2.5 text-left">Test Load Condition</th>
-                  <th className="px-3 py-2.5 text-center">Nominal (kg)</th>
-                  <th className="px-3 py-2.5 text-center">Observed (kg)</th>
-                  <th className="px-3 py-2.5 text-center">Error (g)</th>
-                  <th className="px-3 py-2.5 text-center">MPE Limit</th>
-                  <th className="px-3 py-2.5 text-center">Result</th>
+                  <th className="px-3 py-2.5 text-left">{isHindi ? 'परीक्षण भार स्थिति' : 'Test Load Condition'}</th>
+                  <th className="px-3 py-2.5 text-center">{isHindi ? 'नाममात्र (किग्रा)' : 'Nominal (kg)'}</th>
+                  <th className="px-3 py-2.5 text-center">{isHindi ? 'प्रेक्षित (किग्रा)' : 'Observed (kg)'}</th>
+                  <th className="px-3 py-2.5 text-center">{isHindi ? 'त्रुटि (ग्राम)' : 'Error (g)'}</th>
+                  <th className="px-3 py-2.5 text-center">{isHindi ? 'एमपीई सीमा' : 'MPE Limit'}</th>
+                  <th className="px-3 py-2.5 text-center">{isHindi ? 'परिणाम' : 'Result'}</th>
                   <th className="px-2 py-2.5 text-center"></th>
                 </tr>
               </thead>
@@ -730,7 +838,7 @@ export const InspectionDetailPage = () => {
                   return (
                     <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-3 py-2.5 font-semibold text-slate-900">
-                        {m.testWeight}
+                        {translateTestWeight(m.testWeight)}
                       </td>
                       <td className="px-3 py-2.5 text-center font-mono font-medium text-slate-700">
                         {m.loadKg.toFixed(3)}
@@ -760,7 +868,7 @@ export const InspectionDetailPage = () => {
                               : 'bg-rose-100 text-rose-800 border border-rose-300'
                           }`}
                         >
-                          {m.result}
+                          {m.result === 'PASS' ? (isHindi ? 'उत्तीर्ण' : 'PASS') : (isHindi ? 'अनुत्तीर्ण' : 'FAIL')}
                         </span>
                       </td>
                       <td className="px-2 py-2.5 text-center">
@@ -783,10 +891,18 @@ export const InspectionDetailPage = () => {
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
             <p className="font-bold text-slate-800 flex items-center gap-1">
               <Sliders className="w-3.5 h-3.5 text-blue-600" />
-              Maximum Permissible Error (MPE) for Class III Scales:
+              {isHindi ? 'वर्ग III तराजू के लिए अधिकतम स्वीकार्य त्रुटि (एमपीई):' : 'Maximum Permissible Error (MPE) for Class III Scales:'}
             </p>
             <p>
-              • 0 to 500e (0-5kg): <strong>±1e (±10g)</strong> • 500e to 2000e (5-20kg): <strong>±2e (±20g)</strong> • &gt;2000e: <strong>±3e (±30g)</strong>
+              {isHindi ? (
+                <>
+                  • 0 से 500e (0-5किग्रा): <strong>±1e (±10ग्राम)</strong> • 500e से 2000e (5-20किग्रा): <strong>±2e (±20ग्राम)</strong> • &gt;2000e: <strong>±3e (±30ग्राम)</strong>
+                </>
+              ) : (
+                <>
+                  • 0 to 500e (0-5kg): <strong>±1e (±10g)</strong> • 500e to 2000e (5-20kg): <strong>±2e (±20g)</strong> • &gt;2000e: <strong>±3e (±30g)</strong>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -802,7 +918,9 @@ export const InspectionDetailPage = () => {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4 text-emerald-600 animate-pulse" />
-                <h3 className="text-sm font-bold text-slate-900">Live GNSS Geofencing Telematics</h3>
+                <h3 className="text-sm font-bold text-slate-900">
+                  {isHindi ? 'लाइव जीएनएसएस जियोफेंसिंग टेलीमैटिक्स' : 'Live GNSS Geofencing Telematics'}
+                </h3>
               </div>
               <Button
                 variant="outline"
@@ -812,27 +930,30 @@ export const InspectionDetailPage = () => {
                 isLoading={gpsRefreshing}
                 className="text-xs"
               >
-                Re-acquire Satellite Lock
+                {isHindi ? 'सैटेलाइट लॉक पुनः प्राप्त करें' : 'Re-acquire Satellite Lock'}
               </Button>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">GPS Coordinates</span>
+                <span className="text-slate-400 block font-medium">{isHindi ? 'जीपीएस निर्देशांक' : 'GPS Coordinates'}</span>
                 <span className="font-mono font-bold text-slate-900 text-xs sm:text-sm">{gpsData.coords}</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">Satellites / Accuracy</span>
-                <span className="font-bold text-slate-900 text-xs sm:text-sm">{gpsData.satellites} Sats • {gpsData.accuracy}</span>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">Geofence Proximity</span>
-                <span className="font-bold text-emerald-700 text-xs sm:text-sm flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" /> {gpsData.distanceMeters}m from Target
+                <span className="text-slate-400 block font-medium">{isHindi ? 'उपग्रह / सटीकता' : 'Satellites / Accuracy'}</span>
+                <span className="font-bold text-slate-900 text-xs sm:text-sm">
+                  {gpsData.satellites} {isHindi ? 'उपग्रह' : 'Sats'} • {gpsData.accuracy}
                 </span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 block font-medium">Telemetry Timestamp</span>
+                <span className="text-slate-400 block font-medium">{isHindi ? 'जियोफेंस निकटता' : 'Geofence Proximity'}</span>
+                <span className="font-bold text-emerald-700 text-xs sm:text-sm flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  {isHindi ? `लक्ष्य से ${gpsData.distanceMeters} मी` : `${gpsData.distanceMeters}m from Target`}
+                </span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-slate-400 block font-medium">{isHindi ? 'टेलीमैट्री समय-मुहर' : 'Telemetry Timestamp'}</span>
                 <span className="font-mono font-semibold text-slate-700 text-[11px]">{gpsData.timestamp}</span>
               </div>
             </div>
@@ -842,67 +963,72 @@ export const InspectionDetailPage = () => {
           <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
             <div className="border-b border-slate-100 pb-3">
               <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                Statutory Photographic Evidence (Watermarked)
+                {isHindi ? 'वैधानिक फोटो साक्ष्य (वॉटरमार्क युक्त)' : 'Statutory Photographic Evidence (Watermarked)'}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Tap thumbnail to view high-resolution photo with GNSS watermark
+                {isHindi
+                  ? 'जीएनएसएस वॉटरमार्क के साथ उच्च-रिज़ॉल्यूशन फ़ोटो देखने के लिए थंबनेल पर टैप करें'
+                  : 'Tap thumbnail to view high-resolution photo with GNSS watermark'}
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {photos.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl border border-slate-200 p-3.5 bg-slate-50/50 flex flex-col justify-between gap-3"
-                >
-                  <div className="flex items-start gap-3">
-                    {/* Thumbnail */}
-                    <div
-                      onClick={() => setPhotoModalImage(item)}
-                      className="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-slate-300 relative cursor-pointer group bg-slate-200"
-                    >
-                      <img
-                        src={item.url}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <Eye className="w-5 h-5 text-white" />
+              {photos.map((item) => {
+                const meta = getPhotoMeta(item);
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-xl border border-slate-200 p-3.5 bg-slate-50/50 flex flex-col justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Thumbnail */}
+                      <div
+                        onClick={() => setPhotoModalImage(item)}
+                        className="w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-slate-300 relative cursor-pointer group bg-slate-200"
+                      >
+                        <img
+                          src={item.url}
+                          alt={meta.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <Eye className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-slate-900">{meta.title}</span>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
+                            {isHindi ? 'संलग्न' : 'Attached'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-tight">{meta.desc}</p>
+                        <p className="text-[10px] text-slate-400 font-mono pt-1">
+                          {isHindi ? 'समय:' : 'Locked:'} {item.timestamp.replace('Today', 'आज').replace('Just now (Watermarked)', 'अभी (वॉटरमार्क युक्त)')}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-slate-900">{item.title}</span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
-                          Attached
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 leading-tight">{item.description}</p>
-                      <p className="text-[10px] text-slate-400 font-mono pt-1">
-                        Locked: {item.timestamp}
-                      </p>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setPhotoModalImage(item)}
+                        className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> {isHindi ? 'फ़ोटो देखें' : 'View Photo'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSimulatePhotoUpload(item.id)}
+                        className="text-slate-600 hover:text-slate-900 font-semibold flex items-center gap-1"
+                      >
+                        <Camera className="w-3.5 h-3.5" /> {isHindi ? 'पुनः लें' : 'Retake'}
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setPhotoModalImage(item)}
-                      className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
-                    >
-                      <Eye className="w-3.5 h-3.5" /> View Photo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSimulatePhotoUpload(item.id)}
-                      className="text-slate-600 hover:text-slate-900 font-semibold flex items-center gap-1"
-                    >
-                      <Camera className="w-3.5 h-3.5" /> Retake
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -917,58 +1043,66 @@ export const InspectionDetailPage = () => {
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
             <div className="border-b border-slate-100 pb-3">
               <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                Inspection Summary Dossier
+                {isHindi ? 'निरीक्षण सारांश डोज़ियर' : 'Inspection Summary Dossier'}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Consolidated audit results ready for legal metrology sign-off
+                {isHindi
+                  ? 'विधिक मापविज्ञान हस्ताक्षर के लिए समेकित ऑडिट परिणाम तैयार हैं'
+                  : 'Consolidated audit results ready for legal metrology sign-off'}
               </p>
             </div>
 
             {/* 4 Scorecard Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                <span className="text-emerald-700 block font-semibold">Physical Checklist</span>
-                <span className="font-bold text-emerald-900 text-sm">{passedChecklistCount} / 6 Verified</span>
+                <span className="text-emerald-700 block font-semibold">{isHindi ? 'भौतिक चेकलिस्ट' : 'Physical Checklist'}</span>
+                <span className="font-bold text-emerald-900 text-sm">
+                  {passedChecklistCount} / 6 {isHindi ? 'सत्यापित' : 'Verified'}
+                </span>
               </div>
               <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                <span className="text-emerald-700 block font-semibold">MPE Standard Tests</span>
+                <span className="text-emerald-700 block font-semibold">{isHindi ? 'एमपीई मानक परीक्षण' : 'MPE Standard Tests'}</span>
                 <span className="font-bold text-emerald-900 text-sm">
-                  {passedMeasurementsCount} of {measurements.length} Within MPE
+                  {passedMeasurementsCount} {isHindi ? 'में से' : 'of'} {measurements.length} {isHindi ? 'एमपीई के भीतर' : 'Within MPE'}
                 </span>
               </div>
               <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
-                <span className="text-blue-700 block font-semibold">GPS Telematics</span>
-                <span className="font-bold text-blue-900 text-sm">Geofence Verified (4m)</span>
+                <span className="text-blue-700 block font-semibold">{isHindi ? 'जीपीएस टेलीमैटिक्स' : 'GPS Telematics'}</span>
+                <span className="font-bold text-blue-900 text-sm">
+                  {isHindi ? 'जियोफेंस सत्यापित (4मी)' : 'Geofence Verified (4m)'}
+                </span>
               </div>
               <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
-                <span className="text-indigo-700 block font-semibold">Photo Evidence</span>
-                <span className="font-bold text-indigo-900 text-sm">4 Watermarked Photos</span>
+                <span className="text-indigo-700 block font-semibold">{isHindi ? 'फ़ोटो साक्ष्य' : 'Photo Evidence'}</span>
+                <span className="font-bold text-indigo-900 text-sm">
+                  {isHindi ? '4 वॉटरमार्क युक्त फ़ोटो' : '4 Watermarked Photos'}
+                </span>
               </div>
             </div>
 
             {/* Inspector Recommendation Selector */}
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <label className="block text-xs font-bold text-slate-800">
-                Statutory Inspector Recommendation
+                {isHindi ? 'वैधानिक निरीक्षक सिफारिश' : 'Statutory Inspector Recommendation'}
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                 {[
                   {
                     id: 'RECOMMEND_APPROVAL',
-                    label: 'Recommend for Approval',
-                    desc: 'All criteria satisfied under Act',
+                    label: isHindi ? 'अनुमोदन के लिए सिफारिश करें' : 'Recommend for Approval',
+                    desc: isHindi ? 'अधिनियम के तहत सभी मानदंड पूरे किए गए' : 'All criteria satisfied under Act',
                     color: 'peer-checked:bg-emerald-50 peer-checked:border-emerald-500 peer-checked:text-emerald-900'
                   },
                   {
                     id: 'REJECT_RECALIBRATION',
-                    label: 'Require Re-calibration',
-                    desc: 'Error exceeds MPE limit',
+                    label: isHindi ? 'पुनः अंशांकन की आवश्यकता है' : 'Require Re-calibration',
+                    desc: isHindi ? 'त्रुटि एमपीई सीमा से अधिक है' : 'Error exceeds MPE limit',
                     color: 'peer-checked:bg-amber-50 peer-checked:border-amber-500 peer-checked:text-amber-900'
                   },
                   {
                     id: 'REJECT_NONCOMPLIANT',
-                    label: 'Reject / Non-Compliant',
-                    desc: 'Tampering or serial mismatch',
+                    label: isHindi ? 'अस्वीकार / गैर-अनुपालन' : 'Reject / Non-Compliant',
+                    desc: isHindi ? 'छेड़छाड़ या सीरियल नंबर बेमेल' : 'Tampering or serial mismatch',
                     color: 'peer-checked:bg-rose-50 peer-checked:border-rose-500 peer-checked:text-rose-900'
                   }
                 ].map((opt) => (
@@ -996,7 +1130,7 @@ export const InspectionDetailPage = () => {
             {/* Physical Lead Seal Input */}
             <div className="pt-2">
               <label className="block text-xs font-bold text-slate-800 mb-1">
-                Statutory Verification Seal Number Attached
+                {isHindi ? 'संलग्न वैधानिक सत्यापन सील संख्या' : 'Statutory Verification Seal Number Attached'}
               </label>
               <input
                 type="text"
@@ -1006,14 +1140,16 @@ export const InspectionDetailPage = () => {
                 className="w-full p-2.5 text-xs font-mono font-bold bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-[11px] text-slate-500 mt-1">
-                Enter the embossed identification number of the tamper-evident seal applied to the instrument.
+                {isHindi
+                  ? 'उपकरण पर लगाई गई छेड़छाड़-रोधी सील की उभरी हुई पहचान संख्या दर्ज करें।'
+                  : 'Enter the embossed identification number of the tamper-evident seal applied to the instrument.'}
               </p>
             </div>
 
             {/* Remarks / Notes */}
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1">
-                Inspector Findings & Audit Observations
+                {isHindi ? 'निरीक्षक निष्कर्ष एवं ऑडिट टिप्पणियां' : 'Inspector Findings & Audit Observations'}
               </label>
               <textarea
                 rows={3}
@@ -1033,9 +1169,17 @@ export const InspectionDetailPage = () => {
                   className="mt-0.5 w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-slate-700 leading-relaxed">
-                  I, <strong>Inspector Vikram Singh (INSP-NZ-4082)</strong>, hereby declare that the physical verification
-                  and reference load testing of instrument <strong>{assignment.serialNumber}</strong> were carried out in my
-                  presence on-site adhering to the Legal Metrology Act, 2009 and applicable State verification rules.
+                  {isHindi ? (
+                    <>
+                      मैं, <strong>निरीक्षक विक्रम सिंह (INSP-NZ-4082)</strong>, एतद्द्वारा घोषित करता हूं कि उपकरण <strong>{assignment.serialNumber}</strong> का भौतिक सत्यापन एवं संदर्भ भार परीक्षण विधिक मापविज्ञान अधिनियम, 2009 तथा लागू राज्य सत्यापन नियमों के अनुसार साइट पर मेरी उपस्थिति में किया गया।
+                    </>
+                  ) : (
+                    <>
+                      I, <strong>Inspector Vikram Singh (INSP-NZ-4082)</strong>, hereby declare that the physical verification
+                      and reference load testing of instrument <strong>{assignment.serialNumber}</strong> were carried out in my
+                      presence on-site adhering to the Legal Metrology Act, 2009 and applicable State verification rules.
+                    </>
+                  )}
                 </span>
               </label>
             </div>
@@ -1056,11 +1200,11 @@ export const InspectionDetailPage = () => {
             leftIcon={ArrowLeft}
             className="text-xs"
           >
-            Prev
+            {isHindi ? 'पिछला' : 'Prev'}
           </Button>
 
           <span className="text-xs font-semibold text-slate-600 text-center truncate">
-            Step {currentTabIndex + 1} of 5: <strong className="text-slate-900">{tabs[currentTabIndex].label}</strong>
+            {isHindi ? `चरण ${currentTabIndex + 1} / 5:` : `Step ${currentTabIndex + 1} of 5:`} <strong className="text-slate-900">{tabs[currentTabIndex].label}</strong>
           </span>
 
           {currentTabIndex < tabs.length - 1 ? (
@@ -1071,7 +1215,7 @@ export const InspectionDetailPage = () => {
               rightIcon={ArrowRight}
               className="text-xs shadow-xs"
             >
-              Next Step
+              {isHindi ? 'अगला चरण' : 'Next Step'}
             </Button>
           ) : (
             <Button
@@ -1082,7 +1226,7 @@ export const InspectionDetailPage = () => {
               leftIcon={CheckCircle2}
               className="bg-emerald-600 hover:bg-emerald-500 text-xs shadow-md"
             >
-              Submit Report
+              {isHindi ? 'रिपोर्ट जमा करें' : 'Submit Report'}
             </Button>
           )}
         </div>
@@ -1100,7 +1244,9 @@ export const InspectionDetailPage = () => {
           >
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-bold text-slate-900">{photoModalImage.title}</h4>
+                <h4 className="text-sm font-bold text-slate-900">
+                  {getPhotoMeta(photoModalImage).title}
+                </h4>
                 <p className="text-[11px] text-slate-500 font-mono">{gpsData.coords} • {photoModalImage.timestamp}</p>
               </div>
               <button
@@ -1115,7 +1261,7 @@ export const InspectionDetailPage = () => {
             <div className="p-4 bg-slate-900 flex items-center justify-center relative">
               <img
                 src={photoModalImage.url}
-                alt={photoModalImage.title}
+                alt={getPhotoMeta(photoModalImage).title}
                 className="max-h-80 w-auto object-contain rounded-lg"
               />
               {/* Telematics Watermark Overlay */}
@@ -1129,7 +1275,7 @@ export const InspectionDetailPage = () => {
 
             <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
               <Button size="sm" variant="outline" onClick={() => setPhotoModalImage(null)}>
-                Close Preview
+                {isHindi ? 'पूर्वावलोकन बंद करें' : 'Close Preview'}
               </Button>
             </div>
           </div>
@@ -1146,29 +1292,39 @@ export const InspectionDetailPage = () => {
 
             <div className="space-y-1">
               <h3 className="text-lg font-bold text-slate-900">
-                Inspection Report Submitted!
+                {isHindi ? 'निरीक्षण रिपोर्ट सफलतापूर्वक जमा की गई!' : 'Inspection Report Submitted!'}
               </h3>
               <p className="text-xs text-slate-600">
-                The field verification dossier for <strong>{assignment.businessName}</strong> has been digitally signed and routed to the Verification Officer for certificate issuance.
+                {isHindi ? (
+                  <>
+                    <strong>{assignment.businessName}</strong> का फ़ील्ड सत्यापन डोज़ियर डिजिटल रूप से हस्ताक्षरित कर प्रमाणपत्र जारी करने हेतु सत्यापन अधिकारी को अग्रेषित कर दिया गया है।
+                  </>
+                ) : (
+                  <>
+                    The field verification dossier for <strong>{assignment.businessName}</strong> has been digitally signed and routed to the Verification Officer for certificate issuance.
+                  </>
+                )}
               </p>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-left font-mono space-y-1 text-slate-700">
               <div className="flex justify-between">
-                <span>Dossier Reference:</span>
+                <span>{isHindi ? 'डोज़ियर संदर्भ:' : 'Dossier Reference:'}</span>
                 <span className="font-bold text-slate-900">{assignment.id}</span>
               </div>
               <div className="flex justify-between">
-                <span>Verification Seal ID:</span>
+                <span>{isHindi ? 'सत्यापन सील आईडी:' : 'Verification Seal ID:'}</span>
                 <span className="font-bold text-blue-600">{sealNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span>Inspector Badge:</span>
+                <span>{isHindi ? 'निरीक्षक बैज:' : 'Inspector Badge:'}</span>
                 <span className="font-bold text-slate-900">INSP-NZ-4082</span>
               </div>
               <div className="flex justify-between">
-                <span>Routing Target:</span>
-                <span className="font-bold text-emerald-700">Dr. Anita Deshmukh (Officer Queue)</span>
+                <span>{isHindi ? 'अग्रेषित अधिकारी:' : 'Routing Target:'}</span>
+                <span className="font-bold text-emerald-700">
+                  {isHindi ? 'डॉ. अनीता देशमुख (अधिकारी कतार)' : 'Dr. Anita Deshmukh (Officer Queue)'}
+                </span>
               </div>
             </div>
 
@@ -1182,7 +1338,7 @@ export const InspectionDetailPage = () => {
                 }}
                 className="flex-1 text-xs"
               >
-                Review Report
+                {isHindi ? 'रिपोर्ट की समीक्षा करें' : 'Review Report'}
               </Button>
               <Button
                 variant="primary"
@@ -1190,7 +1346,7 @@ export const InspectionDetailPage = () => {
                 onClick={() => navigate('/inspector/dashboard')}
                 className="flex-1 text-xs"
               >
-                Return to Dashboard
+                {isHindi ? 'डैशबोर्ड पर लौटें' : 'Return to Dashboard'}
               </Button>
             </div>
           </div>

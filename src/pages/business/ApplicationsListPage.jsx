@@ -10,9 +10,11 @@ import SearchBar from '../../components/ui/SearchBar';
 import FilterDropdown from '../../components/ui/FilterDropdown';
 import LoadingState from '../../components/ui/LoadingState';
 import ErrorState from '../../components/ui/ErrorState';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const ApplicationsListPage = () => {
   const navigate = useNavigate();
+  const { t, isHindi } = useLanguage();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,7 +51,7 @@ export const ApplicationsListPage = () => {
 
   const columns = [
     {
-      header: 'Application ID',
+      header: isHindi ? 'आवेदन आईडी' : 'Application ID',
       accessor: 'id',
       render: (row) => (
         <Link
@@ -62,32 +64,32 @@ export const ApplicationsListPage = () => {
       )
     },
     {
-      header: 'Instrument Type',
+      header: isHindi ? 'उपकरण का प्रकार' : 'Instrument Type',
       accessor: 'instrumentType',
       render: (row) => <span className="text-xs font-medium text-slate-900">{row.instrumentType}</span>
     },
     {
-      header: 'Instrument ID',
+      header: isHindi ? 'उपकरण आईडी' : 'Instrument ID',
       accessor: 'instrumentId',
       render: (row) => <span className="font-mono text-xs text-slate-500">{row.instrumentId}</span>
     },
     {
-      header: 'Submitted On',
+      header: isHindi ? 'जमा करने की तारीख' : 'Submitted On',
       accessor: 'submissionDate',
       render: (row) => <span className="text-xs text-slate-500">{row.submissionDate}</span>
     },
     {
-      header: 'Assigned Inspector',
+      header: isHindi ? 'नियुक्त निरीक्षक' : 'Assigned Inspector',
       accessor: 'assignedInspector',
       render: (row) => <span className="text-xs text-slate-600">{row.assignedInspector}</span>
     },
     {
-      header: 'AI Risk Level',
+      header: isHindi ? 'एआई जोखिम स्तर' : 'AI Risk Level',
       accessor: 'riskLevel',
       render: (row) => <RiskBadge level={row.riskLevel} score={row.riskScore} />
     },
     {
-      header: 'Status',
+      header: isHindi ? 'स्थिति' : 'Status',
       accessor: 'status',
       render: (row) => <StatusBadge status={row.status} />
     }
@@ -99,15 +101,15 @@ export const ApplicationsListPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900 font-heading">
-            Verification Applications
+            {t.verificationApplicationsTitle || 'Verification Applications'}
           </h2>
           <p className="text-xs text-slate-500">
-            Track statutory filing, AI analysis, field telemetry, and officer approvals
+            {t.verificationApplicationsSub || 'Track statutory filing, AI analysis, field telemetry, and officer approvals'}
           </p>
         </div>
         <Link to="/business/applications/new">
           <Button variant="primary" size="md" leftIcon={PlusCircle}>
-            New Verification Application
+            {t.newVerificationApplication || 'New Verification Application'}
           </Button>
         </Link>
       </div>
@@ -117,18 +119,18 @@ export const ApplicationsListPage = () => {
         <SearchBar
           value={search}
           onChange={setSearch}
-          placeholder="Search by Application ID, instrument ID, device..."
+          placeholder={isHindi ? "आवेदन आईडी, उपकरण आईडी, डिवाइस द्वारा खोजें..." : "Search by Application ID, instrument ID, device..."}
           className="flex-1"
         />
         <FilterDropdown
           value={statusFilter}
           onChange={setStatusFilter}
-          label="Status"
+          label={isHindi ? "स्थिति" : "Status"}
           options={[
-            { label: 'Approved', value: 'APPROVED' },
-            { label: 'Officer Review', value: 'OFFICER_REVIEW' },
-            { label: 'Inspection', value: 'INSPECTION' },
-            { label: 'Submitted', value: 'SUBMITTED' }
+            { label: isHindi ? 'स्वीकृत' : 'Approved', value: 'APPROVED' },
+            { label: isHindi ? 'अधिकारी समीक्षा' : 'Officer Review', value: 'OFFICER_REVIEW' },
+            { label: isHindi ? 'निरीक्षण' : 'Inspection', value: 'INSPECTION' },
+            { label: isHindi ? 'प्रस्तुत' : 'Submitted', value: 'SUBMITTED' }
           ]}
         />
       </div>

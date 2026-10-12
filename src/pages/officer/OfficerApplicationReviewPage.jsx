@@ -31,11 +31,13 @@ import AIAnalysisCard from '../../components/ai/AIAnalysisCard';
 import LoadingState from '../../components/ui/LoadingState';
 import ErrorState from '../../components/ui/ErrorState';
 import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const OfficerApplicationReviewPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t, isHindi } = useLanguage();
 
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -150,16 +152,16 @@ export const OfficerApplicationReviewPage = () => {
     }
     if (typeof checklist === 'object') {
       const labels = {
-        instrumentAvailable: 'Instrument Available On-Site for Inspection',
-        serialNumberVisible: 'Stamped Serial Number Clean & Legible',
-        manufacturerDetailsVisible: 'Model & Manufacturer Plate Intact',
-        displayFunctioning: 'Digital Display & Zero Indicator Operational',
-        requiredMarkingsVisible: 'Statutory Verification Markings Displayed',
-        requiredDocumentsAvailable: 'Model Approval Documentation Valid',
-        visualInspection: 'Visual Inspection & Housing Integrity',
-        sealingIntact: 'Calibration Tamper Seal Enclosure Intact',
-        zeroErrorCheck: 'Zero Tare Balance & Centered Level Vial',
-        repeatabilityPass: 'Multi-Trial Repeatability Tolerance Compliant'
+        instrumentAvailable: isHindi ? 'निरीक्षण के लिए साइट पर उपकरण उपलब्ध' : 'Instrument Available On-Site for Inspection',
+        serialNumberVisible: isHindi ? 'स्टैम्प्ड सीरियल नंबर साफ एवं पठनीय' : 'Stamped Serial Number Clean & Legible',
+        manufacturerDetailsVisible: isHindi ? 'मॉडल एवं निर्माता प्लेट अक्षुण्ण' : 'Model & Manufacturer Plate Intact',
+        displayFunctioning: isHindi ? 'डिजिटल डिस्प्ले एवं शून्य संकेतक चालू' : 'Digital Display & Zero Indicator Operational',
+        requiredMarkingsVisible: isHindi ? 'वैधानिक सत्यापन चिन्हांकन प्रदर्शित' : 'Statutory Verification Markings Displayed',
+        requiredDocumentsAvailable: isHindi ? 'मॉडल अनुमोदन दस्तावेज़ीकरण मान्य' : 'Model Approval Documentation Valid',
+        visualInspection: isHindi ? 'दृश्य निरीक्षण एवं आवरण अखंडता' : 'Visual Inspection & Housing Integrity',
+        sealingIntact: isHindi ? 'अंशांकन छेड़छाड़-रोधी सील बाड़े अक्षुण्ण' : 'Calibration Tamper Seal Enclosure Intact',
+        zeroErrorCheck: isHindi ? 'शून्य टेयर संतुलन एवं केंद्रित स्तर वायल' : 'Zero Tare Balance & Centered Level Vial',
+        repeatabilityPass: isHindi ? 'बहु-परीक्षण दोहराव सहनशीलता अनुरूप' : 'Multi-Trial Repeatability Tolerance Compliant'
       };
       return Object.entries(checklist).map(([key, val]) => ({
         item: labels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase()),
@@ -201,77 +203,77 @@ export const OfficerApplicationReviewPage = () => {
     {
       id: 'instrument',
       number: 1,
-      title: 'Instrument',
-      badge: application.instrumentDetails?.accuracyClass?.split(' ')[0] || 'Class III',
+      title: isHindi ? 'उपकरण' : 'Instrument',
+      badge: application.instrumentDetails?.accuracyClass?.split(' ')[0] || (isHindi ? 'वर्ग III' : 'Class III'),
       isPassed: true,
       desc: `SN: ${application.instrumentDetails?.serialNumber || 'WS123456'}`,
-      statusText: 'Specs Validated'
+      statusText: isHindi ? 'विनिर्देश मान्य' : 'Specs Validated'
     },
     {
       id: 'application',
       number: 2,
-      title: 'Application',
-      badge: 'Fee Paid',
+      title: isHindi ? 'आवेदन' : 'Application',
+      badge: isHindi ? 'शुल्क भुगतान पूर्ण' : 'Fee Paid',
       isPassed: true,
       desc: application.statutoryFee?.amount || '₹1,250',
-      statusText: 'Challan Reconciled'
+      statusText: isHindi ? 'चालान समाधान' : 'Challan Reconciled'
     },
     {
       id: 'documents',
       number: 3,
-      title: 'Documents',
-      badge: `${application.documents?.length || 3} Files`,
+      title: isHindi ? 'दस्तावेज़' : 'Documents',
+      badge: `${application.documents?.length || 3} ${isHindi ? 'फ़ाइलें' : 'Files'}`,
       isPassed: true,
-      desc: 'Authentic 99.4%',
-      statusText: 'PDF Vault Signed'
+      desc: isHindi ? 'प्रामाणिक 99.4%' : 'Authentic 99.4%',
+      statusText: isHindi ? 'हस्ताक्षरित पीडीएफ वॉल्ट' : 'PDF Vault Signed'
     },
     {
       id: 'ai',
       number: 4,
-      title: 'AI Check',
-      badge: application.riskLevel === 'HIGH' ? 'Anomaly Flag' : 'OCR Match',
+      title: isHindi ? 'एआई जांच' : 'AI Check',
+      badge: application.riskLevel === 'HIGH' ? (isHindi ? 'विसंगति ध्वज' : 'Anomaly Flag') : (isHindi ? 'ओसीआर मिलान' : 'OCR Match'),
       isPassed: application.riskLevel !== 'HIGH',
       isWarning: application.riskLevel === 'HIGH',
-      desc: `Risk: ${application.riskScore}/100`,
-      statusText: application.riskLevel === 'HIGH' ? 'Serial Mismatch' : 'OCR 100% Match'
+      desc: `${isHindi ? 'जोखिम:' : 'Risk:'} ${application.riskScore}/100`,
+      statusText: application.riskLevel === 'HIGH' ? (isHindi ? 'सीरियल बेमेल' : 'Serial Mismatch') : (isHindi ? 'ओसीआर 100% मिलान' : 'OCR 100% Match')
     },
     {
       id: 'inspection',
       number: 5,
-      title: 'Inspection',
-      badge: checklistItems.length > 0 ? `${checklistItems.filter(c => c.passed).length}/${checklistItems.length} Check` : 'In Progress',
+      title: isHindi ? 'निरीक्षण' : 'Inspection',
+      badge: checklistItems.length > 0 ? `${checklistItems.filter(c => c.passed).length}/${checklistItems.length} ${isHindi ? 'जांच' : 'Check'}` : (isHindi ? 'प्रगति में' : 'In Progress'),
       isPassed: !!application.inspection?.completedDate,
-      desc: application.inspection?.inspectorName?.split(' ')[0] || 'Assigned',
-      statusText: application.inspection?.completedDate ? 'Site Audit Done' : 'Field Pending'
+      desc: application.inspection?.inspectorName?.split(' ')[0] || (isHindi ? 'नियुक्त' : 'Assigned'),
+      statusText: application.inspection?.completedDate ? (isHindi ? 'साइट ऑडिट पूर्ण' : 'Site Audit Done') : (isHindi ? 'फील्ड लंबित' : 'Field Pending')
     },
     {
       id: 'evidence',
       number: 6,
-      title: 'Evidence',
+      title: isHindi ? 'साक्ष्य' : 'Evidence',
       badge: measurementsList.length > 0 && measurementsList.every((m) => m.result === 'PASS')
-        ? 'MPE Verified'
-        : (measurementsList.length === 0 ? 'Pending Field Audit' : 'MPE Exceeded'),
+        ? (isHindi ? 'एमपीई सत्यापित' : 'MPE Verified')
+        : (measurementsList.length === 0 ? (isHindi ? 'फील्ड ऑडिट लंबित' : 'Pending Field Audit') : (isHindi ? 'एमपीई सीमा पार' : 'MPE Exceeded')),
       isPassed: measurementsList.length > 0 && measurementsList.every((m) => m.result === 'PASS'),
       isWarning: measurementsList.some((m) => m.result === 'FAIL'),
-      desc: 'GNSS & Photos',
+      desc: isHindi ? 'जीएनएसएस व फोटो' : 'GNSS & Photos',
       statusText: measurementsList.length > 0 && measurementsList.every((m) => m.result === 'PASS')
-        ? 'Tolerances Met'
-        : (measurementsList.length === 0 ? 'Awaiting Field Visit' : 'Error Tolerance Fail')
+        ? (isHindi ? 'सहनशीलता संतुष्ट' : 'Tolerances Met')
+        : (measurementsList.length === 0 ? (isHindi ? 'फील्ड दौरे की प्रतीक्षा' : 'Awaiting Field Visit') : (isHindi ? 'त्रुटि सीमा विफल' : 'Error Tolerance Fail'))
     },
     {
       id: 'decision',
       number: 7,
-      title: 'Officer Decision',
+      title: isHindi ? 'अधिकारी निर्णय' : 'Officer Decision',
       badge:
         application.status === 'APPROVED'
-          ? 'Approved'
+          ? (isHindi ? 'स्वीकृत' : 'Approved')
           : application.status === 'REJECTED'
-          ? 'Rejected'
-          : 'Pending Order',
+          ? (isHindi ? 'अस्वीकृत' : 'Rejected')
+          : (isHindi ? 'आदेश लंबित' : 'Pending Order'),
       isPassed: application.status === 'APPROVED',
       isWarning: application.status === 'OFFICER_REVIEW',
       desc: 'Dr. Anita Deshmukh',
-      statusText: application.status === 'APPROVED' ? 'Form VI Sealed' : 'Awaiting Sign-off'
+      statusText: application.status === 'APPROVED' ? (isHindi ? 'फॉर्म VI सील' : 'Form VI Sealed') : (isHindi ? 'हस्ताक्षर प्रतीक्षित' : 'Awaiting Sign-off')
     }
   ];
 
@@ -284,7 +286,7 @@ export const OfficerApplicationReviewPage = () => {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Adjudication Queue</span>
+          <span>{t.backToAdjudicationQueue || (isHindi ? 'न्यायनिर्णयन कतार पर वापस' : 'Back to Adjudication Queue')}</span>
         </Link>
 
         {/* Adjudication Decision Quick Actions */}
@@ -298,7 +300,7 @@ export const OfficerApplicationReviewPage = () => {
                   leftIcon={Award}
                   className="text-xs shadow-md font-bold"
                 >
-                  View Issued Form VI Certificate
+                  {t.viewIssuedFormVi || (isHindi ? 'जारी किया गया फॉर्म VI प्रमाणपत्र देखें' : 'View Issued Form VI Certificate')}
                 </Button>
               </Link>
               <Link to={`/verify/MV-2026-${(application.id || '').replace('MV-APP-', '')}`}>
@@ -308,7 +310,7 @@ export const OfficerApplicationReviewPage = () => {
                   leftIcon={Eye}
                   className="text-xs border-emerald-300 text-emerald-800 bg-emerald-50"
                 >
-                  Public Verification
+                  {t.publicVerification || (isHindi ? 'सार्वजनिक सत्यापन' : 'Public Verification')}
                 </Button>
               </Link>
             </>
@@ -321,7 +323,7 @@ export const OfficerApplicationReviewPage = () => {
                 onClick={() => setCorrectionModalOpen(true)}
                 className="text-xs shadow-xs"
               >
-                Request Correction
+                {t.requestCorrection || (isHindi ? 'सुधार का अनुरोध करें' : 'Request Correction')}
               </Button>
               <Button
                 variant="danger"
@@ -330,7 +332,7 @@ export const OfficerApplicationReviewPage = () => {
                 onClick={() => setRejectModalOpen(true)}
                 className="text-xs shadow-xs"
               >
-                Reject Verification
+                {t.rejectVerification || (isHindi ? 'सत्यापन अस्वीकार करें' : 'Reject Verification')}
               </Button>
               <Button
                 variant="success"
@@ -339,7 +341,7 @@ export const OfficerApplicationReviewPage = () => {
                 onClick={() => setApproveModalOpen(true)}
                 className="text-xs shadow-md font-bold"
               >
-                Approve & Issue Certificate
+                {t.approveAndIssue || (isHindi ? 'स्वीकृत करें और प्रमाणपत्र जारी करें' : 'Approve & Issue Certificate')}
               </Button>
             </>
           )}
@@ -356,23 +358,23 @@ export const OfficerApplicationReviewPage = () => {
             <StatusBadge status={application.status} />
             <RiskBadge level={application.riskLevel} score={application.riskScore} />
             <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-              SLA: {application.slaRemainingDays}d remaining
+              SLA: {application.slaRemainingDays}d {isHindi ? 'शेष' : 'remaining'}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-heading">
-            {application.instrumentType} — Statutory Adjudication Dossier
+            {application.instrumentType} — {t.statutoryAdjudicationDossier || (isHindi ? 'वैधानिक न्यायनिर्णयन डॉसियर' : 'Statutory Adjudication Dossier')}
           </h2>
           <p className="text-xs text-slate-500">
-            Filing Date: <strong className="text-slate-700">{application.submissionDate}</strong> • State Directorate Authority
+            {t.filingDate || (isHindi ? 'दाखिल करने की तिथि:' : 'Filing Date:')} <strong className="text-slate-700">{application.submissionDate}</strong> • {t.stateDirectorateAuthority || (isHindi ? 'राज्य निदेशालय प्राधिकरण' : 'State Directorate Authority')}
           </p>
         </div>
 
         <div className="text-left md:text-right text-xs space-y-1 bg-slate-50 md:bg-transparent p-3 md:p-0 rounded-xl border md:border-0 border-slate-200">
-          <span className="text-slate-400 font-medium block">Applicant Commercial Entity</span>
+          <span className="text-slate-400 font-medium block">{t.applicantEntity || (isHindi ? 'आवेदक व्यावसायिक इकाई' : 'Applicant Commercial Entity')}</span>
           <p className="text-slate-900 font-bold text-sm">{application.businessName}</p>
-          <p className="text-slate-600 font-mono text-[11px]">{application.traderDetails?.gstin || 'GSTIN Validated'}</p>
+          <p className="text-slate-600 font-mono text-[11px]">{application.traderDetails?.gstin || (isHindi ? 'जीएसटी मान्य' : 'GSTIN Validated')}</p>
           <span className="inline-block text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold border border-emerald-200">
-            GST Active & Validated
+            {t.gstActive || (isHindi ? 'जीएसटी सक्रिय और सत्यापित' : 'GST Active & Validated')}
           </span>
         </div>
       </div>
@@ -388,16 +390,16 @@ export const OfficerApplicationReviewPage = () => {
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-bold tracking-tight font-heading">
-                Complete Digital Trust Chain Architecture
+                {t.trustChainTitle || (isHindi ? 'पूर्ण डिजिटल ट्रस्ट चेन आर्किटेक्चर' : 'Complete Digital Trust Chain Architecture')}
               </h3>
               <p className="text-[11px] text-slate-300">
-                End-to-end statutory cryptographic trail from instrument registration to legal verification order
+                {t.trustChainSub || (isHindi ? 'उपकरण पंजीकरण से विधिक सत्यापन आदेश तक एंड-टू-एंड वैधानिक क्रिप्टोग्राफिक ट्रेल' : 'End-to-end statutory cryptographic trail from instrument registration to legal verification order')}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-300 font-semibold bg-indigo-900/70 px-2.5 py-1 rounded-full border border-indigo-700/50">
-              Cryptographically Anchored • 7 Nodes
+              {t.cryptoAnchored || (isHindi ? 'क्रिप्टोग्राफ़िक रूप से सुरक्षित • 7 नोड्स' : 'Cryptographically Anchored • 7 Nodes')}
             </span>
           </div>
         </div>
@@ -450,7 +452,7 @@ export const OfficerApplicationReviewPage = () => {
         {/* Trust Chain View Selector Pills & Cryptographic Hash */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-1 border-t border-indigo-900/60 text-slate-300">
           <div className="flex items-center gap-1 overflow-x-auto">
-            <span className="text-[11px] text-slate-400 font-medium mr-1">View Stage:</span>
+            <span className="text-[11px] text-slate-400 font-medium mr-1">{t.viewStage || (isHindi ? 'चरण देखें:' : 'View Stage:')}</span>
             <button
               type="button"
               onClick={() => setActiveTrustStage('all')}
@@ -460,7 +462,7 @@ export const OfficerApplicationReviewPage = () => {
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
               }`}
             >
-              All 7 Stages
+              {t.allStages || (isHindi ? 'सभी 7 चरण' : 'All 7 Stages')}
             </button>
             {trustChainStages.map((s) => (
               <button
@@ -480,7 +482,7 @@ export const OfficerApplicationReviewPage = () => {
 
           <div className="font-mono text-[10px] text-purple-300 truncate max-w-sm flex items-center gap-1">
             <Hash className="w-3 h-3 shrink-0" />
-            <span>Chain Hash: {application.chainOfCustodyHash?.slice(0, 24)}...</span>
+            <span>{t.chainHash || (isHindi ? 'चेन हैश:' : 'Chain Hash:')} {application.chainOfCustodyHash?.slice(0, 24)}...</span>
           </div>
         </div>
       </div>
@@ -495,56 +497,76 @@ export const OfficerApplicationReviewPage = () => {
               <Scale className="w-5 h-5 text-blue-600" />
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  1. Instrument Technical Specifications & Model Approval
+                  {isHindi ? '1. उपकरण तकनीकी विनिर्देश एवं मॉडल अनुमोदन' : '1. Instrument Technical Specifications & Model Approval'}
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  National Legal Metrology Model Approval Registry cross-reference & class parameters
+                  {isHindi
+                    ? 'राष्ट्रीय विधिक मापविज्ञान मॉडल अनुमोदन रजिस्ट्री क्रॉस-संदर्भ एवं श्रेणी पैरामीटर'
+                    : 'National Legal Metrology Model Approval Registry cross-reference & class parameters'}
                 </p>
               </div>
             </div>
             <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
-              {application.instrumentDetails?.accuracyClass || 'Class III NAWI'}
+              {isHindi
+                ? (application.instrumentDetails?.accuracyClass ? application.instrumentDetails.accuracyClass.replace('Class III', 'वर्ग III') : 'वर्ग III NAWI')
+                : (application.instrumentDetails?.accuracyClass || 'Class III NAWI')}
             </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Manufacturer / Brand</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'निर्माता / ब्रांड' : 'Manufacturer / Brand'}
+              </span>
               <span className="font-bold text-slate-900 text-sm">{application.instrumentDetails?.manufacturer}</span>
             </div>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Model Designation</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'मॉडल' : 'Model Designation'}
+              </span>
               <span className="font-bold text-slate-900 text-sm">{application.instrumentDetails?.model}</span>
             </div>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Stamped Serial Number</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'स्टैम्प्ड सीरियल नंबर' : 'Stamped Serial Number'}
+              </span>
               <span className="font-mono font-bold text-blue-600 text-sm">
                 {application.instrumentDetails?.serialNumber}
               </span>
             </div>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Model Approval Number</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'मॉडल अनुमोदन संख्या' : 'Model Approval Number'}
+              </span>
               <span className="font-mono font-bold text-purple-700 text-xs">
                 {application.instrumentDetails?.modelApprovalNumber || 'IND-DLM-2024-AP-0912'}
               </span>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Maximum Capacity (Max)</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'अधिकतम क्षमता (Max)' : 'Maximum Capacity (Max)'}
+              </span>
               <span className="font-bold text-slate-900 text-sm">{application.instrumentDetails?.maxCapacity}</span>
             </div>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Minimum Capacity (Min)</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'न्यूनतम क्षमता (Min)' : 'Minimum Capacity (Min)'}
+              </span>
               <span className="font-bold text-slate-900 text-sm">{application.instrumentDetails?.minCapacity}</span>
             </div>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Verification Division (e)</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'सत्यापन डिवीज़न (e)' : 'Verification Division (e)'}
+              </span>
               <span className="font-bold text-slate-900 text-sm">
                 {application.instrumentDetails?.verificationDivision}
               </span>
             </div>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Actual Scale Interval (d)</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'वास्तविक पैमाना अंतराल (d)' : 'Actual Scale Interval (d)'}
+              </span>
               <span className="font-bold text-slate-900 text-sm">
                 {application.instrumentDetails?.scaleInterval}
               </span>
@@ -563,15 +585,17 @@ export const OfficerApplicationReviewPage = () => {
               <Building className="w-5 h-5 text-blue-600" />
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  2. Commercial Entity & Statutory Fee Reconciliation
+                  {isHindi ? '2. वाणिज्यिक इकाई एवं वैधानिक शुल्क समाधान' : '2. Commercial Entity & Statutory Fee Reconciliation'}
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  GSTIN verification, registered premise geo-coordinates, and Treasury Challan payment receipt
+                  {isHindi
+                    ? 'जीएसटीआईएन सत्यापन, पंजीकृत परिसर भू-निर्देशांक एवं ट्रेजरी चालान भुगतान रसीद'
+                    : 'GSTIN verification, registered premise geo-coordinates, and Treasury Challan payment receipt'}
                 </p>
               </div>
             </div>
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              Treasury Challan Reconciled
+              {isHindi ? 'ट्रेजरी चालान समाधान संपन्न' : 'Treasury Challan Reconciled'}
             </span>
           </div>
 
@@ -579,14 +603,14 @@ export const OfficerApplicationReviewPage = () => {
             {/* Trader Details */}
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
               <h4 className="font-bold text-slate-800 flex items-center justify-between">
-                <span>Trading Business Entity</span>
+                <span>{isHindi ? 'व्यावसायिक व्यावसायिक इकाई' : 'Trading Business Entity'}</span>
                 <span className="font-mono text-[11px] text-blue-600 font-bold">
                   {application.traderDetails?.gstin || '07AAACS1429B1Z8'}
                 </span>
               </h4>
               <p className="font-bold text-slate-900 text-sm">{application.businessName}</p>
               <p className="text-slate-600">
-                Proprietor / Signatory: <strong>{application.traderDetails?.proprietor}</strong>
+                {isHindi ? 'स्वामी / हस्ताक्षरकर्ता:' : 'Proprietor / Signatory:'} <strong>{application.traderDetails?.proprietor}</strong>
               </p>
               <p className="text-slate-600 flex items-start gap-1">
                 <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
@@ -603,29 +627,29 @@ export const OfficerApplicationReviewPage = () => {
             {/* Statutory Fee Challan */}
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
               <h4 className="font-bold text-slate-800 flex items-center justify-between">
-                <span>Statutory Fee Challan Receipt</span>
+                <span>{isHindi ? 'वैधानिक शुल्क चालान रसीद' : 'Statutory Fee Challan Receipt'}</span>
                 <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded text-[10px]">
-                  Payment Captured
+                  {isHindi ? 'भुगतान प्राप्त' : 'Payment Captured'}
                 </span>
               </h4>
               <div className="flex justify-between items-baseline">
-                <span className="text-slate-500">Statutory Fee Paid:</span>
+                <span className="text-slate-500">{isHindi ? 'वैधानिक शुल्क भुगतान:' : 'Statutory Fee Paid:'}</span>
                 <span className="font-mono font-bold text-slate-900 text-base">
                   {application.statutoryFee?.amount}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Challan / Receipt Number:</span>
+                <span className="text-slate-500">{isHindi ? 'चालान / रसीद संख्या:' : 'Challan / Receipt Number:'}</span>
                 <span className="font-mono font-bold text-blue-600">
                   {application.statutoryFee?.receiptNo}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Payment Gateway Timestamp:</span>
+                <span className="text-slate-500">{isHindi ? 'भुगतान गेटवे समय-मुहर:' : 'Payment Gateway Timestamp:'}</span>
                 <span className="text-slate-700 font-mono">{application.statutoryFee?.paidAt}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Payment Channel:</span>
+                <span className="text-slate-500">{isHindi ? 'भुगतान माध्यम:' : 'Payment Channel:'}</span>
                 <span className="text-slate-700 font-medium">{application.statutoryFee?.paymentMode}</span>
               </div>
             </div>
@@ -643,15 +667,19 @@ export const OfficerApplicationReviewPage = () => {
               <FileText className="w-5 h-5 text-blue-600" />
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  3. Statutory Document Vault ({application.documents?.length || 4} Files)
+                  {isHindi
+                    ? `3. वैधानिक दस्तावेज़ वॉल्ट (${application.documents?.length || 4} फ़ाइलें)`
+                    : `3. Statutory Document Vault (${application.documents?.length || 4} Files)`}
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Cryptographically hashed PDF uploads, pixel integrity scan, and EXIF authenticity check
+                  {isHindi
+                    ? 'क्रिप्टोग्राफ़िक रूप से हैश किए गए पीडीएफ अपलोड, पिक्सेल अखंडता स्कैन एवं ईएक्सआईएफ प्रामाणिकता जांच'
+                    : 'Cryptographically hashed PDF uploads, pixel integrity scan, and EXIF authenticity check'}
                 </p>
               </div>
             </div>
             <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              Integrity: 99.4% Clean
+              {isHindi ? 'अखंडता: 99.4% स्वच्छ' : 'Integrity: 99.4% Clean'}
             </span>
           </div>
 
@@ -668,7 +696,7 @@ export const OfficerApplicationReviewPage = () => {
                   <div>
                     <p className="font-bold text-slate-900 text-sm">{doc.name}</p>
                     <p className="text-[11px] text-slate-500 font-mono">
-                      {doc.size} • Uploaded {doc.uploadedAt} • SHA-256 Verified
+                      {doc.size} • {isHindi ? 'अपलोड:' : 'Uploaded'} {doc.uploadedAt} • {isHindi ? 'SHA-256 सत्यापित' : 'SHA-256 Verified'}
                     </p>
                   </div>
                 </div>
@@ -681,7 +709,7 @@ export const OfficerApplicationReviewPage = () => {
                         : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                     }`}
                   >
-                    {doc.status}
+                    {doc.status === 'Flagged' ? (isHindi ? 'ध्वजांकित' : 'Flagged') : (isHindi ? 'सत्यापित' : doc.status)}
                   </span>
                   <button
                     type="button"
@@ -689,7 +717,7 @@ export const OfficerApplicationReviewPage = () => {
                     className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-700 hover:text-blue-600 rounded-lg border border-slate-200 hover:border-blue-300 bg-white shadow-2xs transition-colors"
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    <span>View PDF</span>
+                    <span>{isHindi ? 'पीडीएफ देखें' : 'View PDF'}</span>
                   </button>
                 </div>
               </div>
@@ -708,10 +736,14 @@ export const OfficerApplicationReviewPage = () => {
               <Sparkles className="w-5 h-5 text-purple-600" />
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  4. AI Computer Vision & OCR Cross-Match Matrix
+                  {isHindi
+                    ? '4. एआई कंप्यूटर विज़न एवं ओसीआर क्रॉस-मैच मैट्रिक्स'
+                    : '4. AI Computer Vision & OCR Cross-Match Matrix'}
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Automated discrepancy detection comparing trader application, invoice text, and stamped photo OCR
+                  {isHindi
+                    ? 'व्यापारी आवेदन, इनवॉइस टेक्स्ट और मुद्रांकित फोटो ओसीआर की तुलना करने वाली स्वचालित विसंगति पहचान'
+                    : 'Automated discrepancy detection comparing trader application, invoice text, and stamped photo OCR'}
                 </p>
               </div>
             </div>
@@ -735,33 +767,43 @@ export const OfficerApplicationReviewPage = () => {
               <UserCheck className="w-5 h-5 text-blue-600" />
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  5. Legal Metrology Field Inspector Physical Verification Audit
+                  {isHindi
+                    ? '5. विधिक मापविज्ञान फील्ड निरीक्षक भौतिक सत्यापन ऑडिट'
+                    : '5. Legal Metrology Field Inspector Physical Verification Audit'}
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  On-site statutory audit checklist, tamper wire application, and inspector credentials
+                  {isHindi
+                    ? 'ऑन-साइट वैधानिक ऑडिट चेकलिस्ट, छेड़छाड़-रोधी तार एवं निरीक्षक साख'
+                    : 'On-site statutory audit checklist, tamper wire application, and inspector credentials'}
                 </p>
               </div>
             </div>
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              Field Audit Complete
+              {isHindi ? 'फ़ील्ड ऑडिट पूर्ण' : 'Field Audit Complete'}
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Assigned Field Inspector</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'नियुक्त फील्ड निरीक्षक' : 'Assigned Field Inspector'}
+              </span>
               <span className="font-bold text-slate-900 text-sm">
                 {application.inspection?.inspectorName || application.assignedInspector}
               </span>
             </div>
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Inspection Audit Timestamp</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'निरीक्षण ऑडिट समय-मुहर' : 'Inspection Audit Timestamp'}
+              </span>
               <span className="font-mono font-bold text-slate-900 text-xs">
-                {application.inspection?.completedDate || 'Pending Field Visit'}
+                {application.inspection?.completedDate || (isHindi ? 'फील्ड दौरा लंबित' : 'Pending Field Visit')}
               </span>
             </div>
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-slate-400 block font-medium">Statutory Lead Seal Applied</span>
+              <span className="text-slate-400 block font-medium">
+                {isHindi ? 'लगाई गई वैधानिक लेड सील' : 'Statutory Lead Seal Applied'}
+              </span>
               <span className="font-mono font-bold text-blue-600 text-xs">
                 {application.inspection?.sealNumber || 'MV-SEAL-2026-09412'}
               </span>
@@ -772,7 +814,9 @@ export const OfficerApplicationReviewPage = () => {
           {checklistItems.length > 0 && (
             <div className="space-y-2 pt-1">
               <h4 className="text-xs font-bold text-slate-800">
-                Statutory Physical Examination Verification Checklist:
+                {isHindi
+                  ? 'वैधानिक भौतिक परीक्षण सत्यापन चेकलिस्ट:'
+                  : 'Statutory Physical Examination Verification Checklist:'}
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {checklistItems.map((item, idx) => (
@@ -790,7 +834,9 @@ export const OfficerApplicationReviewPage = () => {
                         item.passed ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
                       }`}
                     >
-                      {item.passed ? 'PASSED' : 'NON-COMPLIANT'}
+                      {item.passed
+                        ? (isHindi ? 'उत्तीर्ण' : 'PASSED')
+                        : (isHindi ? 'गैर-अनुपालन' : 'NON-COMPLIANT')}
                     </span>
                   </div>
                 ))}
@@ -801,7 +847,7 @@ export const OfficerApplicationReviewPage = () => {
           {application.inspection?.remarks && (
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
               <span className="text-slate-400 block font-medium">
-                Field Inspector Observations & Findings:
+                {isHindi ? 'फील्ड निरीक्षक अवलोकन एवं निष्कर्ष:' : 'Field Inspector Observations & Findings:'}
               </span>
               <p className="text-slate-800 mt-1 font-medium leading-relaxed">
                 {application.inspection.remarks}
@@ -821,10 +867,14 @@ export const OfficerApplicationReviewPage = () => {
               <Radio className="w-5 h-5 text-emerald-600 animate-pulse" />
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  6. Telematics Evidence & Standard Reference Load MPE Verification
+                  {isHindi
+                    ? '6. टेलीमैटिक्स साक्ष्य एवं मानक संदर्भ भार एमपीई सत्यापन'
+                    : '6. Telematics Evidence & Standard Reference Load MPE Verification'}
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Live GNSS geofence radius check, standard test weights calibration, and watermarked photography
+                  {isHindi
+                    ? 'लाइव जीएनएसएस जियोफेंस त्रिज्या जांच, मानक परीक्षण बाट अंशांकन एवं वॉटरमार्क युक्त फोटोग्राफी'
+                    : 'Live GNSS geofence radius check, standard test weights calibration, and watermarked photography'}
                 </p>
               </div>
             </div>
@@ -838,14 +888,18 @@ export const OfficerApplicationReviewPage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Compass className="w-4 h-4 text-emerald-400" />
-                <span className="font-bold text-slate-200">GNSS Geofence Spatial Verification</span>
+                <span className="font-bold text-slate-200">
+                  {isHindi ? 'जीएनएसएस जियोफेंस स्थानिक सत्यापन' : 'GNSS Geofence Spatial Verification'}
+                </span>
               </div>
               <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">
-                Geofence Verified • 8.2m Precision Radius
+                {isHindi ? 'जियोफेंस सत्यापित • 8.2मी परिशुद्धता त्रिज्या' : 'Geofence Verified • 8.2m Precision Radius'}
               </span>
             </div>
             <p className="text-[11px] text-slate-300">
-              Inspector GPS fix coincides with registered commercial shop coordinate (Premise Geofence Envelope: 50m). Device verified on-site.
+              {isHindi
+                ? 'निरीक्षक का जीपीएस फिक्स पंजीकृत वाणिज्यिक दुकान के निर्देशांक से मेल खाता है (परिसर जियोफेंस दायरा: 50 मी)। उपकरण का साइट पर सत्यापन किया गया।'
+                : 'Inspector GPS fix coincides with registered commercial shop coordinate (Premise Geofence Envelope: 50m). Device verified on-site.'}
             </p>
           </div>
 
@@ -853,23 +907,34 @@ export const OfficerApplicationReviewPage = () => {
           {measurementsList.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-slate-800">
-                Statutory Reference Load Measurements vs MPE Tolerances (Legal Metrology Rules Schedule VII):
+                {isHindi
+                  ? 'वैधानिक संदर्भ भार माप बनाम एमपीई सहनशीलता (विधिक मापविज्ञान नियम अनुसूची VII):'
+                  : 'Statutory Reference Load Measurements vs MPE Tolerances (Legal Metrology Rules Schedule VII):'}
               </h4>
               <div className="overflow-x-auto rounded-xl border border-slate-200">
                 <table className="min-w-full divide-y divide-slate-200 text-xs">
                   <thead className="bg-slate-50 font-semibold text-slate-700">
                     <tr>
-                      <th className="px-3.5 py-2.5 text-left">Applied Standard Load</th>
-                      <th className="px-3.5 py-2.5 text-center">Observed Reading</th>
-                      <th className="px-3.5 py-2.5 text-center">Calculated Error</th>
-                      <th className="px-3.5 py-2.5 text-center">Statutory MPE Limit</th>
-                      <th className="px-3.5 py-2.5 text-center">Verification Status</th>
+                      <th className="px-3.5 py-2.5 text-left">{isHindi ? 'प्रयुक्त मानक भार' : 'Applied Standard Load'}</th>
+                      <th className="px-3.5 py-2.5 text-center">{isHindi ? 'प्रेक्षित पाठ्यांक' : 'Observed Reading'}</th>
+                      <th className="px-3.5 py-2.5 text-center">{isHindi ? 'परिकलित त्रुटि' : 'Calculated Error'}</th>
+                      <th className="px-3.5 py-2.5 text-center">{isHindi ? 'वैधानिक एमपीई सीमा' : 'Statutory MPE Limit'}</th>
+                      <th className="px-3.5 py-2.5 text-center">{isHindi ? 'सत्यापन स्थिति' : 'Verification Status'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {measurementsList.map((m, idx) => (
                       <tr key={idx}>
-                        <td className="px-3.5 py-3 font-semibold text-slate-900">{m.testWeight}</td>
+                        <td className="px-3.5 py-3 font-semibold text-slate-900">
+                          {isHindi
+                            ? String(m.testWeight)
+                                .replace(/Class M1 Standard Test Block/g, 'वर्ग M1 मानक परीक्षण ब्लॉक')
+                                .replace(/Minimum Load Test/g, 'न्यूनतम भार परीक्षण')
+                                .replace(/Quarter Load Test/g, 'तिमाही भार परीक्षण')
+                                .replace(/Half Capacity Test/g, 'अर्ध क्षमता परीक्षण')
+                                .replace(/Full Capacity Test/g, 'पूर्ण क्षमता परीक्षण')
+                            : m.testWeight}
+                        </td>
                         <td className="px-3.5 py-3 text-center font-mono font-bold text-slate-800">
                           {m.readingKg !== undefined ? `${m.readingKg} kg` : m.reading}
                         </td>
@@ -887,7 +952,7 @@ export const OfficerApplicationReviewPage = () => {
                                 : 'bg-rose-100 text-rose-800 border border-rose-300'
                             }`}
                           >
-                            {m.result}
+                            {m.result === 'PASS' ? (isHindi ? 'उत्तीर्ण' : 'PASS') : (isHindi ? 'विफल' : 'FAIL')}
                           </span>
                         </td>
                       </tr>
@@ -902,30 +967,38 @@ export const OfficerApplicationReviewPage = () => {
           <div className="space-y-2 pt-2">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-slate-800">
-                Watermarked Photographic Field Evidence (Tap to Zoom):
+                {isHindi
+                  ? 'वॉटरमार्क युक्त फोटोग्राफिक फील्ड साक्ष्य (ज़ूम करने के लिए टैप करें):'
+                  : 'Watermarked Photographic Field Evidence (Tap to Zoom):'}
               </h4>
-              <span className="text-[10px] font-mono text-slate-400">4 Cryptographic Records</span>
+              <span className="text-[10px] font-mono text-slate-400">
+                {isHindi ? '4 क्रिप्टोग्राफिक रिकॉर्ड' : '4 Cryptographic Records'}
+              </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
                 {
-                  title: 'Serial Nameplate Plate',
-                  desc: 'Riveted manufacturer data plate',
+                  id: 'plate',
+                  title: isHindi ? 'सीरियल नेमप्लेट' : 'Serial Nameplate Plate',
+                  desc: isHindi ? 'रिवेट की गई निर्माता डेटा प्लेट' : 'Riveted manufacturer data plate',
                   url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600&auto=format&fit=crop&q=80'
                 },
                 {
-                  title: 'Full Instrument Unit',
-                  desc: 'Operational retail counter view',
+                  id: 'scale',
+                  title: isHindi ? 'संपूर्ण उपकरण इकाई' : 'Full Instrument Unit',
+                  desc: isHindi ? 'परिचालन खुदरा काउंटर दृश्य' : 'Operational retail counter view',
                   url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80'
                 },
                 {
-                  title: 'Lead Security Wire Seal',
-                  desc: 'Tamper-evident wire lock affixed',
+                  id: 'seal',
+                  title: isHindi ? 'लेड सुरक्षा वायर सील' : 'Lead Security Wire Seal',
+                  desc: isHindi ? 'छेड़छाड़-रोधी वायर लॉक संलग्न' : 'Tamper-evident wire lock affixed',
                   url: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?w=600&auto=format&fit=crop&q=80'
                 },
                 {
-                  title: 'Zero Tare Indication',
-                  desc: 'Digital display zero stability',
+                  id: 'display',
+                  title: isHindi ? 'शून्य टेयर संकेतक' : 'Zero Tare Indication',
+                  desc: isHindi ? 'डिजिटल डिस्प्ले शून्य स्थिरता' : 'Digital display zero stability',
                   url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&auto=format&fit=crop&q=80'
                 }
               ].map((p, idx) => (
@@ -950,7 +1023,7 @@ export const OfficerApplicationReviewPage = () => {
                     <p className="text-xs font-bold text-slate-800 truncate">{p.title}</p>
                     <p className="text-[10px] text-slate-500 truncate">{p.desc}</p>
                     <p className="text-[9px] text-emerald-600 font-mono font-semibold mt-0.5">
-                      Watermark Validated
+                      {isHindi ? 'वॉटरमार्क मान्य' : 'Watermark Validated'}
                     </p>
                   </div>
                 </button>
@@ -970,23 +1043,27 @@ export const OfficerApplicationReviewPage = () => {
               <Award className="w-6 h-6 text-purple-600" />
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  7. Legal Metrology Officer Statutory Adjudication Decision Center
+                  {isHindi
+                    ? '7. विधिक मापविज्ञान अधिकारी वैधानिक न्यायनिर्णयन निर्णय केंद्र'
+                    : '7. Legal Metrology Officer Statutory Adjudication Decision Center'}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Final adjudication under Section 24, Legal Metrology Act, 2009 with cryptographic DSC seal
+                  {isHindi
+                    ? 'विधिक मापविज्ञान अधिनियम, 2009 की धारा 24 के तहत क्रिप्टोग्राफिक डीएससी सील के साथ अंतिम न्यायनिर्णयन'
+                    : 'Final adjudication under Section 24, Legal Metrology Act, 2009 with cryptographic DSC seal'}
                 </p>
               </div>
             </div>
             <span className="text-xs font-mono font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
-              Signatory: Dr. Anita Deshmukh (OFF-HQ)
+              {isHindi ? 'हस्ताक्षरकर्ता: डॉ. अनीता देशमुख (मुख्यालय अधिकारी)' : 'Signatory: Dr. Anita Deshmukh (OFF-HQ)'}
             </span>
           </div>
 
           {/* Cryptographic Chain of Custody Anchor */}
           <div className="p-4 bg-slate-950 text-white rounded-xl font-mono text-xs space-y-1.5 border border-purple-900/60">
             <div className="flex justify-between text-slate-400 text-[11px]">
-              <span>DIGITAL TRUST CHAIN IMMUTABLE SHA-256 HASH</span>
-              <span className="text-emerald-400 font-bold">CHAIN INTEGRITY VERIFIED</span>
+              <span>{isHindi ? 'डिजिटल ट्रस्ट चेन अपरिवर्तनीय SHA-256 हैश' : 'DIGITAL TRUST CHAIN IMMUTABLE SHA-256 HASH'}</span>
+              <span className="text-emerald-400 font-bold">{isHindi ? 'चेन अखंडता सत्यापित' : 'CHAIN INTEGRITY VERIFIED'}</span>
             </div>
             <p className="text-emerald-300 break-all text-[11px] leading-relaxed">
               {application.chainOfCustodyHash ||
@@ -1002,10 +1079,14 @@ export const OfficerApplicationReviewPage = () => {
                   <Award className="w-6 h-6 text-emerald-400" />
                   <div>
                     <h4 className="text-sm font-bold text-white">
-                      Statutory Verification Certificate (Form VI) Cryptographically Issued
+                      {isHindi
+                        ? 'वैधानिक सत्यापन प्रमाणपत्र (प्रारूप VI) क्रिप्टोग्राफिक रूप से जारी'
+                        : 'Statutory Verification Certificate (Form VI) Cryptographically Issued'}
                     </h4>
                     <p className="text-[11px] text-emerald-300">
-                      e-Signed under Section 24, Legal Metrology Act, 2009 with Officer Class 3 DSC Token
+                      {isHindi
+                        ? 'विधिक मापविज्ञान अधिनियम, 2009 की धारा 24 के तहत अधिकारी क्लास 3 डीएससी टोकन के साथ ई-हस्ताक्षरित'
+                        : 'e-Signed under Section 24, Legal Metrology Act, 2009 with Officer Class 3 DSC Token'}
                     </p>
                   </div>
                 </div>
@@ -1015,31 +1096,31 @@ export const OfficerApplicationReviewPage = () => {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div className="p-2.5 bg-emerald-950/60 rounded-lg border border-emerald-800/40">
-                  <span className="text-slate-400 block text-[10px]">Statutory Seal</span>
+                  <span className="text-slate-400 block text-[10px]">{isHindi ? 'वैधानिक सील' : 'Statutory Seal'}</span>
                   <span className="font-mono font-bold text-white text-xs">{application.inspection?.sealNumber || 'MV-SEAL-2026-09412'}</span>
                 </div>
                 <div className="p-2.5 bg-emerald-950/60 rounded-lg border border-emerald-800/40">
-                  <span className="text-slate-400 block text-[10px]">Validity</span>
-                  <span className="font-bold text-white text-xs">12 Months (Active)</span>
+                  <span className="text-slate-400 block text-[10px]">{isHindi ? 'वैधता' : 'Validity'}</span>
+                  <span className="font-bold text-white text-xs">{isHindi ? '12 महीने (सक्रिय)' : '12 Months (Active)'}</span>
                 </div>
                 <div className="p-2.5 bg-emerald-950/60 rounded-lg border border-emerald-800/40">
-                  <span className="text-slate-400 block text-[10px]">Signatory Officer</span>
+                  <span className="text-slate-400 block text-[10px]">{isHindi ? 'हस्ताक्षरकर्ता अधिकारी' : 'Signatory Officer'}</span>
                   <span className="font-bold text-white text-xs">Dr. Anita Deshmukh</span>
                 </div>
                 <div className="p-2.5 bg-emerald-950/60 rounded-lg border border-emerald-800/40">
-                  <span className="text-slate-400 block text-[10px]">Status</span>
-                  <span className="font-bold text-emerald-400 text-xs">SEALED & ISSUED</span>
+                  <span className="text-slate-400 block text-[10px]">{isHindi ? 'स्थिति' : 'Status'}</span>
+                  <span className="font-bold text-emerald-400 text-xs">{isHindi ? 'सील एवं जारी' : 'SEALED & ISSUED'}</span>
                 </div>
               </div>
               <div className="flex items-center gap-3 pt-1">
                 <Link to={`/officer/certificates/MV-2026-${(application.id || '').replace('MV-APP-', '')}`}>
                   <Button variant="success" size="sm" leftIcon={Eye} className="font-bold text-xs shadow-md">
-                    View Form VI Certificate
+                    {isHindi ? 'प्रारूप VI प्रमाणपत्र देखें' : 'View Form VI Certificate'}
                   </Button>
                 </Link>
                 <Link to={`/verify/MV-2026-${(application.id || '').replace('MV-APP-', '')}`}>
                   <Button variant="outline" size="sm" leftIcon={ExternalLink} className="text-xs bg-transparent border-emerald-600 text-emerald-300 hover:bg-emerald-900/50">
-                    Public Verification Page
+                    {isHindi ? 'सार्वजनिक सत्यापन पृष्ठ' : 'Public Verification Page'}
                   </Button>
                 </Link>
               </div>
@@ -1047,9 +1128,13 @@ export const OfficerApplicationReviewPage = () => {
           ) : (
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-0.5">
-                <h4 className="text-sm font-bold text-slate-900">Execute Statutory Order</h4>
+                <h4 className="text-sm font-bold text-slate-900">
+                  {isHindi ? 'वैधानिक आदेश निष्पादित करें' : 'Execute Statutory Order'}
+                </h4>
                 <p className="text-xs text-slate-500">
-                  Issue Legal Metrology Verification Certificate or Statutory Non-Compliance Order
+                  {isHindi
+                    ? 'विधिक मापविज्ञान सत्यापन प्रमाणपत्र या वैधानिक गैर-अनुपालन आदेश जारी करें'
+                    : 'Issue Legal Metrology Verification Certificate or Statutory Non-Compliance Order'}
                 </p>
               </div>
 
@@ -1115,27 +1200,27 @@ export const OfficerApplicationReviewPage = () => {
 
           <div className="grid grid-cols-2 gap-2.5 font-mono text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200 text-[11px]">
             <div>
-              <span className="text-slate-400 block font-sans">Instrument Serial:</span>
+              <span className="text-slate-400 block font-sans">{isHindi ? 'उपकरण सीरियल:' : 'Instrument Serial:'}</span>
               <span className="font-bold text-slate-900">{application.instrumentDetails?.serialNumber || 'WS123456'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-sans">Accuracy Class:</span>
+              <span className="text-slate-400 block font-sans">{isHindi ? 'सटीकता वर्ग:' : 'Accuracy Class:'}</span>
               <span className="font-bold text-indigo-700">{application.instrumentDetails?.accuracyClass || 'Class III'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-sans">Applied Seal ID:</span>
+              <span className="text-slate-400 block font-sans">{isHindi ? 'लगाई गई सील आईडी:' : 'Applied Seal ID:'}</span>
               <span className="font-bold text-blue-600">{application.inspection?.sealNumber || 'MV-SEAL-2026-09412'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block font-sans">Statutory Validity:</span>
-              <span className="font-bold text-emerald-700">{validityMonths} Months (Annual Renewal)</span>
+              <span className="text-slate-400 block font-sans">{isHindi ? 'वैधानिक वैधता:' : 'Statutory Validity:'}</span>
+              <span className="font-bold text-emerald-700">{validityMonths} {isHindi ? 'महीने (वार्षिक नवीनीकरण)' : 'Months (Annual Renewal)'}</span>
             </div>
           </div>
 
           {/* Validity Period Selector */}
           <div>
             <label htmlFor="statutory-validity" className="block font-bold text-slate-800 mb-1">
-              Statutory Validity Duration
+              {t.statutoryValidityDuration || (isHindi ? 'वैधानिक वैधता अवधि' : 'Statutory Validity Duration')}
             </label>
             <select
               id="statutory-validity"
@@ -1143,15 +1228,15 @@ export const OfficerApplicationReviewPage = () => {
               onChange={(e) => setValidityMonths(e.target.value)}
               className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 font-medium"
             >
-              <option value="12">12 Months (Standard Commercial Non-Automatic Weighing)</option>
-              <option value="24">24 Months (Specialized / Sealed Flow Meter Standards)</option>
+              <option value="12">{isHindi ? '12 महीने (मानक वाणिज्यिक गैर-स्वचालित तराजू)' : '12 Months (Standard Commercial Non-Automatic Weighing)'}</option>
+              <option value="24">{isHindi ? '24 महीने (विशेष / सीलबंद फ्लो मीटर मानक)' : '24 Months (Specialized / Sealed Flow Meter Standards)'}</option>
             </select>
           </div>
 
           {/* Digital Signature Hardware Token PIN */}
           <div>
             <label htmlFor="dsc-pin" className="block font-bold text-slate-800 mb-1">
-              Officer Digital Signature Certificate (DSC) Hardware Token PIN *
+              {isHindi ? 'अधिकारी डिजिटल हस्ताक्षर प्रमाणपत्र (डीएससी) हार्डवेयर टोकन पिन *' : 'Officer Digital Signature Certificate (DSC) Hardware Token PIN *'}
             </label>
             <input
               id="dsc-pin"
@@ -1169,7 +1254,7 @@ export const OfficerApplicationReviewPage = () => {
           {/* Endorsement Remarks */}
           <div>
             <label htmlFor="approval-remarks" className="block font-bold text-slate-800 mb-1">
-              Statutory Endorsement & Approval Remarks *
+              {isHindi ? 'वैधानिक पृष्ठांकन और अनुमोदन टिप्पणियां *' : 'Statutory Endorsement & Approval Remarks *'}
             </label>
             <textarea
               id="approval-remarks"
@@ -1183,7 +1268,7 @@ export const OfficerApplicationReviewPage = () => {
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <Button variant="outline" size="sm" onClick={() => setApproveModalOpen(false)}>
-              Cancel
+              {isHindi ? 'रद्द करें' : 'Cancel'}
             </Button>
             <Button
               variant="success"
@@ -1193,7 +1278,7 @@ export const OfficerApplicationReviewPage = () => {
               leftIcon={CheckCircle2}
               className="font-bold"
             >
-              Sign DSC & Issue Certificate
+              {t.signDscAndIssue || (isHindi ? 'डीएससी ई-हस्ताक्षर करें और प्रमाणपत्र जारी करें' : 'Sign DSC & Issue Certificate')}
             </Button>
           </div>
         </div>
@@ -1205,23 +1290,23 @@ export const OfficerApplicationReviewPage = () => {
       <Modal
         isOpen={rejectModalOpen}
         onClose={() => setRejectModalOpen(false)}
-        title="Issue Statutory Rejection Order"
-        description="Formal statutory order of non-compliance under Legal Metrology Act & Rules."
+        title={t.issueRejectionOrderTitle || (isHindi ? "वैधानिक अस्वीकृति आदेश जारी करें" : "Issue Statutory Rejection Order")}
+        description={isHindi ? "विधिक मापविज्ञान अधिनियम एवं नियमों के तहत गैर-अनुपालन का औपचारिक वैधानिक आदेश।" : "Formal statutory order of non-compliance under Legal Metrology Act & Rules."}
       >
         <div className="space-y-4 text-xs">
           <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-950 text-xs space-y-1">
             <p className="font-bold flex items-center gap-1.5 text-rose-800">
               <ShieldAlert className="w-4 h-4 text-rose-600" />
-              Statutory Prohibition of Use Order
+              {isHindi ? 'उपयोग का वैधानिक निषेध आदेश' : 'Statutory Prohibition of Use Order'}
             </p>
             <p className="text-[11px] text-rose-900 leading-relaxed">
-              This formal order forbids commercial use or transaction using the instrument until complete recalibration, physical seal replacement, and formal re-verification.
+              {isHindi ? 'यह औपचारिक आदेश पूर्ण पुनर्गणना, भौतिक सील प्रतिस्थापन और औपचारिक पुनर्सत्यापन तक उपकरण के उपयोग या वाणिज्यिक लेनदेन को रोकता है।' : 'This formal order forbids commercial use or transaction using the instrument until complete recalibration, physical seal replacement, and formal re-verification.'}
             </p>
           </div>
 
           <div>
             <label htmlFor="rejection-reason" className="block font-bold text-slate-800 mb-1">
-              Statutory Ground for Rejection *
+              {isHindi ? 'अस्वीकृति के वैधानिक आधार *' : 'Statutory Ground for Rejection *'}
             </label>
             <select
               id="rejection-reason"
@@ -1229,17 +1314,17 @@ export const OfficerApplicationReviewPage = () => {
               onChange={(e) => setRejectionReason(e.target.value)}
               className="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500 font-medium"
             >
-              <option value="MPE_EXCEEDED">Measurement Error exceeds Maximum Permissible Error (MPE) limit</option>
-              <option value="SERIAL_MISMATCH">Serial number discrepancy / altered stamped nameplate</option>
-              <option value="UNAPPROVED_MODIFICATION">Unapproved electronic bypass or load-cell tampering detected</option>
-              <option value="MISSING_DOCUMENTS">Missing valid model approval or purchase invoice records</option>
-              <option value="PREMISES_INACCESSIBLE">Registered premises inaccessible or instrument unavailable</option>
+              <option value="MPE_EXCEEDED">{isHindi ? 'माप त्रुटि अधिकतम अनुमेय त्रुटि (एमपीई) सीमा से अधिक है' : 'Measurement Error exceeds Maximum Permissible Error (MPE) limit'}</option>
+              <option value="SERIAL_MISMATCH">{isHindi ? 'सीरियल नंबर विसंगति / बदली हुई मोहर प्लेट' : 'Serial number discrepancy / altered stamped nameplate'}</option>
+              <option value="UNAPPROVED_MODIFICATION">{isHindi ? 'अनधिकृत इलेक्ट्रॉनिक बायपास या लोड-सेल छेड़छाड़' : 'Unapproved electronic bypass or load-cell tampering detected'}</option>
+              <option value="MISSING_DOCUMENTS">{isHindi ? 'वैध मॉडल अनुमोदन या खरीद चालान रिकॉर्ड गायब' : 'Missing valid model approval or purchase invoice records'}</option>
+              <option value="PREMISES_INACCESSIBLE">{isHindi ? 'पंजीकृत परिसर दुर्गम या उपकरण अनुपलब्ध' : 'Registered premises inaccessible or instrument unavailable'}</option>
             </select>
           </div>
 
           <div>
             <label htmlFor="rejection-remarks" className="block font-bold text-slate-800 mb-1">
-              Detailed Legal Metrology Violation Findings & Directions *
+              {isHindi ? 'विधिक मापविज्ञान उल्लंघन निष्कर्ष और निर्देश *' : 'Detailed Legal Metrology Violation Findings & Directions *'}
             </label>
             <textarea
               id="rejection-remarks"
@@ -1253,7 +1338,7 @@ export const OfficerApplicationReviewPage = () => {
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <Button variant="outline" size="sm" onClick={() => setRejectModalOpen(false)}>
-              Cancel
+              {isHindi ? 'रद्द करें' : 'Cancel'}
             </Button>
             <Button
               variant="danger"
@@ -1263,7 +1348,7 @@ export const OfficerApplicationReviewPage = () => {
               leftIcon={XCircle}
               className="font-bold"
             >
-              Confirm Rejection Order
+              {t.confirmRejectionOrder || (isHindi ? 'अस्वीकृति आदेश की पुष्टि करें' : 'Confirm Rejection Order')}
             </Button>
           </div>
         </div>
@@ -1275,13 +1360,13 @@ export const OfficerApplicationReviewPage = () => {
       <Modal
         isOpen={correctionModalOpen}
         onClose={() => setCorrectionModalOpen(false)}
-        title="Issue Statutory Deficiency Notice"
-        description="Direct the applicant to rectify omissions within statutory 7-day window."
+        title={t.issueDeficiencyNoticeTitle || (isHindi ? "वैधानिक त्रुटि निवारण नोटिस जारी करें" : "Issue Statutory Deficiency Notice")}
+        description={isHindi ? "आवेदक को वैधानिक 7-दिवसीय अवधि के भीतर कमियों को दूर करने का निर्देश दें।" : "Direct the applicant to rectify omissions within statutory 7-day window."}
       >
         <div className="space-y-4 text-xs">
           <div>
             <label htmlFor="correction-notes" className="block font-bold text-slate-800 mb-1">
-              Specific Deficiencies & Rectification Directives *
+              {isHindi ? 'विशिष्ट कमियां और सुधार निर्देश *' : 'Specific Deficiencies & Rectification Directives *'}
             </label>
             <textarea
               id="correction-notes"
@@ -1294,7 +1379,7 @@ export const OfficerApplicationReviewPage = () => {
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <Button variant="outline" size="sm" onClick={() => setCorrectionModalOpen(false)}>
-              Cancel
+              {isHindi ? 'रद्द करें' : 'Cancel'}
             </Button>
             <Button
               variant="primary"
@@ -1303,7 +1388,7 @@ export const OfficerApplicationReviewPage = () => {
               onClick={handleCorrectionSubmit}
               className="font-bold"
             >
-              Dispatch Deficiency Notice
+              {t.dispatchDeficiencyNotice || (isHindi ? 'त्रुटि निवारण नोटिस भेजें' : 'Dispatch Deficiency Notice')}
             </Button>
           </div>
         </div>

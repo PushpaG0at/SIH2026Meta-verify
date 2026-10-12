@@ -9,8 +9,10 @@ import FilterDropdown from '../../components/ui/FilterDropdown';
 import LoadingState from '../../components/ui/LoadingState';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const InstrumentsListPage = () => {
+  const { t, isHindi } = useLanguage();
   const [instruments, setInstruments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,15 +54,15 @@ export const InstrumentsListPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900 font-heading">
-            Registered Instruments
+            {t.registeredInstrumentsTitle || 'Registered Instruments'}
           </h2>
           <p className="text-xs text-slate-500">
-            Commercial weighing and measuring devices under your trade registry
+            {t.registeredInstrumentsSub || 'Commercial weighing and measuring devices under your trade registry'}
           </p>
         </div>
         <Link to="/business/instruments/new">
           <Button variant="primary" size="md" leftIcon={PlusCircle}>
-            Register New Instrument
+            {t.registerNewInstrument || 'Register New Instrument'}
           </Button>
         </Link>
       </div>
@@ -70,37 +72,36 @@ export const InstrumentsListPage = () => {
         <SearchBar
           value={search}
           onChange={setSearch}
-          placeholder="Search by ID, serial number, make, model..."
+          placeholder={isHindi ? "आईडी, सीरियल नंबर, मेक, मॉडल द्वारा खोजें..." : "Search by ID, serial number, make, model..."}
           className="flex-1"
         />
         <FilterDropdown
           value={statusFilter}
           onChange={setStatusFilter}
-          label="Status"
+          label={isHindi ? "स्थिति" : "Status"}
           options={[
-            { label: 'Verified', value: 'VERIFIED' },
-            { label: 'Inspection Scheduled', value: 'INSPECTION_SCHEDULED' },
-            { label: 'Pending Review', value: 'PENDING_REVIEW' }
+            { label: isHindi ? 'सत्यापित' : 'Verified', value: 'VERIFIED' },
+            { label: isHindi ? 'निरीक्षण निर्धारित' : 'Inspection Scheduled', value: 'INSPECTION_SCHEDULED' },
+            { label: isHindi ? 'समीक्षा लंबित' : 'Pending Review', value: 'PENDING_REVIEW' }
           ]}
         />
       </div>
 
       {/* Grid listing */}
       {loading ? (
-        <LoadingState message="Fetching registered instruments..." />
+        <LoadingState message={isHindi ? "पंजीकृत उपकरण लोड हो रहे हैं..." : "Fetching registered instruments..."} />
       ) : error ? (
         <ErrorState
-          title="Unable to load instruments"
+          title={isHindi ? "उपकरण लोड करने में असमर्थ" : "Unable to load instruments"}
           message={error}
           onRetry={fetchInstruments}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-
           icon={Scale}
-          title="No instruments found"
-          description="No weighing or measuring instruments match your search or filter criteria."
-          actionText="Register Instrument"
+          title={isHindi ? "कोई उपकरण नहीं मिला" : "No instruments found"}
+          description={isHindi ? "आपकी खोज या फ़िल्टर मानदंडों से मेल खाने वाला कोई उपकरण नहीं है।" : "No weighing or measuring instruments match your search or filter criteria."}
+          actionText={isHindi ? "उपकरण पंजीकृत करें" : "Register Instrument"}
           onAction={() => window.location.href = '/business/instruments/new'}
         />
       ) : (

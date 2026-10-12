@@ -24,9 +24,11 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import RiskBadge from '../../components/ui/RiskBadge';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../hooks/useAuth';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const InspectorDashboard = () => {
   const { user } = useAuth();
+  const { t, isHindi } = useLanguage();
   const navigate = useNavigate();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +90,7 @@ export const InspectorDashboard = () => {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
             <span className="text-[11px] text-indigo-300 font-semibold tracking-wider uppercase font-mono">
-              GNSS Telematics Active • Zone 4 North Delhi
+              {t.gnssActive || 'GNSS Telematics Active • Zone 4 North Delhi'}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight font-heading text-white" style={{ color: '#ffffff' }}>
@@ -99,7 +101,7 @@ export const InspectorDashboard = () => {
               : 'Insp. Vikram Sharma'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-300">
-            Badge: <span className="font-mono text-indigo-200 font-semibold">{user?.badgeNumber || 'INSP-NZ-4082'}</span> • Legal Metrology Field Enforcement Unit
+            Badge: <span className="font-mono text-indigo-200 font-semibold">{user?.badgeNumber || 'INSP-NZ-4082'}</span> • {t.enforcementUnit || 'Legal Metrology Field Enforcement Unit'}
           </p>
         </div>
 
@@ -111,7 +113,7 @@ export const InspectorDashboard = () => {
               leftIcon={ClipboardCheck}
               className="bg-indigo-600 hover:bg-indigo-500 shadow-md text-xs sm:text-sm"
             >
-              Assignments Queue ({pendingAssignments.length})
+              {t.assignmentsQueue || 'Assignments Queue'} ({pendingAssignments.length})
             </Button>
           </Link>
         </div>
@@ -120,30 +122,30 @@ export const InspectorDashboard = () => {
       {/* Primary Inspector Statistics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
-          title="Assigned Audits"
+          title={t.assignedAudits || 'Assigned Audits'}
           value={assignments.length}
-          subtitle="Active roster cycle"
+          subtitle={t.activeRoster || 'Active roster cycle'}
           icon={ClipboardCheck}
           iconColor="text-blue-600 bg-blue-50"
         />
         <StatCard
-          title="Pending Visits"
+          title={t.pendingVisits || 'Pending Visits'}
           value={pendingAssignments.length}
-          subtitle="On-site verification required"
+          subtitle={t.onSiteReq || 'On-site verification required'}
           icon={Clock}
           iconColor="text-amber-600 bg-amber-50"
         />
         <StatCard
-          title="Completed Audits"
+          title={t.completedAuditsStat || 'Completed Audits'}
           value={completedAssignments.length}
-          subtitle="Signed & submitted"
+          subtitle={t.signedSubmitted || 'Signed & submitted'}
           icon={CheckCircle2}
           iconColor="text-emerald-600 bg-emerald-50"
         />
         <StatCard
-          title="High-Priority Sites"
+          title={t.highPrioritySites || 'High-Priority Sites'}
           value={highPriorityPending.length > 0 ? highPriorityPending.length : assignments.filter((a) => a.priority === 'HIGH').length}
-          subtitle="Priority queue verification"
+          subtitle={t.priorityQueue || 'Priority queue verification'}
           icon={ShieldAlert}
           iconColor="text-rose-600 bg-rose-50"
         />
@@ -160,7 +162,7 @@ export const InspectorDashboard = () => {
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-full font-mono">
-                    {isPending(activeAssignment) ? 'Next Active Target' : 'Inspection Dossier'}
+                    {isPending(activeAssignment) ? (t.nextActiveTarget || 'Next Active Target') : 'Inspection Dossier'}
                   </span>
                   <span className="font-mono text-xs font-bold text-slate-800">{activeAssignment.id}</span>
                   <StatusBadge status={activeAssignment.priority} size="sm" />
@@ -191,7 +193,7 @@ export const InspectorDashboard = () => {
                 rightIcon={ArrowRight}
                 className="w-full md:w-auto shadow-md"
               >
-                {activeAssignment.status === 'COMPLETED' ? 'Review Verification Report' : 'Launch Inspection Telematics'}
+                {activeAssignment.status === 'COMPLETED' ? (isHindi ? 'सत्यापन रिपोर्ट समीक्षा' : 'Review Verification Report') : (t.launchTelematics || (isHindi ? 'निरीक्षण टेलीमैटिक्स शुरू करें' : 'Launch Inspection Telematics'))}
               </Button>
             </div>
           </div>
@@ -204,8 +206,8 @@ export const InspectorDashboard = () => {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
           <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-slate-900">Today's Inspection Schedule</h3>
-              <p className="text-xs text-slate-500">Tap assignment to initiate GPS geofenced checklist</p>
+              <h3 className="text-sm sm:text-base font-bold text-slate-900">{t.todaySchedule || (isHindi ? "आज का निरीक्षण शेड्यूल" : "Today's Inspection Schedule")}</h3>
+              <p className="text-xs text-slate-500">{t.tapToInitiate || (isHindi ? 'जीपीएस जियोफेंस्ड चेकलिस्ट शुरू करने के लिए असाइनमेंट पर टैप करें' : 'Tap assignment to initiate GPS geofenced checklist')}</p>
             </div>
 
             {/* Filter Pills */}
@@ -219,7 +221,7 @@ export const InspectorDashboard = () => {
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                All ({assignments.length})
+                {t.all || (isHindi ? 'सभी' : 'All')} ({assignments.length})
               </button>
               <button
                 type="button"
@@ -230,7 +232,7 @@ export const InspectorDashboard = () => {
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                Pending ({pendingAssignments.length})
+                {t.pending || (isHindi ? 'लंबित' : 'Pending')} ({pendingAssignments.length})
               </button>
               <button
                 type="button"
@@ -241,7 +243,7 @@ export const InspectorDashboard = () => {
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                Done ({completedAssignments.length})
+                {t.done || (isHindi ? 'पूर्ण' : 'Done')} ({completedAssignments.length})
               </button>
             </div>
           </div>
@@ -282,11 +284,11 @@ export const InspectorDashboard = () => {
 
                 <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
                   <div className="text-left sm:text-right">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Schedule Slot</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">{isHindi ? 'शेड्यूल स्लॉट' : 'Schedule Slot'}</span>
                     <span className="text-xs font-semibold text-slate-800">{item.timeSlot || item.scheduledDate}</span>
                   </div>
                   <Button variant="primary" size="sm" rightIcon={ArrowRight} className="mt-1">
-                    {item.status === 'COMPLETED' ? 'Review Audit' : 'Start Inspection'}
+                    {item.status === 'COMPLETED' ? (isHindi ? 'ऑडिट समीक्षा' : 'Review Audit') : (isHindi ? 'निरीक्षण शुरू करें' : 'Start Inspection')}
                   </Button>
                 </div>
               </div>
@@ -301,30 +303,30 @@ export const InspectorDashboard = () => {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4 text-emerald-600 animate-pulse" />
-                <h4 className="text-sm font-bold text-slate-900">GNSS Field Radar</h4>
+                <h4 className="text-sm font-bold text-slate-900">{isHindi ? 'जीएनएसएस फील्ड रडार' : 'GNSS Field Radar'}</h4>
               </div>
               <span className="text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                11 Sats • ±3m
+                {isHindi ? '11 उपग्रह • ±3मी' : '11 Sats • ±3m'}
               </span>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500">Live Latitude:</span>
+                <span className="text-slate-500">{isHindi ? 'लाइव अक्षांश:' : 'Live Latitude:'}</span>
                 <span className="font-mono font-bold text-slate-800">28.6139° N</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Live Longitude:</span>
+                <span className="text-slate-500">{isHindi ? 'लाइव देशांतर:' : 'Live Longitude:'}</span>
                 <span className="font-mono font-bold text-slate-800">77.2090° E</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Geofence Status:</span>
+                <span className="text-slate-500">{isHindi ? 'जियोफेंस स्थिति:' : 'Geofence Status:'}</span>
                 <span className="font-semibold text-emerald-600 flex items-center gap-1">
-                  <Check className="w-3 h-3 stroke-[3]" /> Target Locked (50m radius)
+                  <Check className="w-3 h-3 stroke-[3]" /> {isHindi ? 'लक्ष्य लॉक (50मी दायरा)' : 'Target Locked (50m radius)'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Device Clock:</span>
+                <span className="text-slate-500">{isHindi ? 'डिवाइस घड़ी:' : 'Device Clock:'}</span>
                 <span className="font-mono text-slate-700">
                   {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} IST
                 </span>
@@ -332,7 +334,7 @@ export const InspectorDashboard = () => {
             </div>
 
             <div className="text-[11px] text-slate-500 leading-relaxed">
-              Legal metrology statutory audit requires on-site biometric/GPS timestamp locking before seal stamping.
+              {isHindi ? 'विधिक मापविज्ञान वैधानिक ऑडिट के लिए सील लगाने से पहले ऑन-साइट बायोमेट्रिक/जीपीएस टाइमस्टैम्प लॉक आवश्यक है।' : 'Legal metrology statutory audit requires on-site biometric/GPS timestamp locking before seal stamping.'}
             </div>
           </div>
 
@@ -340,26 +342,26 @@ export const InspectorDashboard = () => {
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
             <div className="flex items-center gap-2">
               <Scale className="w-4 h-4 text-indigo-600" />
-              <h4 className="text-sm font-bold text-slate-900">Standard Test Weights Kit</h4>
+              <h4 className="text-sm font-bold text-slate-900">{isHindi ? 'मानक परीक्षण बाट किट' : 'Standard Test Weights Kit'}</h4>
             </div>
 
             <div className="space-y-2 text-xs">
               <div className="p-2.5 bg-slate-50 rounded-lg flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-slate-800">Kit M1-NZ-408</p>
-                  <p className="text-[10px] text-slate-500">10kg, 20kg, 50kg Cast Iron Blocks</p>
+                  <p className="font-bold text-slate-800">{isHindi ? 'किट M1-NZ-408' : 'Kit M1-NZ-408'}</p>
+                  <p className="text-[10px] text-slate-500">{isHindi ? '10किग्रा, 20किग्रा, 50किग्रा कास्ट आयरन ब्लॉक' : '10kg, 20kg, 50kg Cast Iron Blocks'}</p>
                 </div>
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  Calibrated
+                  {isHindi ? 'अंशांकित' : 'Calibrated'}
                 </span>
               </div>
 
               <div className="p-2.5 bg-slate-50 rounded-lg flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-slate-800">Calibration Certificate</p>
-                  <p className="text-[10px] text-slate-500">NABL Lab Ref: RRSL-2025-0982</p>
+                  <p className="font-bold text-slate-800">{isHindi ? 'अंशांकन प्रमाण-पत्र' : 'Calibration Certificate'}</p>
+                  <p className="text-[10px] text-slate-500">{isHindi ? 'एनएबीएल लैब संदर्भ: RRSL-2025-0982' : 'NABL Lab Ref: RRSL-2025-0982'}</p>
                 </div>
-                <span className="text-[10px] font-semibold text-slate-600">Valid: Nov 2026</span>
+                <span className="text-[10px] font-semibold text-slate-600">{isHindi ? 'वैध: नवं 2026' : 'Valid: Nov 2026'}</span>
               </div>
             </div>
           </div>

@@ -1,8 +1,10 @@
 import React from 'react';
 import { getStatusConfig } from '../../utils/formatters';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const StatusBadge = ({ status, size = 'md', className = '' }) => {
-  const config = getStatusConfig(status);
+  const { isHindi } = useLanguage();
+  const config = getStatusConfig(status, isHindi);
   
   const sizeStyles = {
     sm: 'text-[11px] px-2 py-0.5 font-medium',

@@ -205,7 +205,7 @@ export function createInspectorAssignmentForApp(app) {
     manufacturer: inst.manufacturer || inst.brand || 'Apex Metrology Systems',
     model: inst.model || inst.modelNo || 'PM-DS-5000 Ultra-Precision',
     accuracyClass: inst.accuracyClass || 'Class III (Medium Accuracy)',
-    maxCapacity: inst.maxCapacity ? `${inst.maxCapacity} kg` : (inst.capacity || '30 kg'),
+    maxCapacity: inst.maxCapacity ? (String(inst.maxCapacity).toLowerCase().includes('kg') ? inst.maxCapacity : `${inst.maxCapacity} kg`) : (inst.capacity || '30 kg'),
     minCapacity: inst.minCapacity ? `${inst.minCapacity}` : '100 g',
     verificationDivision: inst.verificationDivision || '2 g (e)',
     location: trader.address || inst.installationAddress || inst.location || 'Plot 42, Okhla Industrial Area Phase-III, New Delhi - 110020',

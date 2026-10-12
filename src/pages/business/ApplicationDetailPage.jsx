@@ -23,9 +23,11 @@ import AIAnalysisCard from '../../components/ai/AIAnalysisCard';
 import EvidenceCard from '../../components/inspections/EvidenceCard';
 import LoadingState from '../../components/ui/LoadingState';
 import ErrorState from '../../components/ui/ErrorState';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const ApplicationDetailPage = () => {
   const { id } = useParams();
+  const { t, isHindi } = useLanguage();
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -77,13 +79,13 @@ export const ApplicationDetailPage = () => {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Applications</span>
+          <span>{t.backToApplications || 'Back to Applications'}</span>
         </Link>
 
         {application.certificateId && (
           <Link to={`/business/certificates/${application.certificateId}`}>
             <Button variant="success" size="sm" leftIcon={Award}>
-              View Issued Certificate ({application.certificateId})
+              {t.viewIssuedCert || 'View Issued Certificate'} ({application.certificateId})
             </Button>
           </Link>
         )}
@@ -101,15 +103,15 @@ export const ApplicationDetailPage = () => {
               <RiskBadge level={application.riskLevel} score={application.riskScore} />
             </div>
             <h2 className="text-xl font-bold text-slate-900 font-heading mt-1.5">
-              Verification Application Dossier
+              {t.verifAppDossier || 'Verification Application Dossier'}
             </h2>
             <p className="text-xs text-slate-500">
-              Submitted on {application.submissionDate} by {application.businessName}
+              {t.submittedOnBy || 'Submitted on'} {application.submissionDate} {t.byTrader || 'by'} {application.businessName}
             </p>
           </div>
 
           <div className="text-left md:text-right text-xs space-y-1">
-            <span className="text-slate-400 font-medium block">Instrument Reference</span>
+            <span className="text-slate-400 font-medium block">{t.instReference || 'Instrument Reference'}</span>
             <Link
               to={`/business/instruments/${application.instrumentId}`}
               className="font-mono font-bold text-blue-600 hover:underline flex items-center md:justify-end gap-1"
@@ -124,7 +126,7 @@ export const ApplicationDetailPage = () => {
         {/* Visual 8-Step Lifecycle Stepper */}
         <div>
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-            Verification Lifecycle Progression
+            {t.verifProgression || 'Verification Lifecycle Progression'}
           </h4>
           <ProgressStepper currentStep={getStepIndex(application.status)} />
         </div>
@@ -136,20 +138,20 @@ export const ApplicationDetailPage = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3 text-xs">
           <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2 pb-2 border-b border-slate-100">
             <UserCheck className="w-4 h-4 text-blue-600" />
-            Assigned Regulatory Personnel
+            {t.assignedPersonnel || 'Assigned Regulatory Personnel'}
           </h4>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-slate-500">Field Inspector:</span>
-              <span className="font-medium text-slate-900">{application.assignedInspector || 'Pending Field Schedule'}</span>
+              <span className="text-slate-500">{t.fieldInspectorLabel || 'Field Inspector:'}</span>
+              <span className="font-medium text-slate-900">{application.assignedInspector || (t.pendingFieldSchedule || 'Pending Field Schedule')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Adjudicating Officer:</span>
-              <span className="font-medium text-slate-900">{application.assignedOfficer || 'State Legal Metrology Desk'}</span>
+              <span className="text-slate-500">{t.adjudicatingOfficerLabel || 'Adjudicating Officer:'}</span>
+              <span className="font-medium text-slate-900">{application.assignedOfficer || (t.stateMetrologyDesk || 'State Legal Metrology Desk')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Scheduled Date:</span>
-              <span className="font-medium text-slate-900">{application.inspection?.scheduledDate || 'To be notified'}</span>
+              <span className="text-slate-500">{t.scheduledDateLabel || 'Scheduled Date:'}</span>
+              <span className="font-medium text-slate-900">{application.inspection?.scheduledDate || (t.toBeNotified || 'To be notified')}</span>
             </div>
           </div>
         </div>
@@ -158,7 +160,7 @@ export const ApplicationDetailPage = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3 text-xs">
           <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2 pb-2 border-b border-slate-100">
             <FileText className="w-4 h-4 text-blue-600" />
-            Uploaded Statutory Documents
+            {t.uploadedStatutoryDocs || 'Uploaded Statutory Documents'}
           </h4>
           <div className="divide-y divide-slate-100">
             {application.documents?.map((doc, idx) => (

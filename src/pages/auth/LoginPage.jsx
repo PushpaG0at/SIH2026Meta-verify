@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { getStoredUserByEmail, formatNameFromEmail } from '../../services/authService';
 import {
   User,
@@ -22,6 +23,7 @@ export const LoginPage = () => {
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const { toast } = useToast();
+  const { t, isHindi } = useLanguage();
 
   const [email, setEmail] = useState('ramesh@kirana.in');
   const [fullName, setFullName] = useState('Ramesh Kumar');
@@ -37,8 +39,8 @@ export const LoginPage = () => {
   const rolePresets = [
     {
       id: 'business',
-      label: 'Business',
-      subtitle: 'Trader / Enterprise',
+      label: t.roleBusiness || 'Business',
+      subtitle: t.roleTraderSub || 'Trader / Enterprise',
       email: 'ramesh@kirana.in',
       name: 'Ramesh Kumar',
       icon: Shield,
@@ -46,8 +48,8 @@ export const LoginPage = () => {
     },
     {
       id: 'inspector',
-      label: 'Inspector',
-      subtitle: 'Field Calibration Desk',
+      label: t.roleInspector || 'Inspector',
+      subtitle: t.roleInspectorSub || 'Field Calibration Desk',
       email: 'inspector.sharma@delhi.gov.in',
       name: 'Insp. Vikram Sharma',
       icon: Camera,
@@ -55,8 +57,8 @@ export const LoginPage = () => {
     },
     {
       id: 'officer',
-      label: 'Officer',
-      subtitle: 'Statutory Regulatory Desk',
+      label: t.roleOfficer || 'Officer',
+      subtitle: t.roleOfficerSub || 'Statutory Regulatory Desk',
       email: 'officer.sen@legalmetrology.gov.in',
       name: 'Shri R. Sen',
       icon: Shield,
@@ -109,23 +111,23 @@ export const LoginPage = () => {
   const validate = () => {
     const errs = {};
     if (!role) {
-      errs.role = 'Please select a role';
+      errs.role = isHindi ? 'कृपया भूमिका चुनें' : 'Please select a role';
     }
 
     if (!fullName.trim()) {
-      errs.fullName = 'Full name is required';
+      errs.fullName = isHindi ? 'पूरा नाम आवश्यक है' : 'Full name is required';
     }
 
     if (!email.trim()) {
-      errs.email = 'Email address is required';
+      errs.email = isHindi ? 'ईमेल पता आवश्यक है' : 'Email address is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      errs.email = 'Please enter a valid email address';
+      errs.email = isHindi ? 'कृपया वैध ईमेल पता दर्ज करें' : 'Please enter a valid email address';
     }
 
     if (!password) {
-      errs.password = 'Password is required';
+      errs.password = isHindi ? 'पासवर्ड आवश्यक है' : 'Password is required';
     } else if (password.length < 6) {
-      errs.password = 'Password must be at least 6 characters';
+      errs.password = isHindi ? 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए' : 'Password must be at least 6 characters';
     }
 
     return errs;
@@ -148,7 +150,9 @@ export const LoginPage = () => {
       const res = await login(email.trim(), password, role, fullName.trim());
 
       toast?.success?.(
-        `Welcome, ${res.user?.name || fullName.trim()}! Accessing ${role.toUpperCase()} portal...`
+        isHindi
+          ? `स्वागत है, ${res.user?.name || fullName.trim()}! ${role.toUpperCase()} पोर्टल खोला जा रहा है...`
+          : `Welcome, ${res.user?.name || fullName.trim()}! Accessing ${role.toUpperCase()} portal...`
       );
 
       const normalizedRole = role.toLowerCase();
@@ -169,17 +173,21 @@ export const LoginPage = () => {
     }
   };
 
-  const currentRoleLabel = role.charAt(0).toUpperCase() + role.slice(1);
+  const roleName = role === 'business'
+    ? (t.roleBusiness || 'Business')
+    : role === 'inspector'
+    ? (t.roleInspector || 'Inspector')
+    : (t.roleOfficer || 'Officer');
 
   return (
     <div className="space-y-5">
       {/* Title & Subtitle */}
       <div className="text-center space-y-1">
         <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-sans">
-          Sign In to Portal
+          {t.signInToPortal || 'Sign In to Portal'}
         </h2>
         <p className="text-xs sm:text-sm text-slate-300 font-normal">
-          Enter your credentials and select your stakeholder role
+          {t.signInSub || 'Enter your credentials and select your stakeholder role'}
         </p>
       </div>
 
@@ -206,10 +214,10 @@ export const LoginPage = () => {
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-xs font-semibold text-slate-200">
-              Select Stakeholder Role <span className="text-sky-400">*</span>
+              {t.selectRole || 'Select Stakeholder Role'} <span className="text-sky-400">*</span>
             </label>
             <span className="text-[10px] font-mono uppercase tracking-wider text-slate-300 bg-slate-800/80 border border-slate-600/60 px-2.5 py-1 rounded-md font-semibold">
-              CURRENT: {role.toUpperCase()}
+              {t.currentRolePrefix || 'CURRENT:'} {role.toUpperCase()}
             </span>
           </div>
 
@@ -283,13 +291,13 @@ export const LoginPage = () => {
               className="block text-xs font-semibold text-slate-200"
             >
               {role === 'inspector'
-                ? 'Inspector Name'
+                ? (t.inspectorNameLabel || 'Inspector Name')
                 : role === 'officer'
-                ? 'Verification Officer Name'
-                : 'Full Name / Enterprise Rep'} <span className="text-sky-400">*</span>
+                ? (t.officerNameLabel || 'Verification Officer Name')
+                : (t.fullNameLabel || 'Full Name / Enterprise Rep')} <span className="text-sky-400">*</span>
             </label>
             <span className="text-[10px] text-sky-300 font-mono">
-              Auto-adapts to email or editable
+              {t.autoAdaptsHint || 'Auto-adapts to email or editable'}
             </span>
           </div>
           <div className="relative flex items-center">
@@ -330,7 +338,7 @@ export const LoginPage = () => {
             htmlFor="login-email"
             className="block text-xs font-semibold text-slate-200 mb-1.5"
           >
-            Email Address <span className="text-sky-400">*</span>
+            {t.emailLabel || 'Email Address'} <span className="text-sky-400">*</span>
           </label>
           <div className="relative flex items-center">
             <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none" />
@@ -349,7 +357,7 @@ export const LoginPage = () => {
             <button
               type="button"
               onClick={() => setShowEmailText(!showEmailText)}
-              className="absolute right-3.5 p-1 text-slate-500 hover:text-slate-800 transition-colors"
+              className="absolute right-3.5 p-1 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
               title={showEmailText ? 'Hide email' : 'Show email'}
             >
               <Eye className="w-4 h-4" />
@@ -370,13 +378,13 @@ export const LoginPage = () => {
               htmlFor="login-password"
               className="block text-xs font-semibold text-slate-200"
             >
-              Password <span className="text-sky-400">*</span>
+              {t.passwordLabel || 'Password'} <span className="text-sky-400">*</span>
             </label>
             <Link
               to="/forgot-password"
               className="text-xs text-sky-400 hover:text-sky-300 hover:underline font-medium transition-colors"
             >
-              Forgot password?
+              {t.forgotPassword || 'Forgot password?'}
             </Link>
           </div>
           <div className="relative flex items-center">
@@ -399,7 +407,7 @@ export const LoginPage = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 p-1 text-slate-500 hover:text-slate-800 transition-colors"
+              className="absolute right-3.5 p-1 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
               title={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? (
@@ -426,36 +434,40 @@ export const LoginPage = () => {
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin text-white" />
-              <span>Authenticating...</span>
+              <span>{isHindi ? 'प्रमाणीकरण हो रहा है...' : 'Authenticating...'}</span>
             </>
           ) : (
             <>
-              <span>Sign In as {currentRoleLabel}</span>
+              <span>
+                {isHindi
+                  ? `${roleName} ${t.signInAs}`
+                  : `${t.signInAs || 'Sign In as'} ${roleName}`}
+              </span>
               <ArrowRight className="w-4 h-4 text-white stroke-[2.5]" />
             </>
           )}
         </button>
       </form>
 
-      {/* Footer Links (Inside the Panel, directly flowing from button with no demonstration box) */}
+      {/* Footer Links */}
       <div className="pt-3 space-y-2 text-center text-xs">
         <p className="text-white/90">
-          New commercial trader or scale owner?{' '}
+          {t.newTraderPrompt || 'New commercial trader or scale owner?'}{' '}
           <Link
             to="/register"
             className="font-semibold text-sky-400 hover:text-sky-300 hover:underline transition-colors"
           >
-            Register Organization
+            {t.registerOrg || 'Register Organization'}
           </Link>
         </p>
 
         <p className="text-white/90">
-          Just need to verify a certificate?{' '}
+          {t.needToVerifyPrompt || 'Just need to verify a certificate?'}{' '}
           <Link
             to="/verify"
             className="font-semibold text-sky-400 hover:text-sky-300 hover:underline transition-colors"
           >
-            Public Verification →
+            {t.publicVerificationLink || 'Public Verification →'}
           </Link>
         </p>
       </div>

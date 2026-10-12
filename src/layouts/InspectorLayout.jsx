@@ -4,14 +4,19 @@ import Sidebar from '../components/layout/Sidebar';
 import Topbar from '../components/layout/Topbar';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
 import { LayoutDashboard, ClipboardCheck, Camera, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export const InspectorLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isHindi } = useLanguage();
 
   return (
     <div className="min-h-screen bg-[#F0F4F8] text-slate-900 flex flex-col font-sans pb-16 lg:pb-0">
       {/* Official Government Full-Width Topbar */}
-      <Topbar onOpenSidebar={() => setSidebarOpen(true)} title="Field Inspector Telematics Desk" />
+      <Topbar
+        onOpenSidebar={() => setSidebarOpen(true)}
+        title={isHindi ? 'फील्ड निरीक्षक टेलीमैटिक्स डेस्क' : 'Field Inspector Telematics Desk'}
+      />
 
       <div className="flex-1 flex min-w-0 relative">
         {/* Sidebar */}
@@ -37,7 +42,7 @@ export const InspectorLayout = () => {
           }
         >
           <LayoutDashboard className="w-5 h-5" />
-          <span>Overview</span>
+          <span>{isHindi ? 'अवलोकन' : 'Overview'}</span>
         </NavLink>
         <NavLink
           to="/inspector/assignments"
@@ -48,7 +53,7 @@ export const InspectorLayout = () => {
           }
         >
           <ClipboardCheck className="w-5 h-5" />
-          <span>Assignments</span>
+          <span>{isHindi ? 'असाइनमेंट' : 'Assignments'}</span>
         </NavLink>
         <NavLink
           to="/inspector/assignments/INSP-438242"
@@ -61,7 +66,7 @@ export const InspectorLayout = () => {
           <div className="p-1.5 bg-blue-600 text-white rounded-full -mt-4 shadow-md">
             <Camera className="w-5 h-5" />
           </div>
-          <span className="text-[10px]">Active Inspect</span>
+          <span className="text-[10px]">{isHindi ? 'सक्रिय' : 'Active Inspect'}</span>
         </NavLink>
         <NavLink
           to="/inspector/inspections/completed"
@@ -72,7 +77,7 @@ export const InspectorLayout = () => {
           }
         >
           <CheckCircle2 className="w-5 h-5" />
-          <span>Completed</span>
+          <span>{isHindi ? 'पूर्ण' : 'Completed'}</span>
         </NavLink>
       </nav>
     </div>

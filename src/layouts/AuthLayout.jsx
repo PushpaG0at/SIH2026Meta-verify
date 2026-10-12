@@ -1,13 +1,16 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import MetraLogo from '../components/ui/MetraLogo';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSelector from '../components/common/LanguageSelector';
 
 export const AuthLayout = () => {
   const location = useLocation();
+  const { t } = useLanguage();
   const isLoginPage = location.pathname === '/login';
 
   return (
-    <div className="min-h-screen w-full bg-[#030718] flex flex-col items-center justify-center py-10 px-4 sm:px-6 relative overflow-hidden select-none font-sans">
+    <div className="min-h-screen w-full bg-[#030718] flex flex-col items-center justify-center py-12 px-4 sm:px-6 relative overflow-hidden select-none font-sans">
       {/* Authoritative Sovereign Space-Blue Base Gradient */}
       <div 
         className="absolute inset-0 pointer-events-none z-0"
@@ -26,7 +29,7 @@ export const AuthLayout = () => {
       />
 
       {/* Refined, Simple Professional Ambient Light Flares */}
-      {/* Left Teal-Emerald Ambient Glow (complementing Verified green logo) */}
+      {/* Left Teal-Emerald Ambient Glow */}
       <div 
         className="absolute -left-28 top-1/4 w-[480px] h-[480px] rounded-full pointer-events-none blur-[140px] opacity-25 z-0"
         style={{ background: 'radial-gradient(circle, #00b074 0%, #0284c7 45%, transparent 70%)' }}
@@ -50,19 +53,20 @@ export const AuthLayout = () => {
         style={{ background: 'radial-gradient(ellipse, #38bdf8 0%, #0284c7 40%, transparent 70%)' }}
       />
 
-      {/* Subtle Clean Star Accent on Lower Right */}
-      <div className="absolute right-[16%] sm:right-[20%] bottom-[15%] sm:bottom-[17%] pointer-events-none z-0 opacity-30 hidden sm:block">
-        <svg 
-          className="w-6 h-6 text-sky-200 drop-shadow-[0_0_8px_rgba(56,189,248,0.7)]" 
-          viewBox="0 0 24 24" 
-          fill="currentColor"
+      {/* Top Floating Utility Bar with Back Link & Language Selector */}
+      <div className="absolute top-4 left-4 right-4 max-w-5xl mx-auto flex items-center justify-between z-20">
+        <Link
+          to="/"
+          className="text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-700/60 backdrop-blur-md transition-colors"
         >
-          <path d="M12 0L14.4 9.6L24 12L14.4 14.4L12 24L9.6 14.4L0 12L9.6 9.6L12 0Z" />
-        </svg>
+          <span>←</span>
+          <span>{t.backToHome || 'Back to Home'}</span>
+        </Link>
+        <LanguageSelector variant="dark" />
       </div>
 
       {/* Header (Above the Panel): Official METRA VERIFY Logo */}
-      <div className="w-full max-w-[500px] text-center mb-6 z-10 flex flex-col items-center">
+      <div className="w-full max-w-[500px] text-center mb-6 z-10 flex flex-col items-center mt-8 sm:mt-4">
         <Link 
           to="/" 
           className="inline-flex items-center group transition-transform hover:scale-[1.02]"
@@ -89,8 +93,8 @@ export const AuthLayout = () => {
       </div>
 
       {/* Subtle Statutory Verification Tagline at the very bottom */}
-      <div className="mt-6 text-center z-10 text-[11px] text-slate-500 font-medium tracking-wide">
-        Legal Metrology Statutory Verification Portal • Govt. of India
+      <div className="mt-6 text-center z-10 text-[11px] text-slate-400 font-medium tracking-wide">
+        {t.legalNotice || 'Legal Metrology Statutory Verification Portal • Govt. of India'}
       </div>
     </div>
   );

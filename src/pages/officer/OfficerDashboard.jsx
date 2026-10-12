@@ -26,9 +26,11 @@ import RiskBadge from '../../components/ui/RiskBadge';
 import DataTable from '../../components/ui/DataTable';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../hooks/useAuth';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const OfficerDashboard = () => {
   const { user } = useAuth();
+  const { t, isHindi } = useLanguage();
   const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +147,7 @@ export const OfficerDashboard = () => {
 
   const columns = [
     {
-      header: 'Application ID',
+      header: isHindi ? 'आवेदन आईडी' : 'Application ID',
       accessor: 'id',
       render: (row) => (
         <div>
@@ -156,18 +158,20 @@ export const OfficerDashboard = () => {
             {row.id}
             <ExternalLink className="w-3 h-3 opacity-60" />
           </Link>
-          <span className="text-[10px] text-slate-400 font-mono block">Filing: {row.submissionDate}</span>
+          <span className="text-[10px] text-slate-400 font-mono block">
+            {isHindi ? 'फाइलिंग:' : 'Filing:'} {row.submissionDate}
+          </span>
         </div>
       )
     },
     {
-      header: 'Business Entity & Location',
+      header: t.colTraderEntity || 'Business Entity & Location',
       accessor: 'businessName',
       render: (row) => (
         <div>
           <span className="text-xs font-bold text-slate-900 block">{row.businessName}</span>
           <span className="text-[11px] text-slate-500 font-mono">
-            {row.traderDetails?.gstin || 'GSTIN Validated'}
+            {row.traderDetails?.gstin || (isHindi ? 'जीएसटीआईएन सत्यापित' : 'GSTIN Validated')}
           </span>
           <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 truncate max-w-[200px]">
             <MapPin className="w-2.5 h-2.5 shrink-0 text-slate-400" />
@@ -177,7 +181,7 @@ export const OfficerDashboard = () => {
       )
     },
     {
-      header: 'Instrument & Accuracy Class',
+      header: t.colInstSpecs || 'Instrument & Accuracy Class',
       accessor: 'instrumentType',
       render: (row) => (
         <div>
@@ -194,40 +198,40 @@ export const OfficerDashboard = () => {
       )
     },
     {
-      header: 'Field Inspector Telematics',
+      header: t.colFieldTelematics || 'Field Inspector Telematics',
       accessor: 'assignedInspector',
       render: (row) => (
         <div>
           <span className="text-xs text-slate-700 font-medium block">
-            {row.inspection?.inspectorName?.split('(')[0] || row.assignedInspector?.split('(')[0] || 'Field Desk'}
+            {row.inspection?.inspectorName?.split('(')[0] || row.assignedInspector?.split('(')[0] || (isHindi ? 'फील्ड डेस्क' : 'Field Desk')}
           </span>
           <span className="text-[10px] text-slate-500 font-mono">
-            Seal:{' '}
+            {isHindi ? 'सील:' : 'Seal:'}{' '}
             {row.inspection?.sealNumber ? (
               <strong className="text-blue-600">{row.inspection.sealNumber.split('-')[0] + '...'}</strong>
             ) : (
-              'Pending Visit'
+              (isHindi ? 'दौरा लंबित' : 'Pending Visit')
             )}
           </span>
         </div>
       )
     },
     {
-      header: 'AI Risk Profile',
+      header: t.colAiRisk || 'AI Risk Profile',
       accessor: 'riskLevel',
       render: (row) => (
         <div>
           <RiskBadge level={row.riskLevel} score={row.riskScore} />
           {row.riskScore >= 60 && (
             <span className="text-[9px] font-bold text-rose-600 uppercase block mt-0.5 tracking-tight">
-              Discrepancy Flag
+              {isHindi ? 'विसंगति ध्वज' : 'Discrepancy Flag'}
             </span>
           )}
         </div>
       )
     },
     {
-      header: 'Statutory SLA',
+      header: t.colFilingSla || 'Statutory SLA',
       accessor: 'slaRemainingDays',
       render: (row) => {
         const isUrgent = row.slaRemainingDays <= 1.0;
@@ -239,20 +243,20 @@ export const OfficerDashboard = () => {
               }`}
             >
               <Clock className="w-3 h-3" />
-              {row.slaRemainingDays ? `${row.slaRemainingDays}d remaining` : 'On Schedule'}
+              {row.slaRemainingDays ? `${row.slaRemainingDays}d ${t.remainingLabel || 'remaining'}` : (t.onScheduleLabel || 'On Schedule')}
             </span>
-            <span className="text-[10px] text-slate-400">Target: 3.0d</span>
+            <span className="text-[10px] text-slate-400">{isHindi ? 'लक्ष्य: 3.0 दिन' : 'Target: 3.0d'}</span>
           </div>
         );
       }
     },
     {
-      header: 'Adjudication Status',
+      header: t.colAuditStatus || 'Adjudication Status',
       accessor: 'status',
       render: (row) => <StatusBadge status={row.status} />
     },
     {
-      header: 'Action',
+      header: t.colAdjudication || 'Action',
       accessor: 'actions',
       render: (row) => (
         <div className="flex items-center gap-1.5">
@@ -263,7 +267,7 @@ export const OfficerDashboard = () => {
                 size="sm"
                 className="bg-emerald-600 hover:bg-emerald-500 shadow-xs text-xs font-bold text-white px-2 py-1"
               >
-                View Cert
+                {t.btnFormVi || 'View Cert'}
               </Button>
             </Link>
           )}
@@ -273,7 +277,7 @@ export const OfficerDashboard = () => {
               size="sm"
               className={isPending(row.status) ? 'bg-purple-600 hover:bg-purple-500 shadow-xs' : ''}
             >
-              {isPending(row.status) ? 'Adjudicate' : 'Dossier'}
+              {isPending(row.status) ? (t.btnAdjudicate || 'Adjudicate') : (t.btnReviewDossier || 'Dossier')}
             </Button>
           </Link>
         </div>
@@ -286,11 +290,11 @@ export const OfficerDashboard = () => {
       {/* Officer Authority Header with Jurisdiction Filter & DSC Hardware Token Status */}
       <div className="bg-gradient-to-r from-slate-950 via-purple-950 to-slate-900 rounded-2xl p-5 sm:p-6 text-white shadow-md border border-purple-900/40 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
+            <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse" />
               <span className="text-[11px] text-purple-300 font-semibold tracking-wider uppercase font-mono">
-                Statutory Directorate of Legal Metrology • Authority Desk
+                {t.authorityDesk || 'Statutory Directorate of Legal Metrology • Authority Desk'}
               </span>
               <span className="text-[10px] font-mono bg-purple-900/80 text-purple-200 px-2 py-0.5 rounded-full border border-purple-700/60">
                 Rule 14 & 24 Legal Metrology Act, 2009
@@ -300,7 +304,7 @@ export const OfficerDashboard = () => {
               {user?.name || 'Dr. Anita Deshmukh'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300">
-              Authorized Legal Metrology Verification Officer •{' '}
+              {t.authorizedOfficerTitle || 'Authorized Legal Metrology Verification Officer'} •{' '}
               <span className="font-mono text-purple-200 font-semibold">ID: OFF-HQ-ANITA-D</span> • State Directorate HQ
             </p>
           </div>
@@ -315,7 +319,7 @@ export const OfficerDashboard = () => {
                 <span className="text-[10px] text-slate-400 block font-mono">DSC e-Sign Token</span>
                 <span className="text-emerald-400 font-bold font-mono text-[11px] flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Hardware PIN Active
+                  {t.dscActive || 'Hardware PIN Active'}
                 </span>
               </div>
             </div>
@@ -327,7 +331,7 @@ export const OfficerDashboard = () => {
                 className="bg-purple-600 hover:bg-purple-500 shadow-md text-xs sm:text-sm font-semibold"
                 rightIcon={ArrowRight}
               >
-                Adjudication Roster ({pendingAdjudicationCount})
+                {t.adjudicationRoster || 'Adjudication Roster'} ({pendingAdjudicationCount})
               </Button>
             </Link>
           </div>
@@ -337,7 +341,7 @@ export const OfficerDashboard = () => {
         <div className="pt-3 border-t border-purple-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 text-slate-300">
             <Compass className="w-3.5 h-3.5 text-purple-400" />
-            <span className="font-medium text-slate-400">Statutory Jurisdiction:</span>
+            <span className="font-medium text-slate-400">{t.statutoryJurisdiction || 'Statutory Jurisdiction:'}</span>
             <select
               value={selectedJurisdiction}
               onChange={(e) => setSelectedJurisdiction(e.target.value)}
@@ -365,37 +369,37 @@ export const OfficerDashboard = () => {
       {/* Top 5 Statutory Metrics Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
-          title="Pending Adjudication"
+          title={t.pendingAdjudication || 'Pending Adjudication'}
           value={loading ? '-' : pendingAdjudicationCount}
-          subtitle="Awaiting officer sign-off"
+          subtitle={t.awaitingSignOff || 'Awaiting officer sign-off'}
           icon={Clock}
           iconColor="text-amber-600 bg-amber-50"
         />
         <StatCard
-          title="High-Risk Anomalies"
+          title={t.highRiskAnomalies || 'High-Risk Anomalies'}
           value={loading ? '-' : highRiskCount}
-          subtitle="AI mismatch flagged"
+          subtitle={t.aiMismatch || 'AI mismatch flagged'}
           icon={ShieldAlert}
           iconColor="text-rose-600 bg-rose-50"
         />
         <StatCard
-          title="Under Field Inspection"
+          title={t.underFieldInspection || 'Under Field Inspection'}
           value={loading ? '-' : underInspectionCount}
-          subtitle="Live GNSS telematics"
+          subtitle={t.liveGnss || 'Live GNSS telematics'}
           icon={FileText}
           iconColor="text-indigo-600 bg-indigo-50"
         />
         <StatCard
-          title="Certificates Issued"
+          title={t.certificatesIssued || 'Certificates Issued'}
           value={loading ? '-' : approvedCount}
-          subtitle="Cryptographically sealed"
+          subtitle={t.cryptoSealed || 'Cryptographically sealed'}
           icon={CheckCircle2}
           iconColor="text-emerald-600 bg-emerald-50"
         />
         <StatCard
-          title="Rejections / Void"
+          title={t.rejectionsVoid || 'Rejections / Void'}
           value={loading ? '-' : rejectedCount}
-          subtitle="Statutory non-compliance"
+          subtitle={t.statutoryNonCompliance || 'Statutory non-compliance'}
           icon={XCircle}
           iconColor="text-rose-600 bg-rose-50"
         />
@@ -452,7 +456,7 @@ export const OfficerDashboard = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
-              <h4 className="text-sm font-bold text-slate-900">Adjudication SLA Velocity</h4>
+              <h4 className="text-sm font-bold text-slate-900">{t.adjudicationSla || 'Adjudication SLA Velocity'}</h4>
             </div>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
               96.4% On-Time
@@ -488,7 +492,7 @@ export const OfficerDashboard = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-600" />
-              <h4 className="text-sm font-bold text-slate-900">AI Risk Spectrum</h4>
+              <h4 className="text-sm font-bold text-slate-900">{t.aiRiskSpectrum || 'AI Risk Spectrum'}</h4>
             </div>
             <span className="text-[10px] font-mono font-semibold text-slate-500">Active State Queue</span>
           </div>
@@ -537,7 +541,7 @@ export const OfficerDashboard = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <Scale className="w-4 h-4 text-blue-600" />
-              <h4 className="text-sm font-bold text-slate-900">Instrument Classification</h4>
+              <h4 className="text-sm font-bold text-slate-900">{t.instrumentClassification || 'Instrument Classification'}</h4>
             </div>
             <span className="text-[10px] font-mono font-semibold text-slate-500">Legal Metrology</span>
           </div>

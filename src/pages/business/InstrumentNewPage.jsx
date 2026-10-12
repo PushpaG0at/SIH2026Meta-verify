@@ -4,10 +4,12 @@ import { Scale, CheckCircle2, ArrowRight, ArrowLeft, Building, Sparkles } from '
 import { instrumentService } from '../../services/instrumentService';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../hooks/useAuth';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const InstrumentNewPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, isHindi } = useLanguage();
 
   const [formData, setFormData] = useState({
     instrumentType: 'Digital Weighing Scale',
@@ -83,7 +85,7 @@ export const InstrumentNewPage = () => {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Instruments</span>
+          <span>{t.backToInstruments || 'Back to Instruments'}</span>
         </Link>
       </div>
 
@@ -96,20 +98,20 @@ export const InstrumentNewPage = () => {
 
           <div className="space-y-2">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-              Registration Successful
+              {t.regSuccess || 'Registration Successful'}
             </span>
             <h2 className="text-2xl font-black text-slate-900 font-heading">
-              Instrument Registered in National Metrology Index
+              {t.instRegisteredIndex || 'Instrument Registered in National Metrology Index'}
             </h2>
             <p className="text-xs text-slate-600 max-w-md mx-auto">
-              Your device has been assigned a unique, tamper-evident Digital Instrument Identifier.
+              {t.deviceAssignedId || 'Your device has been assigned a unique, tamper-evident Digital Instrument Identifier.'}
             </p>
           </div>
 
           {/* Prominent Digital ID Box */}
           <div className="p-5 bg-slate-900 text-white rounded-xl max-w-md mx-auto space-y-1">
             <span className="text-[10px] uppercase font-bold text-blue-400 tracking-widest block">
-              Assigned Digital Instrument ID
+              {t.assignedDigitalId || 'Assigned Digital Instrument ID'}
             </span>
             <p className="font-mono text-2xl font-black text-white tracking-wider">
               {createdInstrument.id}
@@ -122,12 +124,12 @@ export const InstrumentNewPage = () => {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 pt-4">
             <Link to={`/business/instruments/${createdInstrument.id}`}>
               <Button variant="outline" size="md">
-                View Instrument Details
+                {t.viewInstDetails || 'View Instrument Details'}
               </Button>
             </Link>
             <Link to={`/business/applications/new?instrumentId=${createdInstrument.id}`}>
               <Button variant="primary" size="md" rightIcon={ArrowRight}>
-                Create Verification Application
+                {t.createVerificationApp || 'Create Verification Application'}
               </Button>
             </Link>
           </div>
@@ -138,10 +140,10 @@ export const InstrumentNewPage = () => {
           <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900 font-heading">
-                Register Weighing or Measuring Instrument
+                {t.regWeighingMeasuring || 'Register Weighing or Measuring Instrument'}
               </h2>
               <p className="text-xs text-slate-500">
-                Statutory registration under Legal Metrology Act & Rules
+                {t.regStatutorySub || 'Statutory registration under Legal Metrology Act & Rules'}
               </p>
             </div>
             <Button
@@ -151,7 +153,7 @@ export const InstrumentNewPage = () => {
               leftIcon={Sparkles}
               onClick={autoFillSample}
             >
-              Fill Sample Data
+              {t.fillSampleData || 'Fill Sample Data'}
             </Button>
           </div>
 
@@ -159,14 +161,14 @@ export const InstrumentNewPage = () => {
             {/* Owner Name */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Owner / Trader Name *
+                {t.ownerTraderName || 'Owner / Trader Name *'}
               </label>
               <input
                 type="text"
                 name="ownerName"
                 value={formData.ownerName}
                 onChange={handleChange}
-                placeholder="Owner / Proprietor Name"
+                placeholder={t.ownerPlaceholder || 'Owner / Proprietor Name'}
                 className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
               />
             </div>
@@ -175,7 +177,7 @@ export const InstrumentNewPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Instrument Type *
+                  {t.instType || 'Instrument Type *'}
                 </label>
                 <select
                   name="instrumentType"
@@ -183,18 +185,18 @@ export const InstrumentNewPage = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                 >
-                  <option value="Digital Weighing Scale">Digital Weighing Scale (NAWI)</option>
-                  <option value="Electronic Bench Scale">Electronic Bench Scale</option>
-                  <option value="Heavy Duty Platform Scale">Heavy Duty Platform Scale</option>
-                  <option value="Precision Laboratory Micro-Balance">Precision Laboratory Balance (Class I/II)</option>
-                  <option value="Fuel Dispenser Flow Meter">Fuel Dispenser Flow Meter</option>
-                  <option value="Weighbridge Truck Scale">Weighbridge Truck Scale</option>
+                  <option value="Digital Weighing Scale">{t.optScaleNawi || 'Digital Weighing Scale (NAWI)'}</option>
+                  <option value="Electronic Bench Scale">{t.optElectronicBench || 'Electronic Bench Scale'}</option>
+                  <option value="Heavy Duty Platform Scale">{t.optPlatformScale || 'Heavy Duty Platform Scale'}</option>
+                  <option value="Precision Laboratory Micro-Balance">{t.optLabBalance || 'Precision Laboratory Balance (Class I/II)'}</option>
+                  <option value="Fuel Dispenser Flow Meter">{t.optFuelFlowMeter || 'Fuel Dispenser Flow Meter'}</option>
+                  <option value="Weighbridge Truck Scale">{t.optWeighbridge || 'Weighbridge Truck Scale'}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Accuracy Class *
+                  {t.accuracyClass || 'Accuracy Class *'}
                 </label>
                 <select
                   name="accuracyClass"
@@ -202,10 +204,10 @@ export const InstrumentNewPage = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                 >
-                  <option value="Class III (Medium Accuracy)">Class III (Medium Accuracy - Retail/Commercial)</option>
-                  <option value="Class I (Special High Precision)">Class I (Special High Precision - Laboratory)</option>
-                  <option value="Class II (High Accuracy)">Class II (High Accuracy - Precious Metals/Jewelry)</option>
-                  <option value="Class IIII (Ordinary Accuracy)">Class IIII (Ordinary - Bulk Scrap/Aggregates)</option>
+                  <option value="Class III (Medium Accuracy)">{t.optClass3 || 'Class III (Medium Accuracy - Retail/Commercial)'}</option>
+                  <option value="Class I (Special High Precision)">{t.optClass1 || 'Class I (Special High Precision - Laboratory)'}</option>
+                  <option value="Class II (High Accuracy)">{t.optClass2 || 'Class II (High Accuracy - Precious Metals/Jewelry)'}</option>
+                  <option value="Class IIII (Ordinary Accuracy)">{t.optClass4 || 'Class IIII (Ordinary - Bulk Scrap/Aggregates)'}</option>
                 </select>
               </div>
             </div>
@@ -214,14 +216,14 @@ export const InstrumentNewPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Manufacturer / Make *
+                  {t.manufacturerMake || 'Manufacturer / Make *'}
                 </label>
                 <input
                   type="text"
                   name="manufacturer"
                   value={formData.manufacturer}
                   onChange={handleChange}
-                  placeholder="e.g. ABC Instruments Ltd."
+                  placeholder={t.mfrPlaceholder || 'e.g. ABC Instruments Ltd.'}
                   className={`w-full px-3 py-2 text-xs bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.manufacturer ? 'border-rose-400' : 'border-slate-200'
                   }`}
@@ -231,14 +233,14 @@ export const InstrumentNewPage = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Model Designation *
+                  {t.modelDesignation || 'Model Designation *'}
                 </label>
                 <input
                   type="text"
                   name="model"
                   value={formData.model}
                   onChange={handleChange}
-                  placeholder="e.g. WS-500 Industrial"
+                  placeholder={t.modelPlaceholder || 'e.g. WS-500 Industrial'}
                   className={`w-full px-3 py-2 text-xs bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.model ? 'border-rose-400' : 'border-slate-200'
                   }`}
@@ -251,14 +253,14 @@ export const InstrumentNewPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Serial Number (Stamped on plate) *
+                  {t.serialNumberPlate || 'Serial Number (Stamped on plate) *'}
                 </label>
                 <input
                   type="text"
                   name="serialNumber"
                   value={formData.serialNumber}
                   onChange={handleChange}
-                  placeholder="e.g. WS123456"
+                  placeholder={t.serialPlaceholder || 'e.g. WS123456'}
                   className={`w-full px-3 py-2 text-xs bg-slate-50 border font-mono rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.serialNumber ? 'border-rose-400' : 'border-slate-200'
                   }`}
@@ -268,14 +270,14 @@ export const InstrumentNewPage = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Capacity Rating *
+                  {t.capacityRating || 'Capacity Rating *'}
                 </label>
                 <input
                   type="text"
                   name="capacity"
                   value={formData.capacity}
                   onChange={handleChange}
-                  placeholder="e.g. 50 kg"
+                  placeholder={t.capacityPlaceholder || 'e.g. 50 kg'}
                   className={`w-full px-3 py-2 text-xs bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.capacity ? 'border-rose-400' : 'border-slate-200'
                   }`}
@@ -288,7 +290,7 @@ export const InstrumentNewPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Purchase Date *
+                  {t.purchaseDate || 'Purchase Date *'}
                 </label>
                 <input
                   type="date"
@@ -301,14 +303,14 @@ export const InstrumentNewPage = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Operating Site / Location *
+                  {t.operatingLocation || 'Operating Site / Location *'}
                 </label>
                 <input
                   type="text"
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
-                  placeholder="e.g. Main Billing Counter 1, New Delhi"
+                  placeholder={t.locationPlaceholder || 'e.g. Main Billing Counter 1, New Delhi'}
                   className={`w-full px-3 py-2 text-xs bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.location ? 'border-rose-400' : 'border-slate-200'
                   }`}
@@ -321,7 +323,7 @@ export const InstrumentNewPage = () => {
             <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
               <Link to="/business/instruments">
                 <Button variant="outline" size="md">
-                  Cancel
+                  {t.cancel || 'Cancel'}
                 </Button>
               </Link>
               <Button
@@ -331,7 +333,7 @@ export const InstrumentNewPage = () => {
                 isLoading={isSubmitting}
                 rightIcon={ArrowRight}
               >
-                Register Instrument & Generate ID
+                {t.regInstrumentBtn || 'Register Instrument & Generate ID'}
               </Button>
             </div>
           </form>

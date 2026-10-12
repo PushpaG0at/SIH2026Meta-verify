@@ -1,9 +1,27 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const Breadcrumbs = ({ items, className = '' }) => {
   const location = useLocation();
+  const { isHindi } = useLanguage();
+
+  const hindiLabelMap = {
+    'Inspector': 'निरीक्षक',
+    'Assignments': 'असाइनमेंट',
+    'Officer': 'अधिकारी',
+    'Business': 'व्यवसाय',
+    'Applications': 'आवेदन',
+    'Instruments': 'उपकरण',
+    'Certificates': 'प्रमाणपत्र',
+    'Settings': 'सेटिंग्स',
+    'New': 'नया',
+    'Dashboard': 'डैशबोर्ड',
+    'Review': 'समीक्षा',
+    'Inspections': 'निरीक्षण',
+    'Completed': 'पूर्ण'
+  };
 
   // Auto-generate items from pathname if not explicitly passed
   const generateBreadcrumbs = () => {
@@ -22,8 +40,12 @@ export const Breadcrumbs = ({ items, className = '' }) => {
         .replace(/[-_]/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase());
 
+      const displayLabel = isHindi && hindiLabelMap[formattedLabel]
+        ? hindiLabelMap[formattedLabel]
+        : formattedLabel;
+
       breadcrumbList.push({
-        label: formattedLabel,
+        label: displayLabel,
         path: isLast ? null : currentPath
       });
     });

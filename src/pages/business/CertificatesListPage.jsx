@@ -8,8 +8,10 @@ import LoadingState from '../../components/ui/LoadingState';
 import EmptyState from '../../components/ui/EmptyState';
 import ErrorState from '../../components/ui/ErrorState';
 import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const CertificatesListPage = () => {
+  const { t, isHindi } = useLanguage();
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,10 +56,10 @@ export const CertificatesListPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900 font-heading">
-            Verification Certificates
+            {t.verificationCertificatesTitle || 'Verification Certificates'}
           </h2>
           <p className="text-xs text-slate-500">
-            Official cryptographically signed legal metrology verification certificates
+            {t.verificationCertificatesSub || 'Official cryptographically signed legal metrology verification certificates'}
           </p>
         </div>
       </div>
@@ -66,35 +68,34 @@ export const CertificatesListPage = () => {
         <SearchBar
           value={search}
           onChange={setSearch}
-          placeholder="Search by Certificate ID, Serial, Business..."
+          placeholder={isHindi ? "प्रमाणपत्र आईडी, सीरियल, व्यवसाय द्वारा खोजें..." : "Search by Certificate ID, Serial, Business..."}
           className="flex-1"
         />
         <FilterDropdown
           value={statusFilter}
           onChange={setStatusFilter}
-          label="Status"
+          label={isHindi ? "स्थिति" : "Status"}
           options={[
-            { label: 'Valid & Active', value: 'VALID' },
-            { label: 'Expired', value: 'EXPIRED' },
-            { label: 'Revoked', value: 'REVOKED' }
+            { label: isHindi ? 'वैध एवं सक्रिय' : 'Valid & Active', value: 'VALID' },
+            { label: isHindi ? 'समाप्त' : 'Expired', value: 'EXPIRED' },
+            { label: isHindi ? 'रद्द' : 'Revoked', value: 'REVOKED' }
           ]}
         />
       </div>
 
       {loading ? (
-        <LoadingState message="Fetching issued certificates..." />
+        <LoadingState message={isHindi ? "जारी किए गए प्रमाणपत्र लोड हो रहे हैं..." : "Fetching issued certificates..."} />
       ) : error ? (
         <ErrorState
-          title="Unable to load certificates"
+          title={isHindi ? "प्रमाणपत्र लोड करने में असमर्थ" : "Unable to load certificates"}
           message={error}
           onRetry={fetchCertificates}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-
           icon={Award}
-          title="No certificates found"
-          description="No digital certificates match your query or have been issued under this criteria."
+          title={isHindi ? "कोई प्रमाणपत्र नहीं मिला" : "No certificates found"}
+          description={isHindi ? "आपकी खोज या मानदंडों से मेल खाने वाला कोई डिजिटल प्रमाणपत्र नहीं मिला है।" : "No digital certificates match your query or have been issued under this criteria."}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

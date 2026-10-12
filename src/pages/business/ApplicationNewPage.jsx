@@ -19,9 +19,11 @@ import Button from '../../components/ui/Button';
 import FileUploader from '../../components/ui/FileUploader';
 import AIAnalysisCard from '../../components/ai/AIAnalysisCard';
 import ProgressStepper from '../../components/ui/ProgressStepper';
+import { useLanguage } from '../../context/LanguageContext';
 
 export const ApplicationNewPage = () => {
   const navigate = useNavigate();
+  const { t, isHindi } = useLanguage();
   const [searchParams] = useSearchParams();
   const preSelectedInstId = searchParams.get('instrumentId');
 
@@ -113,7 +115,7 @@ export const ApplicationNewPage = () => {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Applications</span>
+          <span>{t.backToApplications || 'Back to Applications'}</span>
         </Link>
       </div>
 
@@ -127,10 +129,10 @@ export const ApplicationNewPage = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
           <div>
             <h3 className="text-lg font-bold text-slate-900 font-heading">
-              Select Instrument for Verification
+              {t.selectInstForVerif || 'Select Instrument for Verification'}
             </h3>
             <p className="text-xs text-slate-500">
-              Choose an already registered weighing or measuring instrument from your inventory
+              {t.selectInstDesc || 'Choose an already registered weighing or measuring instrument from your inventory'}
             </p>
           </div>
 
@@ -140,15 +142,15 @@ export const ApplicationNewPage = () => {
                 <Scale className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-900">No Registered Instruments Found</h4>
+                <h4 className="text-sm font-bold text-slate-900">{t.noRegInstFound || 'No Registered Instruments Found'}</h4>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  You must onboard a weighing scale or measuring instrument before filing a statutory verification application for it.
+                  {t.noRegInstDesc || 'You must onboard a weighing scale or measuring instrument before filing a statutory verification application for it.'}
                 </p>
               </div>
               <div className="pt-2">
                 <Link to="/business/instruments/new">
                   <Button variant="primary" size="sm" leftIcon={PlusCircle}>
-                    Register Your First Instrument
+                    {t.regFirstInst || 'Register Your First Instrument'}
                   </Button>
                 </Link>
               </div>
@@ -192,7 +194,7 @@ export const ApplicationNewPage = () => {
 
           <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
             <Link to="/business/instruments/new" className="text-xs font-semibold text-blue-600 hover:underline">
-              + Register New Instrument first
+              {t.regNewInstFirst || '+ Register New Instrument first'}
             </Link>
             <Button
               variant="primary"
@@ -201,7 +203,7 @@ export const ApplicationNewPage = () => {
               onClick={() => setStep(2)}
               rightIcon={ArrowRight}
             >
-              Continue to Document Upload
+              {t.continueToDocUpload || 'Continue to Document Upload'}
             </Button>
           </div>
         </div>
@@ -212,10 +214,10 @@ export const ApplicationNewPage = () => {
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
           <div>
             <h3 className="text-lg font-bold text-slate-900 font-heading">
-              Upload Verification Documents
+              {t.uploadVerifDocs || 'Upload Verification Documents'}
             </h3>
             <p className="text-xs text-slate-500">
-              Upload statutory purchase invoice, manufacturer model approval certificate, or baseline test data
+              {t.uploadVerifDocsDesc || 'Upload statutory purchase invoice, manufacturer model approval certificate, or baseline test data'}
             </p>
           </div>
 
@@ -232,15 +234,15 @@ export const ApplicationNewPage = () => {
                 onClick={() => setStep(1)}
                 className="text-xs font-semibold text-blue-600 hover:underline"
               >
-                Change
+                {t.change || 'Change'}
               </button>
             </div>
           )}
 
           {/* File Uploader */}
           <FileUploader
-            label="Upload Manufacturer Invoice / Approval Certificate"
-            sublabel="PDF or image showing device serial plate and model designation"
+            label={t.uploadInvoiceApproval || 'Upload Manufacturer Invoice / Approval Certificate'}
+            sublabel={t.uploadInvoiceSub || 'PDF or image showing device serial plate and model designation'}
             onFileSelect={(file) => {
               setUploadedFile(file);
               if (file) setUploadError('');
@@ -252,7 +254,7 @@ export const ApplicationNewPage = () => {
             <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold">Document Required</p>
+                <p className="font-bold">{t.documentRequired || 'Document Required'}</p>
                 <p className="text-rose-700 text-[11px] mt-0.5">{uploadError}</p>
               </div>
             </div>
@@ -262,9 +264,9 @@ export const ApplicationNewPage = () => {
             <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold">Mandatory Statutory Upload</p>
+                <p className="font-bold">{t.mandatoryStatutoryUpload || 'Mandatory Statutory Upload'}</p>
                 <p className="text-amber-800 text-[11px] mt-0.5">
-                  You must attach an invoice, model approval certificate, or test record before running AI Pre-check & OCR. Proceeding to Step 4 (Submission) is locked until documentation is verified.
+                  {t.mandatoryUploadDesc || 'You must attach an invoice, model approval certificate, or test record before running AI Pre-check & OCR. Proceeding to Step 4 (Submission) is locked until documentation is verified.'}
                 </p>
               </div>
             </div>
@@ -275,26 +277,26 @@ export const ApplicationNewPage = () => {
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <div>
-                  <p className="font-bold text-slate-900">Document Attached & Verified</p>
+                  <p className="font-bold text-slate-900">{t.docAttachedVerified || 'Document Attached & Verified'}</p>
                   <p className="text-emerald-700 text-[11px]">
-                    <strong>{uploadedFile.name}</strong> ({(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB) ready for optical character extraction.
+                    <strong>{uploadedFile.name}</strong> ({(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB) {isHindi ? 'ऑप्टिकल वर्ण निष्कर्षण के लिए तैयार।' : 'ready for optical character extraction.'}
                   </p>
                 </div>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full shrink-0">
-                Ready
+                {t.ready || 'Ready'}
               </span>
             </div>
           )}
 
           <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
             <Button variant="outline" size="md" onClick={() => setStep(1)} leftIcon={ArrowLeft}>
-              Back
+              {t.back || 'Back'}
             </Button>
             <div className="flex items-center gap-3">
               {!uploadedFile && (
                 <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-                  Upload document to enable AI Pre-check
+                  {t.uploadDocToEnableAi || 'Upload document to enable AI Pre-check'}
                 </span>
               )}
               <Button
@@ -307,7 +309,7 @@ export const ApplicationNewPage = () => {
                 rightIcon={ArrowRight}
                 className={!uploadedFile ? 'opacity-50 cursor-not-allowed' : 'shadow-md'}
               >
-                Run AI Pre-check & OCR
+                {t.runAiPreCheck || 'Run AI Pre-check & OCR'}
               </Button>
             </div>
           </div>
@@ -328,16 +330,16 @@ export const ApplicationNewPage = () => {
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="space-y-1 text-center sm:text-left">
               <h4 className="text-sm font-bold text-slate-900">
-                Ready to submit application for statutory inspection?
+                {isHindi ? 'क्या आप वैधानिक निरीक्षण के लिए आवेदन जमा करने हेतु तैयार हैं?' : 'Ready to submit application for statutory inspection?'}
               </h4>
               <p className="text-xs text-slate-500">
-                A verification officer and field inspector will be scheduled automatically upon submission.
+                {isHindi ? 'आवेदन जमा करने पर सत्यापन अधिकारी और फील्ड निरीक्षक स्वचालित रूप से निर्धारित किए जाएंगे।' : 'A verification officer and field inspector will be scheduled automatically upon submission.'}
               </p>
             </div>
 
             <div className="flex gap-3">
               <Button variant="outline" size="md" onClick={() => setStep(2)} leftIcon={ArrowLeft}>
-                Re-upload Docs
+                {isHindi ? 'दस्तावेज़ फिर से अपलोड करें' : 'Re-upload Docs'}
               </Button>
               <Button
                 variant="primary"
@@ -346,7 +348,7 @@ export const ApplicationNewPage = () => {
                 isLoading={isSubmitting}
                 rightIcon={CheckCircle2}
               >
-                Submit Application
+                {isHindi ? 'आवेदन जमा करें' : 'Submit Application'}
               </Button>
             </div>
           </div>

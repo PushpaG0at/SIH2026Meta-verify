@@ -15,6 +15,7 @@ import {
 import { instrumentService } from '../../services/instrumentService';
 import { applicationService } from '../../services/applicationService';
 import { aiService } from '../../services/aiService';
+import { notificationService } from '../../services/notificationService';
 import Button from '../../components/ui/Button';
 import FileUploader from '../../components/ui/FileUploader';
 import AIAnalysisCard from '../../components/ai/AIAnalysisCard';
@@ -107,6 +108,29 @@ export const ApplicationNewPage = () => {
         ]
       };
       const createdApp = await applicationService.createApplication(payload);
+
+      // Notify Statutory Officer of new application
+      notificationService.addNotification({
+        recipientRole: 'OFFICER',
+        type: payload.aiStatus === 'FLAGGED_ADVISORY' ? 'AI_DISCREPANCY' : 'STATUTORY_ALERT',
+        title: `New Verification Application (${createdApp.id})`,
+        titleHi: `नया सत्यापन आवेदन (${createdApp.id})`,
+        message: `${payload.manufacturer} ${payload.model} (${payload.capacity} kg) filed by trader. ${payload.aiStatus === 'FLAGGED_ADVISORY' ? 'AI Discrepancy Flagged — Officer review required.' : 'Awaiting officer scrutiny.'}`,
+        messageHi: `व्यापारी द्वारा ${payload.manufacturer} ${payload.model} का आवेदन जमा किया गया।`,
+        link: '/officer/applications'
+      });
+
+      // Notify Trader of successful submission
+      notificationService.addNotification({
+        recipientRole: 'BUSINESS',
+        type: 'STATUTORY_ALERT',
+        title: `Application Submitted (${createdApp.id})`,
+        titleHi: `आवेदन जमा किया गया (${createdApp.id})`,
+        message: `Your statutory verification application for ${payload.model} has been submitted for scrutiny.`,
+        messageHi: `आपके उपकरण ${payload.model} का वैधानिक सत्यापन आवेदन जांच हेतु जमा कर दिया गया है।`,
+        link: `/business/applications/${createdApp.id}`
+      });
+
       navigate(`/business/applications/${createdApp.id}`);
     } catch (err) {
       console.error(err);

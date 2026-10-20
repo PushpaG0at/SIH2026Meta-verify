@@ -68,12 +68,23 @@ process.on('unhandledRejection', (reason) => {
   console.error('[CRITICAL] Unhandled Rejection:', reason?.message || reason);
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(`⚖️  METRA-VERIFY Legal Metrology Platform API running`);
   console.log(`🌐 Port: http://localhost:${PORT}`);
   console.log(`🛡️  Digital Trust Chain: Active (SHA-256 Enabled)`);
   console.log(`====================================================`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.warn(`[METRA-VERIFY API] Port ${PORT} is already in use by an existing backend instance.`);
+    console.warn(`[METRA-VERIFY API] Using existing API service on port ${PORT}.`);
+    // Keep process alive so concurrent dev server does not terminate frontend
+    setInterval(() => {}, 1 << 30);
+  } else {
+    console.error('[METRA-VERIFY API] Server error:', err);
+  }
 });
 
 export default app;

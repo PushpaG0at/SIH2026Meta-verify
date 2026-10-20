@@ -262,63 +262,140 @@ async function analyzeMetrologyVisionWithOcr({ fileBuffer, fileName, mimeType, i
   const cleanSerial = targetSerial.toLowerCase().replace(/[^a-z0-9]/g, '');
   const normTextClean = normOcr.replace(/[^a-z0-9]/g, '');
 
-  // 1. Check serial match
+  // 1. Check for coding / academic / non-metrology content
+  const codingKeywords = ['void', 'int', 'cout', 'cin', 'deposit', 'class', '#include', 'return', 'function', 'public:', 'private:', 'namespace', 'std::', 'printf', 'scanf', 'var ', 'const ', 'main()', 'cpp'];
+  const isCodingContent = codingKeywords.filter(k => normOcr.includes(k)).length >= 2;
+
+  // 2. Check statutory metrology indicators
+  const metrologyKeywords = ['weigh', 'scale', 'model', 'approval', 'serial', 'capacity', 'kg', 'division', 'schedule', 'rule', 'invoice', 'stamp', 'verification', 'metrology', 'statutory'];
+  const hasMetrologyKeywords = metrologyKeywords.some(k => normOcr.includes(k));
+
+  // 3. Check serial match
   const serialMatched = Boolean(
-    cleanSerial && (
+    !isCodingContent && cleanSerial && (
       normOcr.includes(targetSerial.toLowerCase()) ||
       normTextClean.includes(cleanSerial) ||
       (cleanSerial.length > 5 && normTextClean.includes(cleanSerial.slice(-5)))
     )
   );
 
-  // 2. Check maker match
+  // 4. Check maker match
   const makerTokens = targetMaker
     .toLowerCase()
     .split(/\s+/)
     .filter(w => w.length > 3 && !['metrology', 'systems', 'ltd', 'pvt', 'inc', 'corp', 'solutions'].includes(w));
   const makerMatched = Boolean(
-    normOcr.includes(targetMaker.toLowerCase()) ||
-    (makerTokens.length > 0 && makerTokens.some(tok => normOcr.includes(tok)))
+    !isCodingContent && (
+      normOcr.includes(targetMaker.toLowerCase()) ||
+      (makerTokens.length > 0 && makerTokens.some(tok => normOcr.includes(tok)))
+    )
   );
 
-  // 3. Check model match
+  // 5. Check model match
   const modelTokens = targetModel
     .toLowerCase()
     .split(/\s+/)
     .filter(w => w.length > 2 && !['commercial', 'grade', 'standard', 'precision'].includes(w));
   const modelMatched = Boolean(
-    normOcr.includes(targetModel.toLowerCase()) ||
-    (modelTokens.length > 0 && modelTokens.some(tok => normOcr.includes(tok)))
+    !isCodingContent && (
+      normOcr.includes(targetModel.toLowerCase()) ||
+      (modelTokens.length > 0 && modelTokens.some(tok => normOcr.includes(tok)))
+    )
   );
 
-  // 4. Check instrument type match
+  // 6. Check instrument type match
   const typeTokens = targetInstType
     .toLowerCase()
     .split(/\s+/)
     .filter(w => w.length > 3 && !['scale', 'system', 'electronic'].includes(w));
   const typeMatched = Boolean(
-    normOcr.includes(targetInstType.toLowerCase()) ||
-    (typeTokens.length > 0 && typeTokens.some(tok => normOcr.includes(tok)))
+    !isCodingContent && (
+      normOcr.includes(targetInstType.toLowerCase()) ||
+      (typeTokens.length > 0 && typeTokens.some(tok => normOcr.includes(tok)))
+    )
   );
 
-  // 5. Try to extract specific values from document text for display
-  const serialInDocMatch = ocrExtractedText.match(/(?:Serial\s*(?:Number|No\.?|#)?\s*[:\t]+)([A-Za-z0-9\-]+)/i);
+  // 7. Extract specific values from document text for display
+  const serialInDocMatch = isCodingContent ? null : ocrExtractedText.match(/(?:Serial\s*(?:Number|No\.?|#)?\s*[:\t]+)([A-Za-z0-9\-]+)/i);
   const docSerialVal = serialMatched
     ? targetSerial
     : (serialInDocMatch ? serialInDocMatch[1].trim() : 'NOT DETECTED (Discrepancy)');
 
-  const modelInDocMatch = ocrExtractedText.match(/(?:Model\s*(?:Designation|No\.?|Number)?\s*[:\t]+)([A-Za-z0-9\-\/]+)/i);
+  const makerInDocMatch = isCodingContent ? null : ocrExtractedText.match(/(?:Manufacturer|Make|Mfr|Brand)\s*[:\t]+([A-Za-z0-9\s\.\-]{3,35})/i);
+  const docMakerVal = makerMatched
+    ? targetMaker
+    : (makerInDocMatch ? makerInDocMatch[1].trim() : 'NOT DETECTED');
+
+  const modelInDocMatch = isCodingContent ? null : ocrExtractedText.match(/(?:Model\s*(?:Designation|No\.?|Number)?\s*[:\t]+)([A-Za-z0-9\-\/]+)/i);
   const docModelVal = modelMatched
     ? targetModel
-    : (modelInDocMatch ? modelInDocMatch[1].trim() : (makerMatched ? targetModel : 'NOT DETECTED'));
+    : (modelInDocMatch ? modelInDocMatch[1].trim() : 'NOT DETECTED');
 
-  // 6. Check for coding / academic / non-metrology content
-  const codingKeywords = ['void', 'int', 'cout', 'cin', 'deposit', 'class', '#include', 'return', 'function', 'public:', 'private:', 'namespace', 'std::', 'printf', 'scanf', 'var ', 'const '];
-  const isCodingContent = codingKeywords.filter(k => normOcr.includes(k)).length >= 2;
+  const docTypeVal = (!isCodingContent && typeMatched) ? targetInstType : 'NOT DETECTED';
 
-  // 7. Check statutory metrology indicators
-  const metrologyKeywords = ['weigh', 'scale', 'model', 'approval', 'serial', 'capacity', 'kg', 'division', 'schedule', 'rule', 'invoice', 'stamp', 'verification', 'metrology', 'statutory'];
-  const hasMetrologyKeywords = metrologyKeywords.some(k => normOcr.includes(k));
+  // Capacity check - strictly require finding capacity numbers in document text
+  const capLabelMatch = isCodingContent ? null : ocrExtractedText.match(/(?:Capacity|Max(?:\s*Cap)?|Cap\.?|Rated\s*Load)\s*[:\t]*([0-9]+(?:\.[0-9]+)?\s*(?:kg|g|t|ton|quintal))/i);
+  const standaloneCapMatch = isCodingContent ? null : ocrExtractedText.match(/\b([0-9]+(?:\.[0-9]+)?)\s*(kg|ton|quintal)\b/i);
+
+  let docCapVal = 'NOT DETECTED';
+  let capMatched = false;
+
+  if (capLabelMatch) {
+    const rawFound = capLabelMatch[1].trim();
+    const extractedNum = parseFloat(rawFound);
+    docCapVal = rawFound;
+    if (!isNaN(extractedNum) && Math.abs(extractedNum - capacityNum) < 0.01) {
+      capMatched = true;
+      docCapVal = `${capacityNum} kg`;
+    }
+  } else if (standaloneCapMatch) {
+    const extractedNum = parseFloat(standaloneCapMatch[1]);
+    const unit = standaloneCapMatch[2].toLowerCase();
+    docCapVal = `${standaloneCapMatch[1]} ${unit}`;
+    if (!isNaN(extractedNum) && Math.abs(extractedNum - capacityNum) < 0.01 && unit === 'kg') {
+      capMatched = true;
+      docCapVal = `${capacityNum} kg`;
+    }
+  } else {
+    docCapVal = 'NOT DETECTED';
+    capMatched = false;
+  }
+
+  const comparison = [
+    {
+      field: 'Serial Number',
+      dbValue: targetSerial,
+      docValue: docSerialVal,
+      result: (serialMatched && !docSerialVal.includes('NOT DETECTED')) ? 'MATCH' : 'MISMATCH'
+    },
+    {
+      field: 'Manufacturer',
+      dbValue: targetMaker,
+      docValue: docMakerVal,
+      result: (makerMatched && !docMakerVal.includes('NOT DETECTED')) ? 'MATCH' : 'MISMATCH'
+    },
+    {
+      field: 'Model',
+      dbValue: targetModel,
+      docValue: docModelVal,
+      result: (modelMatched && !docModelVal.includes('NOT DETECTED')) ? 'MATCH' : 'MISMATCH'
+    },
+    {
+      field: 'Instrument Type',
+      dbValue: targetInstType,
+      docValue: docTypeVal,
+      result: (typeMatched && !docTypeVal.includes('NOT DETECTED')) ? 'MATCH' : 'MISMATCH'
+    },
+    {
+      field: 'Max Capacity',
+      dbValue: `${capacityNum} kg`,
+      docValue: docCapVal,
+      result: (capMatched && !docCapVal.includes('NOT DETECTED')) ? 'MATCH' : 'MISMATCH'
+    }
+  ];
+
+  const mismatches = comparison.filter(c => c.result === 'MISMATCH');
+  const mismatchCount = mismatches.length;
 
   let status = 'PASSED_ADVISORY';
   let riskScore = 14;
@@ -326,43 +403,16 @@ async function analyzeMetrologyVisionWithOcr({ fileBuffer, fileName, mimeType, i
   let riskLevel = 'LOW';
   const riskFactors = [];
 
-  if (isCodingContent || (!serialMatched && !makerMatched && ocrExtractedText.length > 25 && !hasMetrologyKeywords)) {
+  if (isCodingContent) {
     status = 'FLAGGED_ADVISORY';
-    riskScore = 88;
-    score = 12;
+    riskScore = 94;
+    score = 6;
     riskLevel = 'HIGH';
 
-    riskFactors.push(`CRITICAL DISCREPANCY: Declared Serial Number '${targetSerial}' was NOT detected on the uploaded document.`);
-    riskFactors.push(`CRITICAL DISCREPANCY: Registered Manufacturer '${targetMaker}' was NOT detected in document markings.`);
-
-    if (isCodingContent) {
-      riskFactors.push(`INVALID DOCUMENT CONTENT: Extracted text indicates non-statutory source code / academic notes, failing Rule 18 document scrutiny.`);
-    } else {
-      riskFactors.push(`UNRECOGNIZED DOCUMENT: Document visual structure does not correspond to legal metrology certificates or stamped serial plates.`);
-    }
-
-    riskFactors.push(`RECOMMENDATION: Statutory Legal Metrology Officer must reject or mandate physical on-site serial plate examination.`);
-  } else if (!serialMatched) {
-    status = 'REVIEW_SUGGESTED';
-    riskScore = 42;
-    score = 72;
-    riskLevel = 'MEDIUM';
-
-    if (serialInDocMatch) {
-      riskFactors.push(`SERIAL NUMBER MISMATCH: Document specifies '${docSerialVal}', whereas registered instrument is '${targetSerial}'. Officer inspection required.`);
-    } else {
-      riskFactors.push(`WARNING: Declared Serial Number '${targetSerial}' could not be definitively extracted from document text.`);
-    }
-
-    if (makerMatched) {
-      riskFactors.push(`Manufacturer '${targetMaker}' verified against national metrology registry.`);
-    }
-    if (typeMatched) {
-      riskFactors.push(`Instrument Category '${targetInstType}' matches statutory classification.`);
-    }
-    riskFactors.push(`DOCUMENT VALID: Statutory invoice & approval format detected. Scheduled for officer visual cross-check.`);
-  } else {
-    // High match
+    riskFactors.push('INVALID DOCUMENT CONTENT: Extracted text indicates non-statutory source code / academic notes, failing Rule 18 document scrutiny.');
+    riskFactors.push('CRITICAL DISCREPANCY: Required statutory verification plate markings and certificate seals are absent.');
+    riskFactors.push('RECOMMENDATION: Statutory Legal Metrology Officer must reject or mandate physical on-site serial plate examination.');
+  } else if (mismatchCount === 0) {
     status = 'PASSED_ADVISORY';
     riskScore = 14;
     score = 92;
@@ -370,7 +420,92 @@ async function analyzeMetrologyVisionWithOcr({ fileBuffer, fileName, mimeType, i
 
     riskFactors.push(`Serial Number '${targetSerial}' successfully verified against document markings.`);
     riskFactors.push(`Manufacturer '${targetMaker}' cross-referenced with national metrology registry.`);
-    riskFactors.push(`Class III verification interval ratio verified for capacity ${capacityNum}kg.`);
+    riskFactors.push(`Model '${targetModel}' conforms with Rule 18 Model Approval standards.`);
+    riskFactors.push(`Class III verification interval ratio verified for capacity ${capacityNum} kg.`);
+  } else if (mismatchCount === 1) {
+    status = 'REVIEW_SUGGESTED';
+    riskLevel = 'MEDIUM';
+
+    if (!serialMatched) {
+      riskScore = 40;
+      score = 70;
+      if (serialInDocMatch) {
+        riskFactors.push(`SERIAL NUMBER MISMATCH: Document specifies '${docSerialVal}', whereas registered instrument is '${targetSerial}'. Potential unit substitution.`);
+      } else {
+        riskFactors.push(`SERIAL NUMBER DISCREPANCY: Declared Serial Number '${targetSerial}' could not be definitively extracted from document text.`);
+      }
+      riskFactors.push(`Manufacturer '${targetMaker}' and model specifications verified against national metrology registry.`);
+      riskFactors.push(`Physical verification audit flagged for mandatory serial plate cross-check.`);
+      riskFactors.push('Recommendation: Officer visual cross-examination required prior to dispatching field inspector.');
+    } else if (!makerMatched) {
+      riskScore = 35;
+      score = 74;
+      riskFactors.push(`MANUFACTURER DISCREPANCY: Document indicates '${docMakerVal}', whereas registered manufacturer is '${targetMaker}'.`);
+      riskFactors.push(`Serial Number '${targetSerial}' verified against database records.`);
+      riskFactors.push('Recommendation: Officer verification of manufacturer license under Rule 18 required.');
+    } else if (!modelMatched) {
+      riskScore = 28;
+      score = 80;
+      riskFactors.push(`MODEL DESIGNATION DISCREPANCY: Document specifies '${docModelVal}', declared model is '${targetModel}'.`);
+      riskFactors.push(`Serial Number and Manufacturer verified against registry.`);
+      riskFactors.push('Recommendation: Check model approval certificate schedule for approved model variants.');
+    } else {
+      riskScore = 24;
+      score = 82;
+      riskFactors.push(`SPECIFICATION DISCREPANCY: Declared ${mismatches[0].field} requires officer review against document plate.`);
+      riskFactors.push(`Serial Number and Manufacturer verified against registry.`);
+      riskFactors.push('Recommendation: Officer confirmation of declared instrument specifications.');
+    }
+  } else if (mismatchCount === 2) {
+    status = 'FLAGGED_ADVISORY';
+    riskLevel = 'HIGH';
+    if (!serialMatched && !makerMatched) {
+      riskScore = 66;
+    } else if (!serialMatched) {
+      riskScore = 60;
+    } else {
+      riskScore = 55;
+    }
+    score = 100 - riskScore;
+
+    riskFactors.push(`CRITICAL DISCREPANCY: 2 statutory parameters failed verification (${mismatches.map(m => m.field).join(', ')}).`);
+    if (!serialMatched) {
+      riskFactors.push(`Serial Number '${targetSerial}' does not match document plate markings (found: '${docSerialVal}').`);
+    }
+    if (!makerMatched) {
+      riskFactors.push(`Manufacturer '${targetMaker}' not confirmed in document markings.`);
+    }
+    riskFactors.push('Substantial non-conformity flagged for officer adjudication.');
+    riskFactors.push('Recommendation: Officer adjudication required prior to dispatching field inspector.');
+  } else if (mismatchCount === 3) {
+    status = 'FLAGGED_ADVISORY';
+    riskLevel = 'HIGH';
+    riskScore = 82;
+    score = 18;
+
+    riskFactors.push(`CRITICAL DISCREPANCY: 3 statutory parameters failed verification (${mismatches.map(m => m.field).join(', ')}).`);
+    riskFactors.push('Major inconsistency between registered record and uploaded document.');
+    riskFactors.push('High probability of incorrect document attachment or unapproved device.');
+    riskFactors.push('Recommendation: Mandatory physical verification and serial plate audit by field inspector.');
+  } else if (mismatchCount === 4) {
+    status = 'FLAGGED_ADVISORY';
+    riskLevel = 'HIGH';
+    riskScore = 90;
+    score = 10;
+
+    riskFactors.push(`CRITICAL DISCREPANCY: 4 statutory parameters failed verification (${mismatches.map(m => m.field).join(', ')}).`);
+    riskFactors.push('Document does not correspond to declared weighing/measuring instrument.');
+    riskFactors.push('Recommendation: Reject application or mandate complete re-upload of statutory documentation.');
+  } else {
+    // 5 mismatches
+    status = 'FLAGGED_ADVISORY';
+    riskLevel = 'HIGH';
+    riskScore = 96;
+    score = 4;
+
+    riskFactors.push('CRITICAL: All statutory parameters failed verification (unrecognized document).');
+    riskFactors.push('No matching serial number, manufacturer, model, or capacity detected in document markings.');
+    riskFactors.push('Recommendation: Reject application as non-compliant under Legal Metrology Act, 2009.');
   }
 
   const cleanSnippet = ocrExtractedText.length > 0
@@ -387,41 +522,57 @@ async function analyzeMetrologyVisionWithOcr({ fileBuffer, fileName, mimeType, i
       : (isPdf ? 'Statutory Invoice & Approval Certificate (PDF)' : 'Statutory Invoice / Serial Plate (Image)'),
     rawOcrSnippet: cleanSnippet,
     riskFactors,
-    comparison: [
-      {
-        field: 'Serial Number',
-        dbValue: targetSerial,
-        docValue: docSerialVal,
-        result: serialMatched ? 'MATCH' : 'MISMATCH'
-      },
-      {
-        field: 'Manufacturer',
-        dbValue: targetMaker,
-        docValue: makerMatched ? targetMaker : 'NOT DETECTED',
-        result: makerMatched ? 'MATCH' : 'MISMATCH'
-      },
-      {
-        field: 'Model',
-        dbValue: targetModel,
-        docValue: docModelVal,
-        result: modelMatched ? 'MATCH' : (modelInDocMatch ? 'MISMATCH' : 'MATCH')
-      },
-      {
-        field: 'Instrument Type',
-        dbValue: targetInstType,
-        docValue: isCodingContent ? 'NOT DETECTED' : targetInstType,
-        result: (isCodingContent ? 'MISMATCH' : 'MATCH')
-      },
-      {
-        field: 'Max Capacity',
-        dbValue: `${capacityNum} kg`,
-        docValue: `${capacityNum} kg`,
-        result: 'MATCH'
-      }
-    ],
+    comparison,
     disclaimer: 'AI provides decision support under the Legal Metrology Act, 2009. Final statutory approval is conducted by authorized Legal Metrology Officers.',
     aiModelUsed: isPdf ? 'Legal Metrology PDF Stream Inspector' : 'Deep-Vision OCR (Tesseract.js Engine)'
   };
+}
+
+/**
+ * Calibrate AI Vision API result so riskScore scales proportionally to mismatch count
+ */
+function calibrateAiVisionResult(analysis) {
+  if (!analysis) return analysis;
+  if (!Array.isArray(analysis.comparison) || analysis.comparison.length === 0) return analysis;
+
+  const mismatches = analysis.comparison.filter(c => c.result === 'MISMATCH' || c.status === 'MISMATCH');
+  const count = mismatches.length;
+
+  if (count === 0) {
+    analysis.riskScore = Math.min(analysis.riskScore || 14, 15);
+    analysis.riskLevel = 'LOW';
+    analysis.score = Math.max(analysis.score || 92, 90);
+    analysis.status = 'PASSED_ADVISORY';
+  } else if (count === 1) {
+    const isSerial = mismatches.some(m => /serial/i.test(m.field || ''));
+    analysis.riskScore = isSerial ? 40 : 32;
+    analysis.riskLevel = 'MEDIUM';
+    analysis.score = 100 - analysis.riskScore;
+    analysis.status = 'REVIEW_SUGGESTED';
+  } else if (count === 2) {
+    const isSerial = mismatches.some(m => /serial/i.test(m.field || ''));
+    const isMaker = mismatches.some(m => /maker|manufacturer/i.test(m.field || ''));
+    analysis.riskScore = (isSerial && isMaker) ? 66 : 60;
+    analysis.riskLevel = 'HIGH';
+    analysis.score = 100 - analysis.riskScore;
+    analysis.status = 'FLAGGED_ADVISORY';
+  } else if (count === 3) {
+    analysis.riskScore = 82;
+    analysis.riskLevel = 'HIGH';
+    analysis.score = 18;
+    analysis.status = 'FLAGGED_ADVISORY';
+  } else if (count === 4) {
+    analysis.riskScore = 90;
+    analysis.riskLevel = 'HIGH';
+    analysis.score = 10;
+    analysis.status = 'FLAGGED_ADVISORY';
+  } else if (count >= 5) {
+    analysis.riskScore = 96;
+    analysis.riskLevel = 'HIGH';
+    analysis.score = 4;
+    analysis.status = 'FLAGGED_ADVISORY';
+  }
+  return analysis;
 }
 
 /**
@@ -452,7 +603,7 @@ export async function analyzeUploadedDocumentWithAi({ fileBuffer, fileName, mime
           instrument
         });
         if (geminiResult && geminiResult.status) {
-          return geminiResult;
+          return calibrateAiVisionResult(geminiResult);
         }
       } catch (geminiErr) {
         console.warn('[AI Engine] Gemini Vision call encountered error, falling back to built-in metrology vision analyzer:', geminiErr.message);
@@ -470,7 +621,7 @@ export async function analyzeUploadedDocumentWithAi({ fileBuffer, fileName, mime
           instrument
         });
         if (openaiResult && openaiResult.status) {
-          return openaiResult;
+          return calibrateAiVisionResult(openaiResult);
         }
       } catch (openaiErr) {
         console.warn('[AI Engine] OpenAI Vision call encountered error:', openaiErr.message);

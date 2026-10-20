@@ -23,6 +23,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { applicationService } from '../../services/applicationService';
+import { notificationService } from '../../services/notificationService';
 import StatusBadge from '../../components/ui/StatusBadge';
 import RiskBadge from '../../components/ui/RiskBadge';
 import Button from '../../components/ui/Button';
@@ -90,6 +91,18 @@ export const OfficerApplicationReviewPage = () => {
     try {
       const generatedCertId = `MV-2026-${(application.id || '').replace('MV-APP-', '')}`;
       await applicationService.updateStatus(application.id, 'APPROVED', approvalRemarks);
+
+      // Notify Business user that certificate has been issued and approved
+      notificationService.addNotification({
+        recipientRole: 'BUSINESS',
+        type: 'CERT_ISSUED',
+        title: `Verification Certificate Active (${generatedCertId})`,
+        titleHi: `सत्यापन प्रमाणपत्र सक्रिय (${generatedCertId})`,
+        message: `Application ${application.id} has been formally approved by Authorized Legal Metrology Officer. Certificate ${generatedCertId} is active.`,
+        messageHi: `आवेदन ${application.id} विधिक मापविज्ञान अधिकारी द्वारा स्वीकृत कर दिया गया है। प्रमाणपत्र ${generatedCertId} सक्रिय है।`,
+        link: `/business/certificates/${generatedCertId}`
+      });
+
       showToast(
         `Application ${application.id} approved! Opening Form VI Certificate ${generatedCertId}...`,
         'success'
@@ -112,6 +125,18 @@ export const OfficerApplicationReviewPage = () => {
         'REJECTED',
         `${rejectionReason}: ${rejectionRemarks}`
       );
+
+      // Notify Business user of statutory rejection
+      notificationService.addNotification({
+        recipientRole: 'BUSINESS',
+        type: 'AI_DISCREPANCY',
+        title: `Statutory Order Issued (${application.id})`,
+        titleHi: `वैधानिक आदेश जारी (${application.id})`,
+        message: `Application ${application.id} rejected under Legal Metrology Act: ${rejectionReason}.`,
+        messageHi: `आवेदन ${application.id} विधिक मापविज्ञान अधिनियम के तहत अस्वीकृत: ${rejectionReason}।`,
+        link: `/business/applications/${application.id}`
+      });
+
       showToast(`Application ${application.id} rejected. Formal statutory order dispatched.`, 'error');
       setRejectModalOpen(false);
       navigate('/officer/dashboard');
@@ -127,6 +152,18 @@ export const OfficerApplicationReviewPage = () => {
     setIsProcessing(true);
     try {
       await applicationService.updateStatus(application.id, 'CORRECTION_REQUESTED', correctionNotes);
+
+      // Notify Business user of deficiency notice
+      notificationService.addNotification({
+        recipientRole: 'BUSINESS',
+        type: 'STATUTORY_ALERT',
+        title: `Deficiency Notice (${application.id})`,
+        titleHi: `त्रुटि सुधार सूचना (${application.id})`,
+        message: `Officer requested documentation correction: ${correctionNotes}.`,
+        messageHi: `सत्यापन अधिकारी ने दस्तावेज़ सुधार का अनुरोध किया: ${correctionNotes}।`,
+        link: `/business/applications/${application.id}`
+      });
+
       showToast(`Deficiency notice dispatched to trader for ${application.id}.`, 'info');
       setCorrectionModalOpen(false);
       navigate('/officer/dashboard');

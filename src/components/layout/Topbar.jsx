@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu,
   Bell,
@@ -11,15 +11,21 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
-  ExternalLink
+  ExternalLink,
+  ShieldAlert,
+  FileCheck2,
+  Award,
+  ClipboardCheck
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useLanguage } from '../../context/LanguageContext';
+import { notificationService } from '../../services/notificationService';
 import LanguageSelector from '../common/LanguageSelector';
 import EmblemIndia from '../common/EmblemIndia';
 
 export const Topbar = ({ onOpenSidebar }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { role, user, logout } = useAuth();
   const { t, isHindi } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -27,78 +33,64 @@ export const Topbar = ({ onOpenSidebar }) => {
   const menuRef = useRef(null);
   const notifRef = useRef(null);
 
-  const [notifications, setNotifications] = useState([
-    {
-      id: 'notif-1',
-      type: 'AI_DISCREPANCY',
-      title: 'AI Pre-check Discrepancy Flagged',
-      titleHi: 'एआई प्री-चेक विसंगति चिह्नित',
-      message: 'Statutory scrutiny detected non-conforming or mismatched document data for instrument MT-108484.',
-      messageHi: 'उपकरण MT-108484 के लिए वैधानिक जांच में गैर-अनुरूप या बेमेल दस्तावेज़ डेटा पाया गया।',
-      time: 'Just now',
-      timeHi: 'अभी-अभी',
-      unread: true,
-      link: '/business/applications'
-    },
-    {
-      id: 'notif-2',
-      type: 'INSPECTION_ASSIGNED',
-      title: 'Field Verification Scheduled',
-      titleHi: 'फ़ील्ड सत्यापन निर्धारित',
-      message: 'Legal Metrology Inspector Vikram Sharma has been scheduled for standard weight test audit.',
-      messageHi: 'विधिक मापविज्ञान निरीक्षक विक्रम शर्मा को मानक वजन परीक्षण के लिए नियुक्त किया गया है।',
-      time: '45m ago',
-      timeHi: '45 मिनट पहले',
-      unread: true,
-      link: '/business/applications'
-    },
-    {
-      id: 'notif-3',
-      type: 'CERT_ISSUED',
-      title: 'Digital Certificate Active',
-      titleHi: 'डिजिटल प्रमाणपत्र सक्रिय',
-      message: 'Verification Certificate #METRA-CERT-2026-595654 published with SHA-256 seal.',
-      messageHi: 'सत्यापन प्रमाणपत्र #METRA-CERT-2026-595654 SHA-256 सील के साथ प्रकाशित किया गया।',
-      time: '3h ago',
-      timeHi: '3 घंटे पहले',
-      unread: false,
-      link: '/business/certificates'
-    },
-    {
-      id: 'notif-4',
-      type: 'STATUTORY_ALERT',
-      title: 'Periodic Verification Cycle Open',
-      titleHi: 'आवधिक सत्यापन चक्र प्रारंभ',
-      message: 'Quarterly compliance window open under Legal Metrology Act, 2009 for commercial weighing instruments.',
-      messageHi: 'वाणिज्यिक माप उपकरणों के लिए विधिक मापविज्ञान अधिनियम, 2009 के तहत तिमाही अनुपालन विंडो खुली है।',
-      time: 'Yesterday',
-      timeHi: 'कल',
-      unread: false,
-      link: '/business/instruments'
-    }
-  ]);
+  // Strict role resolution prioritizing the current active portal route
+  const effectiveRole = (() => {
+    if (location.pathname.startsWith('/officer')) return 'OFFICER';
+    if (location.pathname.startsWith('/inspector')) return 'INSPECTOR';
+    if (location.pathname.startsWith('/business')) return 'BUSINESS';
+    const raw = (user?.role || role || 'BUSINESS').toUpperCase();
+    if (raw === 'ADMIN' || raw.includes('OFFICER')) return 'OFFICER';
+    if (raw.includes('INSPECT')) return 'INSPECTOR';
+    return 'BUSINESS';
+  })();
+
+  const [notifications, setNotifications] = useState(() =>
+    notificationService.getNotifications(effectiveRole, user)
+  );
+
+  // Synchronize notifications strictly with the current authenticated role
+  useEffect(() => {
+    const loadNotifs = () => {
+      setNotifications(notificationService.getNotifications(effectiveRole, user));
+    };
+
+    loadNotifs();
+
+    const handleUpdate = (e) => {
+      if (!e.detail?.role || e.detail.role === effectiveRole) {
+        loadNotifs();
+      }
+    };
+
+    window.addEventListener('metra:notification:update', handleUpdate);
+    window.addEventListener('storage', loadNotifs);
+    return () => {
+      window.removeEventListener('metra:notification:update', handleUpdate);
+      window.removeEventListener('storage', loadNotifs);
+    };
+  }, [effectiveRole, user]);
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
   const handleMarkAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+    const updated = notificationService.markAllAsRead(effectiveRole, user);
+    setNotifications(updated);
   };
 
   const handleClearAll = () => {
-    setNotifications([]);
+    const updated = notificationService.clearAll(effectiveRole, user);
+    setNotifications(updated);
   };
 
   const handleNotifClick = (notif) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === notif.id ? { ...n, unread: false } : n))
-    );
+    const updated = notificationService.markAsRead(effectiveRole, user, notif.id);
+    setNotifications(updated);
     setNotifOpen(false);
     if (notif.link) {
       navigate(notif.link);
     }
   };
 
-  const effectiveRole = (user?.role || role || 'BUSINESS').toUpperCase();
   const fallbackName = effectiveRole === 'INSPECTOR'
     ? 'Insp. Vikram Sharma'
     : effectiveRole === 'OFFICER'
@@ -154,16 +146,31 @@ export const Topbar = ({ onOpenSidebar }) => {
             <AlertTriangle className="w-4 h-4" />
           </div>
         );
+      case 'INSPECTION_SUBMITTED':
+        return (
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center shrink-0">
+            <FileCheck2 className="w-4 h-4" />
+          </div>
+        );
       case 'INSPECTION_ASSIGNED':
+      case 'SCHEDULE_ALERT':
         return (
           <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
             <Clock className="w-4 h-4" />
           </div>
         );
       case 'CERT_ISSUED':
+      case 'CERT_PENDING':
         return (
           <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-4 h-4" />
+            <Award className="w-4 h-4" />
+          </div>
+        );
+      case 'STATUTORY_ALERT':
+      case 'CALIBRATION_DUE':
+        return (
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
+            <ShieldAlert className="w-4 h-4" />
           </div>
         );
       default:
@@ -338,11 +345,11 @@ export const Topbar = ({ onOpenSidebar }) => {
                     type="button"
                     onClick={() => {
                       setNotifOpen(false);
-                      navigate('/business/applications');
+                      navigate(notificationService.getViewAllRoute(effectiveRole));
                     }}
                     className="text-[11px] text-blue-400 hover:underline cursor-pointer font-medium"
                   >
-                    {isHindi ? 'सभी आवेदन देखें →' : 'View Applications →'}
+                    {notificationService.getViewAllLabel(effectiveRole, isHindi)}
                   </button>
                 </div>
               )}

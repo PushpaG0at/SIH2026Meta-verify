@@ -48,45 +48,184 @@ export const AIAnalysisCard = ({
   const { isHindi } = useLanguage();
 
   // Support interactive simulation mode for live SIH hackathon evaluation
-  const isInitiallyHigh = initialRiskLevel === 'HIGH' || initialRiskScore >= 70 || (Array.isArray(initialOcrComparison) && initialOcrComparison.some(c => c.result === 'MISMATCH'));
-  const [simulationMode, setSimulationMode] = useState(isInitiallyHigh ? 'mismatch' : 'normal'); // 'normal' | 'mismatch'
+  const hasInitialMismatch = Array.isArray(initialOcrComparison) && initialOcrComparison.some(c => c.result === 'MISMATCH' || c.status === 'MISMATCH');
+  const [simulationMode, setSimulationMode] = useState(
+    hasInitialMismatch || initialRiskLevel === 'HIGH' || initialRiskScore >= 55 ? 'mismatch' : 'normal'
+  );
 
-  // Normal vs Mismatch scenarios
-  const isSimulatedMismatch = simulationMode === 'mismatch';
-  const isHighRisk = isSimulatedMismatch || initialRiskLevel === 'HIGH' || initialRiskScore >= 70;
+  // Derive the active comparison items based on simulation mode
+  const ocrComparison = React.useMemo(() => {
+    if (simulationMode === 'normal') {
+      if (Array.isArray(initialOcrComparison) && initialOcrComparison.length > 0) {
+        return initialOcrComparison.map(item => ({
+          ...item,
+          docValue: item.dbValue || item.docValue,
+          result: 'MATCH'
+        }));
+      }
+      return [
+        { field: 'Serial Number', dbValue: 'MT-108484', docValue: 'MT-108484', result: 'MATCH' },
+        { field: 'Manufacturer', dbValue: 'Mettler Toledo Metrology', docValue: 'Mettler Toledo Metrology', result: 'MATCH' },
+        { field: 'Model', dbValue: 'ICS-429', docValue: 'ICS-429', result: 'MATCH' },
+        { field: 'Instrument Type', dbValue: 'Electronic Bench Scale', docValue: 'Electronic Bench Scale', result: 'MATCH' },
+        { field: 'Max Capacity', dbValue: '60 kg', docValue: '60 kg', result: 'MATCH' }
+      ];
+    }
 
-  const riskScore = isSimulatedMismatch
-    ? (initialRiskScore >= 50 ? initialRiskScore : 88)
-    : (initialRiskScore < 50 ? initialRiskScore : 18);
+    // mismatch mode
+    if (Array.isArray(initialOcrComparison) && initialOcrComparison.length > 0 && initialOcrComparison.some(c => c.result === 'MISMATCH')) {
+      return initialOcrComparison;
+    }
 
-  const riskLevel = isHighRisk ? 'HIGH' : 'LOW';
+    // Default simulated mismatch scenario (1 error: Serial Number discrepancy)
+    return [
+      { field: 'Serial Number', dbValue: 'MT-108484', docValue: 'MT-994821 (Mismatch)', result: 'MISMATCH' },
+      { field: 'Manufacturer', dbValue: 'Mettler Toledo Metrology', docValue: 'Mettler Toledo Metrology', result: 'MATCH' },
+      { field: 'Model', dbValue: 'ICS-429', docValue: 'ICS-429', result: 'MATCH' },
+      { field: 'Instrument Type', dbValue: 'Electronic Bench Scale', docValue: 'Electronic Bench Scale', result: 'MATCH' },
+      { field: 'Max Capacity', dbValue: '60 kg', docValue: '60 kg', result: 'MATCH' }
+    ];
+  }, [simulationMode, initialOcrComparison]);
 
-  const riskFactors = isSimulatedMismatch
-    ? (Array.isArray(initialRiskFactors) && initialRiskFactors.length > 0 && initialRiskLevel === 'HIGH'
-        ? initialRiskFactors
-        : [
-            'CRITICAL: Serial number discrepancy between document plate and registered database record',
-            'Manufacturer model series approved, but stamped plate indicates potential unit substitution',
-            'Physical verification audit flagged for mandatory on-site serial plate examination',
-            'Recommendation: Officer adjudication required prior to dispatching field inspector'
-          ])
-    : initialRiskFactors;
+  const mismatches = ocrComparison.filter(item => item.result === 'MISMATCH' || item.status === 'MISMATCH');
+  const mismatchCount = mismatches.length;
 
-  const ocrComparison = isSimulatedMismatch
-    ? (Array.isArray(initialOcrComparison) && initialOcrComparison.length > 0 && initialOcrComparison.some(c => c.result === 'MISMATCH')
-        ? initialOcrComparison
-        : [
-            { field: 'Serial Number', dbValue: 'MT-108484', docValue: 'NOT DETECTED (Mismatch)', result: 'MISMATCH' },
-            { field: 'Manufacturer', dbValue: 'Mettler Toledo Metrology', docValue: 'NOT DETECTED', result: 'MISMATCH' },
-            { field: 'Model', dbValue: 'ICS-429', docValue: 'NOT DETECTED', result: 'MISMATCH' },
-            { field: 'Instrument Type', dbValue: 'Electronic Bench Scale', docValue: 'NOT DETECTED', result: 'MISMATCH' },
-            { field: 'Max Capacity', dbValue: '60 kg', docValue: 'NOT DETECTED', result: 'MISMATCH' }
-          ])
-    : initialOcrComparison;
+  // Dynamically calculate risk score and level based on actual mismatch count & field severity
+  const { riskScore, riskLevel } = React.useMemo(() => {
+    if (simulationMode === 'normal' || mismatchCount === 0) {
+      return {
+        riskScore: (typeof initialRiskScore === 'number' && initialRiskScore <= 20) ? initialRiskScore : 14,
+        riskLevel: 'LOW'
+      };
+    }
 
-  const rawOcrSnippet = isSimulatedMismatch
-    ? (initialRawOcrSnippet || 'INVOICE_ID: INV-2026-9041 | MAKE: UNKNOWN | SERIAL_NO: NOT_FOUND | STATUS: DISCREPANCY_FLAGGED')
-    : (initialRawOcrSnippet || 'INVOICE_ID: INV-2026-4402 | MAKE: METTLER TOLEDO | SERIAL_NO: MT-108484 | CAPACITY: 60kg | CLASS: III');
+    const hasSerial = mismatches.some(m => /serial/i.test(m.field || ''));
+    const hasMaker = mismatches.some(m => /maker|manufacturer|brand/i.test(m.field || ''));
+    const hasModel = mismatches.some(m => /model/i.test(m.field || ''));
+    const hasType = mismatches.some(m => /type|category/i.test(m.field || ''));
+    const hasCapacity = mismatches.some(m => /capacity/i.test(m.field || ''));
+
+    if (mismatchCount === 1) {
+      let score = 40;
+      if (hasSerial) score = 40;
+      else if (hasMaker) score = 35;
+      else if (hasModel) score = 28;
+      else if (hasType) score = 24;
+      else if (hasCapacity) score = 22;
+
+      // If backend passed a realistic medium risk score (20-48), use it
+      if (typeof initialRiskScore === 'number' && initialRiskScore >= 20 && initialRiskScore <= 48) {
+        score = initialRiskScore;
+      }
+      return { riskScore: score, riskLevel: 'MEDIUM' };
+    }
+
+    if (mismatchCount === 2) {
+      let score = 66;
+      if (hasSerial && hasMaker) score = 66;
+      else if (hasSerial && hasModel) score = 60;
+      else if (hasMaker && hasModel) score = 56;
+      else if (hasSerial) score = 58;
+      else score = 52;
+
+      if (typeof initialRiskScore === 'number' && initialRiskScore >= 50 && initialRiskScore <= 75) {
+        score = initialRiskScore;
+      }
+      return { riskScore: score, riskLevel: 'HIGH' };
+    }
+
+    if (mismatchCount === 3) {
+      let score = 82;
+      if (typeof initialRiskScore === 'number' && initialRiskScore >= 75 && initialRiskScore <= 88) {
+        score = initialRiskScore;
+      }
+      return { riskScore: score, riskLevel: 'HIGH' };
+    }
+
+    if (mismatchCount === 4) {
+      return { riskScore: 90, riskLevel: 'HIGH' };
+    }
+
+    return { riskScore: 96, riskLevel: 'HIGH' };
+  }, [simulationMode, mismatchCount, mismatches, initialRiskScore]);
+
+  const isHighRisk = riskLevel === 'HIGH';
+  const isMediumRisk = riskLevel === 'MEDIUM';
+
+  const riskFactors = React.useMemo(() => {
+    if (simulationMode === 'normal' || mismatchCount === 0) {
+      if (Array.isArray(initialRiskFactors) && initialRiskFactors.length > 0 && initialRiskLevel === 'LOW') {
+        return initialRiskFactors;
+      }
+      return [
+        'Serial number conforms with standard manufacturer series and format',
+        'Model approval record verified in national legal metrology repository',
+        'Capacity ratings and class tolerances adhere strictly to retail schedule',
+        'Zero historical recalibration drift violations recorded for this make'
+      ];
+    }
+
+    // If backend provided custom risk factors for mismatch, use them
+    if (Array.isArray(initialRiskFactors) && initialRiskFactors.length > 0 && initialRiskLevel !== 'LOW') {
+      return initialRiskFactors;
+    }
+
+    if (mismatchCount === 1) {
+      const serialItem = mismatches.find(m => /serial/i.test(m.field));
+      if (serialItem) {
+        return [
+          `CRITICAL: Serial number discrepancy between document plate (${serialItem.docValue}) and registered record (${serialItem.dbValue})`,
+          'Manufacturer model series approved, but stamped plate indicates potential unit substitution or OCR transcription artifact',
+          'Physical verification audit flagged for mandatory on-site serial plate examination',
+          'Recommendation: Officer adjudication required prior to dispatching field inspector'
+        ];
+      }
+      const makerItem = mismatches.find(m => /maker|manufacturer|brand/i.test(m.field));
+      if (makerItem) {
+        return [
+          `CRITICAL: Manufacturer discrepancy between document plate (${makerItem.docValue}) and registered record (${makerItem.dbValue})`,
+          'Manufacturer brand does not correspond to registered Rule 18 model approval license',
+          'Advisory Level: Medium Risk (35/100) - Verification officer scrutiny recommended',
+          'Recommendation: Officer verification of manufacturer license under Rule 18 required'
+        ];
+      }
+      const modelItem = mismatches.find(m => /model/i.test(m.field));
+      if (modelItem) {
+        return [
+          `WARNING: Model designation discrepancy detected in document text (${modelItem.docValue} vs ${modelItem.dbValue})`,
+          'Serial number verified, but model variant requires manual inspection',
+          'Advisory Level: Medium Risk (28/100) - Check model approval certificate annexure',
+          'Recommendation: Officer verification of approved model variant'
+        ];
+      }
+      return [
+        `WARNING: Statutory parameter discrepancy detected (${mismatches[0].field})`,
+        'Declared parameters do not fully conform to document markings',
+        'Advisory Level: Medium Risk - Inspection scheduled for officer visual cross-check',
+        'Recommendation: Officer confirmation required prior to dispatching inspector'
+      ];
+    }
+
+    if (mismatchCount === 2) {
+      return [
+        `CRITICAL: Multiple statutory discrepancies detected (2 fields failed verification: ${mismatches.map(m => m.field).join(', ')})`,
+        'Serial plate markings and manufacturer credentials failed cross-database verification',
+        'High risk of unverified or substituted instrument unit',
+        'Recommendation: Officer adjudication required; mandate physical on-site serial plate examination'
+      ];
+    }
+
+    return [
+      `CRITICAL: Severe discrepancy flagged (${mismatchCount} out of ${ocrComparison.length} parameters failed verification)`,
+      `Mismatched parameters: ${mismatches.map(m => m.field).join(', ')}`,
+      'Document markings do not correspond to registered legal metrology specifications',
+      'Recommendation: Mandate physical on-site audit or rejection of unverified documentation'
+    ];
+  }, [simulationMode, mismatchCount, mismatches, ocrComparison.length, initialRiskFactors, initialRiskLevel]);
+
+  const rawOcrSnippet = simulationMode === 'normal'
+    ? (initialRawOcrSnippet || 'INVOICE_ID: INV-2026-4402 | MAKE: METTLER TOLEDO | SERIAL_NO: MT-108484 | CAPACITY: 60kg | CLASS: III')
+    : (initialRawOcrSnippet || 'INVOICE_ID: INV-2026-9041 | MAKE: UNKNOWN | SERIAL_NO: NOT_FOUND | STATUS: DISCREPANCY_FLAGGED');
 
   const translateField = (field) => {
     if (!isHindi) return field;
@@ -146,8 +285,17 @@ export const AIAnalysisCard = ({
     if (factor.includes('Zero historical recalibration drift violations recorded for this make')) {
       return 'इस मेक के लिए कोई ऐतिहासिक पुनःअंशांकन विचलन उल्लंघन दर्ज नहीं';
     }
-    if (factor.includes('CRITICAL: Serial number discrepancy between invoice plate')) {
-      return 'गंभीर: इनवॉइस प्लेट (WS999888) और पंजीकृत डेटाबेस रिकॉर्ड (WS123456) के बीच सीरियल नंबर विसंगति पाई गई';
+    if (factor.includes('Serial number discrepancy between document plate')) {
+      return 'गंभीर: दस्तावेज़ प्लेट और पंजीकृत रिकॉर्ड के बीच सीरियल नंबर विसंगति पाई गई';
+    }
+    if (factor.includes('CRITICAL: Serial number discrepancy')) {
+      return 'गंभीर: सीरियल नंबर विसंगति पाई गई';
+    }
+    if (factor.includes('Manufacturer discrepancy between document plate')) {
+      return 'गंभीर: दस्तावेज़ प्लेट और पंजीकृत रिकॉर्ड के बीच निर्माता विसंगति पाई गई';
+    }
+    if (factor.includes('Multiple statutory discrepancies detected')) {
+      return 'गंभीर: कई वैधानिक विसंगतियां पाई गईं (सत्यापन विफल)';
     }
     if (factor.includes('Manufacturer model series approved, but stamped plate indicates potential unit substitution')) {
       return 'निर्माता मॉडल श्रृंखला स्वीकृत है, लेकिन स्टैम्प्ड प्लेट संभावित इकाई प्रतिस्थापन को दर्शाती है';
@@ -163,12 +311,16 @@ export const AIAnalysisCard = ({
 
   const displayRiskLevel = isHindi
     ? (riskLevel === 'LOW' ? 'कम जोखिम' : riskLevel === 'HIGH' ? 'उच्च जोखिम' : 'मध्यम जोखिम')
-    : riskLevel;
+    : (riskLevel === 'LOW' ? 'Low Risk' : riskLevel === 'HIGH' ? 'High Risk' : 'Medium Risk');
 
   return (
     <div
       className={`bg-white rounded-2xl border ${
-        isHighRisk ? 'border-rose-300 ring-2 ring-rose-100' : 'border-blue-200/90'
+        isHighRisk
+          ? 'border-rose-300 ring-2 ring-rose-100'
+          : isMediumRisk
+          ? 'border-amber-300 ring-2 ring-amber-100'
+          : 'border-blue-200/90'
       } shadow-md overflow-hidden transition-all ${className}`}
     >
       {/* Top Banner Header */}
@@ -176,6 +328,8 @@ export const AIAnalysisCard = ({
         className={`px-5 py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
           isHighRisk
             ? 'bg-gradient-to-r from-rose-950 via-slate-900 to-rose-900'
+            : isMediumRisk
+            ? 'bg-gradient-to-r from-amber-950 via-slate-900 to-amber-900'
             : 'bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-900'
         }`}
       >
@@ -184,6 +338,8 @@ export const AIAnalysisCard = ({
             className={`p-2 rounded-xl border ${
               isHighRisk
                 ? 'bg-rose-500/20 border-rose-400/30 text-rose-300'
+                : isMediumRisk
+                ? 'bg-amber-500/20 border-amber-400/30 text-amber-300'
                 : 'bg-blue-500/20 border-blue-400/30 text-blue-300'
             }`}
           >
@@ -194,8 +350,18 @@ export const AIAnalysisCard = ({
               <h4 className="text-base font-bold tracking-tight text-white font-heading">
                 {isHindi ? 'एआई प्री-चेक एवं ओसीआर जांच इंजन' : 'AI Pre-check & OCR Scrutiny Engine'}
               </h4>
-              <span className={`px-2 py-0.5 rounded-full ${isHighRisk ? 'bg-rose-400/20 text-rose-300 border-rose-400/30' : 'bg-amber-400/20 text-amber-300 border-amber-400/30'} font-mono text-[10px] font-bold`}>
-                {isHighRisk ? (isHindi ? 'विसंगति ध्वजांकित' : 'DISCREPANCY FLAGGED') : (isHindi ? 'सिंथेटिक परामर्श' : 'SYNTHETIC ADVISORY')}
+              <span className={`px-2 py-0.5 rounded-full ${
+                isHighRisk
+                  ? 'bg-rose-400/20 text-rose-300 border-rose-400/30'
+                  : isMediumRisk
+                  ? 'bg-amber-400/20 text-amber-300 border-amber-400/30'
+                  : 'bg-emerald-400/20 text-emerald-300 border-emerald-400/30'
+              } font-mono text-[10px] font-bold`}>
+                {isHighRisk
+                  ? (isHindi ? 'विसंगति ध्वजांकित' : 'DISCREPANCY FLAGGED')
+                  : isMediumRisk
+                  ? (isHindi ? 'समीक्षा आवश्यक' : 'REVIEW SUGGESTED')
+                  : (isHindi ? 'सिंथेटिक परामर्श' : 'SYNTHETIC ADVISORY')}
               </span>
             </div>
             <p className="text-xs text-slate-300">
@@ -214,7 +380,7 @@ export const AIAnalysisCard = ({
             </span>
             <span
               className={`font-mono text-base font-extrabold ${
-                isHighRisk ? 'text-rose-300' : 'text-emerald-300'
+                isHighRisk ? 'text-rose-300' : isMediumRisk ? 'text-amber-300' : 'text-emerald-300'
               }`}
             >
               {riskScore}/100
@@ -255,11 +421,17 @@ export const AIAnalysisCard = ({
               onClick={() => setSimulationMode('mismatch')}
               className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
                 simulationMode === 'mismatch'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-rose-700'
+                  ? isMediumRisk
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-rose-600 text-white shadow-xs'
+                  : isMediumRisk
+                    ? 'text-slate-600 hover:text-amber-700'
+                    : 'text-slate-600 hover:text-rose-700'
               }`}
             >
-              {isHindi ? 'विसंगति / बेमेल (उच्च - 88/100)' : 'Discrepancy / Mismatch (HIGH - 88/100)'}
+              {isHindi
+                ? `विसंगति / बेमेल (${displayRiskLevel} - ${riskScore}/100)`
+                : `Discrepancy / Mismatch (${riskLevel} - ${riskScore}/100)`}
             </button>
           </div>
         </div>
@@ -352,7 +524,8 @@ export const AIAnalysisCard = ({
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {ocrComparison.map((item, idx) => {
-                  const isMatch = item.result === 'MATCH' || item.status === 'MATCH';
+                  const isNotDetected = !item.docValue || String(item.docValue).toUpperCase().includes('NOT DETECTED') || String(item.docValue).toUpperCase().includes('NOT_FOUND');
+                  const isMatch = (item.result === 'MATCH' || item.status === 'MATCH') && !isNotDetected;
                   return (
                     <tr
                       key={idx}
@@ -400,7 +573,7 @@ export const AIAnalysisCard = ({
             <div className="flex items-center gap-2">
               <AlertTriangle
                 className={`w-4 h-4 ${
-                  isSimulatedMismatch ? 'text-rose-600' : 'text-amber-600'
+                  isHighRisk ? 'text-rose-600' : isMediumRisk ? 'text-amber-600' : 'text-emerald-600'
                 }`}
               />
               <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
@@ -413,8 +586,10 @@ export const AIAnalysisCard = ({
               </span>
               <span
                 className={`font-mono font-bold px-2 py-0.5 rounded text-xs ${
-                  isSimulatedMismatch
+                  isHighRisk
                     ? 'bg-rose-100 text-rose-800'
+                    : isMediumRisk
+                    ? 'bg-amber-100 text-amber-800'
                     : 'bg-emerald-100 text-emerald-800'
                 }`}
               >

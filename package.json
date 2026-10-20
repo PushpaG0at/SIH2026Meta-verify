@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -p \"[{name}]\" -n \"VITE,API\" -c \"cyan,magenta\" \"vite\" \"node backend/src/index.js\"",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"VITE,API\" -c \"cyan,magenta\" \"vite\" \"node --watch backend/src/index.js\"",
     "dev:ui": "vite",
-    "dev:server": "node backend/src/index.js",
+    "dev:server": "node --watch backend/src/index.js",
     "server": "node backend/src/index.js",
     "build": "vite build",
     "lint": "oxlint",

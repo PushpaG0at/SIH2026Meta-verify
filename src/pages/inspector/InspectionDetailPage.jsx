@@ -23,6 +23,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { inspectionService } from '../../services/inspectionService';
+import { notificationService } from '../../services/notificationService';
 import Button from '../../components/ui/Button';
 import LoadingState from '../../components/ui/LoadingState';
 import ErrorState from '../../components/ui/ErrorState';
@@ -422,6 +423,39 @@ export const InspectionDetailPage = () => {
         inspectionReport: reportPayload
       }));
       showToast(isHindi ? 'फ़ील्ड निरीक्षण सफलतापूर्वक हस्ताक्षरित एवं अधिकारी कतार में जमा।' : 'Field inspection successfully signed and submitted to Officer queue.', 'success');
+      // Notify Statutory Officer of newly submitted field inspection report
+      notificationService.addNotification({
+        recipientRole: 'OFFICER',
+        type: 'INSPECTION_SUBMITTED',
+        title: `Field Audit Report Submitted (${assignment.id})`,
+        titleHi: `फ़ील्ड ऑडिट रिपोर्ट प्रस्तुत (${assignment.id})`,
+        message: `Inspector submitted on-site weight verification & tamper seal #${sealNumber} for ${assignment.businessName || 'premises'}. Ready for final adjudication.`,
+        messageHi: `निरीक्षक ने ${assignment.businessName || 'दुकान'} के लिए सील #${sealNumber} के साथ सत्यापन रिपोर्ट जमा की।`,
+        link: '/officer/inspections'
+      });
+
+      // Notify Business user that inspection was completed
+      notificationService.addNotification({
+        recipientRole: 'BUSINESS',
+        type: 'INSPECTION_ASSIGNED',
+        title: `Field Verification Completed (${assignment.id})`,
+        titleHi: `फ़ील्ड सत्यापन संपन्न (${assignment.id})`,
+        message: `Physical on-site test audit completed with tamper seal #${sealNumber}. Dossier forwarded to Statutory Officer for final seal.`,
+        messageHi: `सील #${sealNumber} के साथ भौतिक परीक्षण पूरा हुआ। डोजियर अंतिम निर्णय हेतु अधिकारी को प्रेषित।`,
+        link: '/business/applications'
+      });
+
+      // Update Inspector's own notification log
+      notificationService.addNotification({
+        recipientRole: 'INSPECTOR',
+        type: 'INSPECTION_COMPLETED',
+        title: `Audit Report Synchronized (${assignment.id})`,
+        titleHi: `ऑडिट रिपोर्ट सिंक्रनाइज़ (${assignment.id})`,
+        message: `Tamper seal #${sealNumber} and MPE test results submitted to Officer queue.`,
+        messageHi: `सील #${sealNumber} एवं परीक्षण परिणाम अधिकारी कतार में जमा किए गए।`,
+        link: '/inspector/inspections/completed'
+      });
+
       setShowSuccessModal(true);
     } catch (err) {
       console.error(err);

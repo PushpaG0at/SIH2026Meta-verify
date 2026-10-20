@@ -774,12 +774,16 @@ export const applicationService = {
       assignedInspector: 'Insp. Vikram Sharma (Badge: DL-LM-INS-985)',
       assignedOfficer: 'Dr. Anita Deshmukh',
       certificateId: null,
-      riskScore: 14,
-      riskLevel: 'LOW',
+      riskScore: payload.riskScore !== undefined ? payload.riskScore : 14,
+      riskLevel: payload.riskLevel || (payload.riskScore >= 70 ? 'HIGH' : payload.riskScore >= 35 ? 'MEDIUM' : 'LOW'),
       slaRemainingDays: 3.0,
-      aiScore: 94,
-      aiStatus: 'PASSED_ADVISORY',
-      aiRemarks: 'Statutory documentation verified. Class III tolerance verified under Rule 18.',
+      aiScore: payload.aiScore !== undefined ? payload.aiScore : 94,
+      aiStatus: payload.aiStatus || 'PASSED_ADVISORY',
+      riskFactors: Array.isArray(payload.riskFactors) && payload.riskFactors.length > 0 ? payload.riskFactors : [
+        'Document authenticity verified against national index',
+        'Class III tolerance compliance within Schedule VII parameters'
+      ],
+      aiRemarks: payload.riskFactors ? (Array.isArray(payload.riskFactors) ? payload.riskFactors.join(' • ') : String(payload.riskFactors)) : 'Statutory documentation verified. Class III tolerance verified under Rule 18.',
       statutoryFee: {
         amount: '₹2,500.00',
         receiptNo: `TR-${newId.replace('MV-APP-', '')}`,

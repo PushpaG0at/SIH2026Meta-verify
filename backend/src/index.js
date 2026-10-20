@@ -60,6 +60,14 @@ app.use((err, req, res, next) => {
   });
 });
 
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL] Uncaught exception in server:', err?.message || err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[CRITICAL] Unhandled Rejection:', reason?.message || reason);
+});
+
 app.listen(PORT, () => {
   console.log(`====================================================`);
   console.log(`⚖️  METRA-VERIFY Legal Metrology Platform API running`);
@@ -69,3 +77,4 @@ app.listen(PORT, () => {
 });
 
 export default app;
+

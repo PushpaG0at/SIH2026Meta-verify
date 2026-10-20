@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Uploads & Tesseract cache
+uploads/
+*.traineddata
+
+# Environment
+.env
+.env*.local

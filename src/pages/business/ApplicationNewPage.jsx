@@ -88,12 +88,21 @@ export const ApplicationNewPage = () => {
         instrumentType: selectedInstrument.instrumentType,
         serialNumber: selectedInstrument.serialNumber,
         manufacturer: selectedInstrument.manufacturer,
+        model: selectedInstrument.model,
+        capacity: selectedInstrument.capacity,
+        aiScore: aiResult ? (100 - (aiResult.riskScore || 14)) : 94,
+        aiStatus: aiResult?.status || 'PASSED_ADVISORY',
+        riskScore: aiResult?.riskScore || 14,
+        riskLevel: aiResult?.riskLevel || 'LOW',
+        riskFactors: aiResult?.riskFactors,
         documents: [
           {
             docType: 'INVOICE_MODEL_APPROVAL',
             fileName: uploadedFile.name,
             fileSize: uploadedFile.size,
-            status: 'AI_VERIFIED'
+            fileUrl: aiResult?.fileUrl || `/uploads/${uploadedFile.name}`,
+            ocrExtractedText: aiResult?.rawOcrSnippet || '',
+            status: aiResult?.status === 'FLAGGED_ADVISORY' ? 'AI_FLAGGED' : 'AI_VERIFIED'
           }
         ]
       };
@@ -320,10 +329,15 @@ export const ApplicationNewPage = () => {
       {step === 3 && aiResult && (
         <div className="space-y-6">
           <AIAnalysisCard
+            documentName={uploadedFile?.name || 'Verification_Document.jpg'}
+            documentSize={uploadedFile ? `${(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB` : '2.1 MB'}
+            documentUploadedAt="Just now"
             riskScore={aiResult.riskScore}
             riskLevel={aiResult.riskLevel}
             riskFactors={aiResult.riskFactors}
             ocrComparison={aiResult.comparison}
+            rawOcrSnippet={aiResult.rawOcrSnippet}
+            aiModelUsed={aiResult.aiModelUsed}
             disclaimer={aiResult.disclaimer}
           />
 

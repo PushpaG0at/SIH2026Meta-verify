@@ -7,6 +7,8 @@ import officerRoutes from './officer.routes.js';
 import publicRoutes from './public.routes.js';
 import certificateRoutes from './certificate.routes.js';
 import uploadRoutes from './upload.routes.js';
+import aiRoutes from './ai.routes.js';
+import { chatEndpoint } from '../controllers/ai.controller.js';
 
 const apiRouter = Router();
 
@@ -18,6 +20,8 @@ apiRouter.use('/officer', officerRoutes);
 apiRouter.use('/certificates', certificateRoutes);
 apiRouter.use('/public', publicRoutes);
 apiRouter.use('/upload', uploadRoutes);
+apiRouter.use('/ai', aiRoutes);
+apiRouter.post('/chat', chatEndpoint);
 
 export default apiRouter;
 

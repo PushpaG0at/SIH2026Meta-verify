@@ -39,6 +39,8 @@ export const AIAnalysisCard = ({
     { field: 'Instrument Type', dbValue: 'Digital Weighing Scale', docValue: 'Digital Weighing Scale', result: 'MATCH' },
     { field: 'Max Capacity', dbValue: '50 kg', docValue: '50 kg', result: 'MATCH' }
   ],
+  rawOcrSnippet: initialRawOcrSnippet = '',
+  aiModelUsed: initialAiModelUsed = 'Deep-Vision OCR v2.4',
   disclaimer = 'AI provides decision support. Final verification is performed by authorized personnel.',
   allowSimulation = true,
   className = ''
@@ -46,36 +48,45 @@ export const AIAnalysisCard = ({
   const { isHindi } = useLanguage();
 
   // Support interactive simulation mode for live SIH hackathon evaluation
-  const [simulationMode, setSimulationMode] = useState('normal'); // 'normal' | 'mismatch'
+  const isInitiallyHigh = initialRiskLevel === 'HIGH' || initialRiskScore >= 70 || (Array.isArray(initialOcrComparison) && initialOcrComparison.some(c => c.result === 'MISMATCH'));
+  const [simulationMode, setSimulationMode] = useState(isInitiallyHigh ? 'mismatch' : 'normal'); // 'normal' | 'mismatch'
 
   // Normal vs Mismatch scenarios
   const isSimulatedMismatch = simulationMode === 'mismatch';
+  const isHighRisk = isSimulatedMismatch || initialRiskLevel === 'HIGH' || initialRiskScore >= 70;
 
-  const riskScore = isSimulatedMismatch ? 78 : initialRiskScore;
-  const riskLevel = isSimulatedMismatch ? 'HIGH' : initialRiskLevel;
+  const riskScore = isSimulatedMismatch
+    ? (initialRiskScore >= 50 ? initialRiskScore : 88)
+    : (initialRiskScore < 50 ? initialRiskScore : 18);
+
+  const riskLevel = isHighRisk ? 'HIGH' : 'LOW';
 
   const riskFactors = isSimulatedMismatch
-    ? [
-        'CRITICAL: Serial number discrepancy between invoice plate (WS999888) and registered database record (WS123456)',
-        'Manufacturer model series approved, but stamped plate indicates potential unit substitution',
-        'Physical verification audit flagged for mandatory on-site serial plate examination',
-        'Recommendation: Officer adjudication required prior to dispatching field inspector'
-      ]
+    ? (Array.isArray(initialRiskFactors) && initialRiskFactors.length > 0 && initialRiskLevel === 'HIGH'
+        ? initialRiskFactors
+        : [
+            'CRITICAL: Serial number discrepancy between document plate and registered database record',
+            'Manufacturer model series approved, but stamped plate indicates potential unit substitution',
+            'Physical verification audit flagged for mandatory on-site serial plate examination',
+            'Recommendation: Officer adjudication required prior to dispatching field inspector'
+          ])
     : initialRiskFactors;
 
   const ocrComparison = isSimulatedMismatch
-    ? [
-        { field: 'Serial Number', dbValue: 'WS123456', docValue: 'WS999888', result: 'MISMATCH' },
-        { field: 'Manufacturer', dbValue: 'ABC Instruments Ltd.', docValue: 'ABC Instruments Ltd.', result: 'MATCH' },
-        { field: 'Model', dbValue: 'WS-500 Industrial Precision', docValue: 'WS-500 Industrial Precision', result: 'MATCH' },
-        { field: 'Instrument Type', dbValue: 'Digital Weighing Scale', docValue: 'Digital Weighing Scale', result: 'MATCH' },
-        { field: 'Max Capacity', dbValue: '50 kg', docValue: '30 kg', result: 'MISMATCH' }
-      ]
+    ? (Array.isArray(initialOcrComparison) && initialOcrComparison.length > 0 && initialOcrComparison.some(c => c.result === 'MISMATCH')
+        ? initialOcrComparison
+        : [
+            { field: 'Serial Number', dbValue: 'MT-108484', docValue: 'NOT DETECTED (Mismatch)', result: 'MISMATCH' },
+            { field: 'Manufacturer', dbValue: 'Mettler Toledo Metrology', docValue: 'NOT DETECTED', result: 'MISMATCH' },
+            { field: 'Model', dbValue: 'ICS-429', docValue: 'NOT DETECTED', result: 'MISMATCH' },
+            { field: 'Instrument Type', dbValue: 'Electronic Bench Scale', docValue: 'NOT DETECTED', result: 'MISMATCH' },
+            { field: 'Max Capacity', dbValue: '60 kg', docValue: 'NOT DETECTED', result: 'MISMATCH' }
+          ])
     : initialOcrComparison;
 
   const rawOcrSnippet = isSimulatedMismatch
-    ? 'INVOICE_ID: INV-2026-9041 | MAKE: ABC INSTRUMENTS LTD. | MODEL: WS-500 | SERIAL_NO: WS999888 | CAPACITY: 30kg | CLASS: III'
-    : 'INVOICE_ID: INV-2026-4402 | MAKE: ABC INSTRUMENTS LTD. | MODEL: WS-500 | SERIAL_NO: WS123456 | CAPACITY: 50kg | CLASS: III';
+    ? (initialRawOcrSnippet || 'INVOICE_ID: INV-2026-9041 | MAKE: UNKNOWN | SERIAL_NO: NOT_FOUND | STATUS: DISCREPANCY_FLAGGED')
+    : (initialRawOcrSnippet || 'INVOICE_ID: INV-2026-4402 | MAKE: METTLER TOLEDO | SERIAL_NO: MT-108484 | CAPACITY: 60kg | CLASS: III');
 
   const translateField = (field) => {
     if (!isHindi) return field;
@@ -157,13 +168,13 @@ export const AIAnalysisCard = ({
   return (
     <div
       className={`bg-white rounded-2xl border ${
-        isSimulatedMismatch ? 'border-rose-300 ring-2 ring-rose-100' : 'border-blue-200/90'
+        isHighRisk ? 'border-rose-300 ring-2 ring-rose-100' : 'border-blue-200/90'
       } shadow-md overflow-hidden transition-all ${className}`}
     >
       {/* Top Banner Header */}
       <div
         className={`px-5 py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-          isSimulatedMismatch
+          isHighRisk
             ? 'bg-gradient-to-r from-rose-950 via-slate-900 to-rose-900'
             : 'bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-900'
         }`}
@@ -171,7 +182,7 @@ export const AIAnalysisCard = ({
         <div className="flex items-center gap-3">
           <div
             className={`p-2 rounded-xl border ${
-              isSimulatedMismatch
+              isHighRisk
                 ? 'bg-rose-500/20 border-rose-400/30 text-rose-300'
                 : 'bg-blue-500/20 border-blue-400/30 text-blue-300'
             }`}
@@ -183,8 +194,8 @@ export const AIAnalysisCard = ({
               <h4 className="text-base font-bold tracking-tight text-white font-heading">
                 {isHindi ? 'एआई प्री-चेक एवं ओसीआर जांच इंजन' : 'AI Pre-check & OCR Scrutiny Engine'}
               </h4>
-              <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-mono text-[10px] font-bold">
-                {isHindi ? 'सिंथेटिक परामर्श' : 'SYNTHETIC ADVISORY'}
+              <span className={`px-2 py-0.5 rounded-full ${isHighRisk ? 'bg-rose-400/20 text-rose-300 border-rose-400/30' : 'bg-amber-400/20 text-amber-300 border-amber-400/30'} font-mono text-[10px] font-bold`}>
+                {isHighRisk ? (isHindi ? 'विसंगति ध्वजांकित' : 'DISCREPANCY FLAGGED') : (isHindi ? 'सिंथेटिक परामर्श' : 'SYNTHETIC ADVISORY')}
               </span>
             </div>
             <p className="text-xs text-slate-300">
@@ -203,7 +214,7 @@ export const AIAnalysisCard = ({
             </span>
             <span
               className={`font-mono text-base font-extrabold ${
-                isSimulatedMismatch ? 'text-rose-300' : 'text-emerald-300'
+                isHighRisk ? 'text-rose-300' : 'text-emerald-300'
               }`}
             >
               {riskScore}/100
@@ -237,7 +248,7 @@ export const AIAnalysisCard = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {isHindi ? 'सामान्य (कम - 25/100)' : 'Normal (LOW - 25/100)'}
+              {isHindi ? 'सत्यापित मिलान (कम - 14/100)' : 'Verified Match (LOW - 14/100)'}
             </button>
             <button
               type="button"
@@ -248,7 +259,7 @@ export const AIAnalysisCard = ({
                   : 'text-slate-600 hover:text-rose-700'
               }`}
             >
-              {isHindi ? 'बेमेल सिमुलेशन (उच्च - 78/100)' : 'Simulate Mismatch (HIGH - 78/100)'}
+              {isHindi ? 'विसंगति / बेमेल (उच्च - 88/100)' : 'Discrepancy / Mismatch (HIGH - 88/100)'}
             </button>
           </div>
         </div>
@@ -300,7 +311,7 @@ export const AIAnalysisCard = ({
               <span>{isHindi ? 'ओसीआर निष्कर्षण स्ट्रीम' : 'OCR Extraction Stream'}</span>
             </div>
             <span className="text-[11px] text-slate-500 font-mono">
-              {isHindi ? 'इंजन: डीप-विज़न ओसीआर v2.4' : 'Engine: Deep-Vision OCR v2.4'}
+              {isHindi ? `इंजन: ${initialAiModelUsed}` : `Engine: ${initialAiModelUsed}`}
             </span>
           </div>
 
